@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Datos pesados (se descargan con scripts/descargar_datos.py)
+kernels/
+*.bsp
+*.bpc
+*.tif
+*.tiff
+data/raw/
