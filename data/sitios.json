@@ -1,0 +1,16 @@
+{
+  "_nota": "Lista curada inicial. Latitud y longitud lunares en grados (longitud este, negativa = oeste). Los sitios con aproximado=true hay que confirmarlos con una fuente oficial antes de la entrega.",
+  "sitios": [
+    {"id": "apollo-11", "nombre": "Apollo 11 — Mar de la Tranquilidad", "lat": 0.67408, "lon": 23.47297, "categoria": "apollo", "anio": 1969, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "apollo-12", "nombre": "Apollo 12 — Océano de las Tormentas", "lat": -3.01239, "lon": -23.42157, "categoria": "apollo", "anio": 1969, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "apollo-14", "nombre": "Apollo 14 — Fra Mauro", "lat": -3.64530, "lon": -17.47136, "categoria": "apollo", "anio": 1971, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "apollo-15", "nombre": "Apollo 15 — Hadley-Apennine", "lat": 26.13222, "lon": 3.63386, "categoria": "apollo", "anio": 1971, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "apollo-16", "nombre": "Apollo 16 — Descartes", "lat": -8.97301, "lon": 15.50019, "categoria": "apollo", "anio": 1972, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "apollo-17", "nombre": "Apollo 17 — Taurus-Littrow", "lat": 20.19080, "lon": 30.77168, "categoria": "apollo", "anio": 1972, "aproximado": false, "fuente": "NASA, coordenadas del módulo lunar"},
+    {"id": "change-4", "nombre": "Chang'e 4 — Cráter Von Kármán (China)", "lat": -45.4446, "lon": 177.5991, "categoria": "otros_paises", "anio": 2019, "aproximado": true, "fuente": "CNSA, verificar"},
+    {"id": "chandrayaan-3", "nombre": "Chandrayaan-3 — Shiv Shakti (India)", "lat": -69.373, "lon": 32.319, "categoria": "otros_paises", "anio": 2023, "aproximado": true, "fuente": "ISRO, verificar"},
+    {"id": "im-1-odysseus", "nombre": "IM-1 Odysseus — Malapert A (CLPS)", "lat": -80.13, "lon": 1.44, "categoria": "clps", "anio": 2024, "aproximado": true, "fuente": "Intuitive Machines / NASA CLPS, verificar"},
+    {"id": "connecting-ridge", "nombre": "Connecting Ridge — cerca de Shackleton", "lat": -89.45, "lon": 222.69, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"},
+    {"id": "malapert-massif", "nombre": "Macizo Malapert (región Artemis III)", "lat": -86.0, "lon": 2.9, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"}
+  ]
+}
