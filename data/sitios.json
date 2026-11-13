@@ -11,6 +11,8 @@
     {"id": "chandrayaan-3", "nombre": "Chandrayaan-3 — Shiv Shakti (India)", "lat": -69.373, "lon": 32.319, "categoria": "otros_paises", "anio": 2023, "aproximado": true, "fuente": "ISRO, verificar"},
     {"id": "im-1-odysseus", "nombre": "IM-1 Odysseus — Malapert A (CLPS)", "lat": -80.13, "lon": 1.44, "categoria": "clps", "anio": 2024, "aproximado": true, "fuente": "Intuitive Machines / NASA CLPS, verificar"},
     {"id": "connecting-ridge", "nombre": "Connecting Ridge — cerca de Shackleton", "lat": -89.45, "lon": 222.69, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"},
+    {"id": "borde-shackleton", "nombre": "Borde de Shackleton", "lat": -89.78, "lon": 204.27, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar"},
+    {"id": "borde-de-gerlache", "nombre": "Borde de de Gerlache", "lat": -88.71, "lon": 291.90, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar"},
     {"id": "malapert-massif", "nombre": "Macizo Malapert (región Artemis III)", "lat": -86.0, "lon": 2.9, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"}
   ]
 }

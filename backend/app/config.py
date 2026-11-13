@@ -20,6 +20,14 @@ DEM_POLO_SUR_LAT_MAX = -87.0
 # Multiplicador para pasar las alturas del archivo a metros (1.0 si ya vienen en metros).
 DEM_ESCALA_ALTURA = float(os.getenv("MOONSET_DEM_ESCALA", "1.0"))
 
+# DEM regional del polo sur (LOLA 80 m/píxel, 80°S a 90°S, 115 MB). Formato PDS .IMG crudo:
+# int16 little-endian, altura = valor * 0,5 m sobre el radio de referencia, estereográfica polar.
+# https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_80S_80M.IMG
+DEM_80S = Path(os.getenv("MOONSET_DEM_80S", RAW_DIR / "LDEM_80S_80M.IMG"))
+DEM_80S_LAT_MAX = -80.0
+DEM_80S_PASO_M = 80.0
+DEM_80S_ESCALA = 0.5
+
 # Constantes físicas
 RADIO_LUNA_M = 1_737_400.0  # radio de referencia de LOLA
 RADIO_APARENTE_SOL_DEG = 0.267  # medio diámetro del disco solar visto desde la Luna

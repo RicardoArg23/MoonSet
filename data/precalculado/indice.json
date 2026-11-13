@@ -208,18 +208,18 @@
    "aproximado": true,
    "fuente": "Intuitive Machines / NASA CLPS, verificar",
    "metricas": {
-    "porcentaje_luz": 52.2,
+    "porcentaje_luz": 40.4,
     "porcentaje_senal": 100.0,
-    "porcentaje_luz_y_senal": 52.2,
-    "oscuridad_mas_larga_h": 326,
+    "porcentaje_luz_y_senal": 40.4,
+    "oscuridad_mas_larga_h": 391,
     "sin_senal_mas_largo_h": 0,
     "elevacion_solar_max": 10.374,
-    "elevacion_solar_media_con_luz": 6.419,
+    "elevacion_solar_media_con_luz": 7.725,
     "horas_hasta_puesta_sol": 0.0,
     "horas_hasta_puesta_tierra": null,
     "muestras": 720
    },
-   "horizonte_fuente": "esfera",
+   "horizonte_fuente": "dem_lola_80s_80m",
    "archivo": "im-1-odysseus.json"
   },
   {
@@ -233,18 +233,66 @@
    "fuente": "Ubicación aproximada para pruebas",
    "metricas": {
     "porcentaje_luz": 100.0,
-    "porcentaje_senal": 41.0,
-    "porcentaje_luz_y_senal": 41.0,
+    "porcentaje_senal": 44.2,
+    "porcentaje_luz_y_senal": 44.2,
     "oscuridad_mas_larga_h": 0,
-    "sin_senal_mas_largo_h": 243,
+    "sin_senal_mas_largo_h": 230,
     "elevacion_solar_max": 1.518,
     "elevacion_solar_media_con_luz": 0.684,
     "horas_hasta_puesta_sol": null,
     "horas_hasta_puesta_tierra": 0.0,
     "muestras": 720
    },
-   "horizonte_fuente": "esfera",
+   "horizonte_fuente": "dem_lola_80s_80m",
    "archivo": "connecting-ridge.json"
+  },
+  {
+   "id": "borde-shackleton",
+   "nombre": "Borde de Shackleton",
+   "lat": -89.78,
+   "lon": 204.27,
+   "categoria": "artemis",
+   "anio": null,
+   "aproximado": true,
+   "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar",
+   "metricas": {
+    "porcentaje_luz": 100.0,
+    "porcentaje_senal": 42.4,
+    "porcentaje_luz_y_senal": 42.4,
+    "oscuridad_mas_larga_h": 0,
+    "sin_senal_mas_largo_h": 237,
+    "elevacion_solar_max": 1.172,
+    "elevacion_solar_media_con_luz": 0.68,
+    "horas_hasta_puesta_sol": null,
+    "horas_hasta_puesta_tierra": 0.0,
+    "muestras": 720
+   },
+   "horizonte_fuente": "dem_lola_80s_80m",
+   "archivo": "borde-shackleton.json"
+  },
+  {
+   "id": "borde-de-gerlache",
+   "nombre": "Borde de de Gerlache",
+   "lat": -88.71,
+   "lon": 291.9,
+   "categoria": "artemis",
+   "anio": null,
+   "aproximado": true,
+   "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar",
+   "metricas": {
+    "porcentaje_luz": 54.2,
+    "porcentaje_senal": 48.9,
+    "porcentaje_luz_y_senal": 48.9,
+    "oscuridad_mas_larga_h": 205,
+    "sin_senal_mas_largo_h": 214,
+    "elevacion_solar_max": 2.144,
+    "elevacion_solar_media_con_luz": 0.193,
+    "horas_hasta_puesta_sol": 0.0,
+    "horas_hasta_puesta_tierra": 0.0,
+    "muestras": 720
+   },
+   "horizonte_fuente": "dem_lola_80s_80m",
+   "archivo": "borde-de-gerlache.json"
   },
   {
    "id": "malapert-massif",
@@ -256,18 +304,18 @@
    "aproximado": true,
    "fuente": "Ubicación aproximada para pruebas",
    "metricas": {
-    "porcentaje_luz": 59.2,
-    "porcentaje_senal": 60.8,
-    "porcentaje_luz_y_senal": 41.5,
-    "oscuridad_mas_larga_h": 283,
-    "sin_senal_mas_largo_h": 164,
+    "porcentaje_luz": 24.7,
+    "porcentaje_senal": 40.6,
+    "porcentaje_luz_y_senal": 24.7,
+    "oscuridad_mas_larga_h": 351,
+    "sin_senal_mas_largo_h": 251,
     "elevacion_solar_max": 4.51,
-    "elevacion_solar_media_con_luz": 2.564,
-    "horas_hasta_puesta_sol": 20.0,
+    "elevacion_solar_media_con_luz": 3.475,
+    "horas_hasta_puesta_sol": 0.0,
     "horas_hasta_puesta_tierra": 0.0,
     "muestras": 720
    },
-   "horizonte_fuente": "esfera",
+   "horizonte_fuente": "dem_lola_80s_80m",
    "archivo": "malapert-massif.json"
   }
  ]

@@ -30,32 +30,76 @@ DEM LOLA         ──►   + métricas                              línea de 
 - `backend/` — cálculo y API. Ver [backend/README.md](backend/README.md).
 - `frontend/` — interfaz. Ver [frontend/README.md](frontend/README.md).
 - `data/` — lista curada de sitios y resultados precalculados.
+- `docs/` — [estado del proyecto](docs/ESTADO.md): qué hay, qué falta, cómo funciona.
 - `prototipos/` — primeras pruebas (script de un sitio y página HTML con globo 3D).
 
 ## Inicio rápido
 
-```bash
-# Backend
-cd backend
-python -m venv .venv
-.venv\Scripts\activate          # Windows  (Linux/macOS: source .venv/bin/activate)
-pip install -r requirements.txt
-python scripts/descargar_datos.py
-uvicorn app.main:app --reload   # http://127.0.0.1:8000/docs
+Requisitos: Python 3.11+ y Node 18+.
 
-# Frontend (otra terminal)
+**Solo la interfaz (sin backend).** Usa los 13 sitios precalculados que ya están en `data/`:
+
+```bash
 cd frontend
 npm install
 npm run dev                     # http://localhost:5173
 ```
 
+**Con backend** (habilita puntos propios: coordenadas libres en `GET /anual?lat=&lon=`):
+
+```bash
+# Terminal 1 — backend
+cd backend
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python scripts/descargar_datos.py          # kernels JPL (~20 MB)
+uvicorn app.main:app --reload              # http://127.0.0.1:8000/docs
+
+# Terminal 2 — frontend
+cd frontend
+echo "VITE_API_URL=http://127.0.0.1:8000" > .env
+npm install
+npm run dev
+```
+
+Si los puertos 8000/5173 están ocupados, usá otros: `uvicorn ... --port 8010`, `npm run dev -- --port 5174`,
+y agregá el origen del frontend en `MOONSET_CORS` (por ejemplo
+`MOONSET_CORS="http://localhost:5174" uvicorn app.main:app --port 8010`).
+
+`npm run dev` y `npm run build` copian `data/precalculado` y `data/anual` a `frontend/public/` solos.
+
+### Regenerar datos (opcional)
+
+Los resultados ya están commiteados. Solo hace falta si cambian los sitios o el algoritmo:
+
+```bash
+cd backend
+python scripts/precalcular_sitios.py     # horizonte y métricas por sitio
+python scripts/precalcular_anual.py      # año 2027, cada hora, Sol/Tierra por sitio
+python scripts/precalcular_vecindad.py   # grillas de alrededores (sitios polares)
+node ../frontend/scripts/copiar-datos.mjs
+```
+
+Para el relieve real al sur de 80°S hay que bajar el DEM de LOLA de 80 m (115 MB) a `data/raw/`:
+
+```bash
+mkdir -p data/raw
+curl -L -o data/raw/LDEM_80S_80M.IMG https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_80S_80M.IMG
+```
+
+Sin ese archivo el horizonte se calcula sobre la esfera lisa (sin relieve). Tests: `cd backend && pytest`.
+
 ## Datos
 
 - Efemérides: NASA/JPL DE421 y orientación lunar `moon_pa_de421_1900-2050` (vía skyfield).
-- Relieve: LOLA (Lunar Reconnaissance Orbiter), mosaico del polo sur a 5 m/píxel —
-  https://pgda.gsfc.nasa.gov/products/81
+- Relieve: LOLA (Lunar Reconnaissance Orbiter), DEM del polo sur a 80 m/píxel (80°S–90°S) y,
+  opcional, mosaico a 5 m/píxel — https://pgda.gsfc.nasa.gov/products/81
+- Textura del globo: mosaico LROC 4k (`frontend/public/texturas/`).
+- Algunas coordenadas de `data/sitios.json` son aproximadas y los números aún no se validaron
+  contra valores publicados.
 
-Los archivos pesados no se guardan en el repo; se descargan con `backend/scripts/descargar_datos.py`.
+Los archivos pesados (`data/raw/`, kernels) no se guardan en el repo.
 
 ## Equipo
 

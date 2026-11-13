@@ -135,10 +135,75 @@ def horizonte_dem(ruta_dem: str | Path, lat: float, lon: float, altura_m: float 
     return np.maximum(maximo, base)  # nunca por debajo del borde de la esfera
 
 
+@lru_cache(maxsize=2)
+def _cargar_img_lola(ruta: str, escala: float) -> np.ndarray:
+    """Carga un LDEM polar de LOLA en formato PDS .IMG (cuadrado, int16 LSB) como alturas en metros."""
+    crudo = np.fromfile(ruta, dtype="<i2")
+    n = int(round(np.sqrt(crudo.size)))
+    if n * n != crudo.size:
+        raise ValueError(f"{ruta}: se esperaba una imagen cuadrada de int16, hay {crudo.size} muestras.")
+    return crudo.reshape(n, n).astype("float32") * escala
+
+
+def _polar_sur_xy(lat: np.ndarray, lon: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Estereográfica polar sur esférica de LOLA (centro lat -90°, lon 0°): metros desde el polo.
+
+    Para lon 0° el punto queda sobre +y; el este (lon 90°) es +x.
+    """
+    r = 2.0 * R * np.tan(np.pi / 4.0 + np.radians(lat) / 2.0)
+    lam = np.radians(lon)
+    return r * np.sin(lam), r * np.cos(lam)
+
+
+def horizonte_img_lola(ruta_img: str | Path, lat: float, lon: float, altura_m: float = 2.0,
+                       alcance_km: float = 250.0, paso_m: float | None = None,
+                       escala: float | None = None) -> np.ndarray:
+    """Máscara de horizonte desde un LDEM polar de LOLA en .IMG (por ejemplo LDEM_80S_80M).
+
+    No necesita rasterio ni pyproj. Los puntos que caen fuera del DEM se ignoran, así que un sitio
+    cerca del borde (80°S) tiene relieve real solo hacia el polo.
+    """
+    from scipy.ndimage import map_coordinates
+
+    paso = config.DEM_80S_PASO_M if paso_m is None else paso_m
+    dem = _cargar_img_lola(str(ruta_img), config.DEM_80S_ESCALA if escala is None else escala)
+    n = dem.shape[0]
+
+    def muestrear(la, lo):
+        x, y = _polar_sur_xy(la, lo)
+        col = x / paso + n / 2.0 - 0.5  # píxel-registrado: el centro del píxel 0 está a medio paso
+        fila = n / 2.0 - 0.5 - y / paso
+        return map_coordinates(dem, [fila, col], order=1, cval=np.nan, mode="constant")
+
+    h0 = float(muestrear(np.array([lat]), np.array([lon]))[0])
+    base = horizonte_esfera(altura_m)
+    if np.isnan(h0):
+        return base  # el sitio está fuera del DEM
+
+    alcance_m = alcance_km * 1_000.0
+    dist = np.concatenate([
+        np.arange(paso, 5_000.0, paso),
+        np.arange(5_000.0, 30_000.0, 2 * paso),
+        np.arange(30_000.0, alcance_m, 4 * paso),
+    ])
+    lat_p, lon_p = _destinos(lat, lon, dist)
+    alturas = muestrear(lat_p, lon_p)
+    angulos = _elevacion_angular(h0 + altura_m, alturas, dist[None, :])
+    validos = ~np.isnan(angulos)
+    with np.errstate(all="ignore"):
+        maximo = np.max(np.where(validos, angulos, -np.inf), axis=1)
+    # Desde una cresta el horizonte real queda por debajo del de la esfera lisa: ahí manda el relieve.
+    # Solo se recurre a la esfera en las direcciones donde el rayo se sale del DEM.
+    completo = validos.mean(axis=1) > 0.98
+    return np.where(completo, maximo, np.maximum(maximo, base))
+
+
 @lru_cache(maxsize=128)
 def _horizonte_cache(lat: float, lon: float, altura_m: float) -> tuple[tuple[float, ...], str]:
     if lat <= config.DEM_POLO_SUR_LAT_MAX and config.DEM_POLO_SUR.exists():
         return tuple(horizonte_dem(config.DEM_POLO_SUR, lat, lon, altura_m)), "dem_lola_polo_sur"
+    if lat <= config.DEM_80S_LAT_MAX and config.DEM_80S.exists():
+        return tuple(horizonte_img_lola(config.DEM_80S, lat, lon, altura_m)), "dem_lola_80s_80m"
     # TODO: sumar un DEM global (más grueso) para sitios fuera del polo sur
     return tuple(horizonte_esfera(altura_m)), "esfera"
 

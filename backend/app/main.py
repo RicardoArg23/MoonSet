@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from . import config
+from .anual import DIAS_MAX, construir_anual
 from .servicio import ConsultaInvalida, evaluar
 from .sitios import buscar_sitio, cargar_sitios
 
@@ -73,3 +74,20 @@ def evaluar_coordenadas(p: Pedido):
     """Lo mismo que /sitios/{id}, pero para coordenadas cualesquiera."""
     return _ejecutar(lat=p.lat, lon=p.lon, inicio=p.inicio, dias=p.dias,
                      paso_horas=p.paso_horas, altura_m=p.altura_m)
+
+
+@app.get("/anual")
+def anual_coordenadas(
+    lat: float = Query(..., ge=-90, le=90, description="Latitud lunar en grados (negativa = sur)"),
+    lon: float = Query(..., ge=-180, le=360, description="Longitud lunar en grados este"),
+    inicio: datetime = Query(datetime(2027, 1, 1), description="Inicio en UTC"),
+    dias: int = Query(DIAS_MAX, ge=1, le=DIAS_MAX),
+    altura_m: float = Query(2, ge=0, le=100),
+):
+    """Un año de horizonte y posiciones para coordenadas cualesquiera, en el mismo formato que
+    data/anual/<id>.json. La interfaz calcula con esto las métricas de misión en el navegador."""
+    sitio = {"id": f"coord:{lat:.4f},{lon:.4f}", "nombre": f"Punto propio {abs(lat):.2f}° {'S' if lat < 0 else 'N'}, {lon % 360:.2f}° E",
+             "lat": lat, "lon": lon, "categoria": "personalizado", "anio": None, "aproximado": False,
+             "fuente": "Coordenadas ingresadas por el usuario"}
+    datos, _ = construir_anual(sitio, inicio, dias, altura_m)
+    return datos
