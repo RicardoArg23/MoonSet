@@ -78,6 +78,7 @@ cd backend
 python scripts/precalcular_sitios.py     # horizonte y métricas por sitio
 python scripts/precalcular_anual.py      # año 2027, cada hora, Sol/Tierra por sitio
 python scripts/precalcular_vecindad.py   # grillas de alrededores (sitios polares)
+python scripts/generar_mapa_polo.py      # fondo del mapa 2D del polo sur (usa el DEM si está)
 node ../frontend/scripts/copiar-datos.mjs
 ```
 
@@ -89,6 +90,10 @@ curl -L -o data/raw/LDEM_80S_80M.IMG https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR
 ```
 
 Sin ese archivo el horizonte se calcula sobre la esfera lisa (sin relieve). Tests: `cd backend && pytest`.
+
+Con el DEM descargado, `python scripts/generar_mapa_polo.py` reemplaza el fondo del mapa 2D (que viene
+de la textura LROC, en baja resolución) por el relieve sombreado de LOLA a 80 m. Después hay que commitear
+`data/mapa/polo_sur.jpg` y `data/mapa/polo_sur.json`.
 
 ## Datos
 

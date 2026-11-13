@@ -25,8 +25,13 @@ Los JSON de `data/precalculado/` de los sitios polares cambiaron porque ahora se
 
 ## Qué tiene
 
-- **Cabina sin scroll** con cuatro vistas:
+- **Cabina sin scroll** con cinco vistas:
   - **Globo**: Luna 3D (React Three Fiber) con los sitios y el punto subsolar/subterrestre en la fecha elegida.
+  - **Mapa** (rama `mapa-2d`): el polo sur visto desde arriba, en estereográfica polar (la misma proyección que
+    `horizonte.py`). Sitios coloreados según si sirven en la fecha elegida, zoom y arrastre, clic para probar un
+    punto, brújula con la dirección del Sol y la Tierra, y la grilla de alrededores al acercarse a un sitio.
+    El fondo sale de `backend/scripts/generar_mapa_polo.py`: relieve LOLA 80 m si está el DEM; si no, la textura
+    LROC reproyectada (baja resolución). Componente: `frontend/src/v2/MapaPolar.jsx`.
   - **Horizonte**: panorama de 360° con el relieve, el Sol y la Tierra.
   - **Alrededores**: grilla de puntos cercanos al sitio (4 sitios polares) y cuál conviene para la misma misión.
   - **Comparar**: hasta N escenarios fijados lado a lado.

@@ -1,0 +1,11 @@
+{
+ "imagen": "polo_sur.jpg",
+ "proyeccion": "estereografica_polar_sur",
+ "nota_proyeccion": "x = r·sin(lon), y = r·cos(lon), r = 2R·tan(45° + lat/2); lon 0° arriba, lon 90° E a la derecha",
+ "radio_luna_m": 1737400.0,
+ "lat_limite": -80.0,
+ "extension_m": 304005.6,
+ "lado_px": 1024,
+ "fuente": "textura_lroc_4k",
+ "descripcion": "Respaldo de baja resolución: casquete polar de la textura LROC 4k reproyectado"
+}

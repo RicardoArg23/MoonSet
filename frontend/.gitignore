@@ -4,3 +4,4 @@ dist/
 # se copia desde ../data/precalculado al correr npm run dev / build
 public/precalculado/
 public/anual/
+public/mapa/

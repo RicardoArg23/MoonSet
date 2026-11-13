@@ -38,3 +38,11 @@ export async function cargarVecindad(id) {
   if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return null;
   return r.json();
 }
+
+/** Metadatos e imagen de fondo del mapa 2D del polo sur (data/mapa). null si no se generó. */
+export async function cargarMapa() {
+  const r = await fetch(`${BASE}mapa/polo_sur.json`);
+  if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return null;
+  const meta = await r.json();
+  return { ...meta, url: `${BASE}mapa/${meta.imagen}` };
+}

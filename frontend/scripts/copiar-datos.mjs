@@ -1,10 +1,10 @@
-// Copia ../data/precalculado y ../data/anual a public/ para que la página funcione sin backend.
+// Copia ../data/precalculado, ../data/anual y ../data/mapa a public/ para que la página funcione sin backend.
 import { cpSync, existsSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const aqui = dirname(fileURLToPath(import.meta.url));
-const carpetas = ["precalculado", "anual"];
+const carpetas = ["precalculado", "anual", "mapa"];
 
 for (const carpeta of carpetas) {
   const origen = resolve(aqui, "../../data", carpeta);

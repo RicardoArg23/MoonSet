@@ -4,6 +4,7 @@ import { coordenadas, evaluarMision, fechaCorta, fechaLarga, fechaViableCercana,
 import Dock from "./Dock";
 import VistaHorizonte from "./VistaHorizonte";
 import Vecindad from "./Vecindad";
+import MapaPolar from "./MapaPolar";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
@@ -12,6 +13,7 @@ const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
 const VISTAS = [
   { id: "globo", nombre: "Globo" },
+  { id: "mapa", nombre: "Mapa" },
   { id: "horizonte", nombre: "Horizonte" },
   { id: "alrededores", nombre: "Alrededores" },
   { id: "comparar", nombre: "Comparar" },
@@ -321,6 +323,25 @@ export default function App() {
           </p>
         )}
 
+        {vista === "mapa" && (
+          <section className="tarjeta vidrio mapa-tarjeta">
+            <MapaPolar
+              sitios={sitios}
+              sitio={sitio}
+              viables={viables}
+              sol={{ lat: geometria.sol_lat[iGeo], lon: geometria.sol_lon[iGeo] }}
+              tierra={{ lat: geometria.tierra_lat[iGeo], lon: geometria.tierra_lon[iGeo] }}
+              onElegir={elegirSitio}
+              onPunto={puntoEnGlobo}
+              vecindad={vecindad}
+              i0={i0}
+              duracionH={duracionH}
+              autonomiaH={autonomiaH}
+              hayBackend={hayBackend}
+            />
+          </section>
+        )}
+
         {vista === "horizonte" && (
           <section className="tarjeta vidrio">
             <VistaHorizonte sitio={sitio} i={iAhora} />
@@ -396,7 +417,7 @@ export default function App() {
         setHoraMision={setHoraMision}
       />
 
-      <p className="creditos">Relieve LOLA 80 m (al sur de 80° S) · efemérides JPL DE421 · imagen NASA SVS/LROC · <a href="?clasico">versión anterior</a></p>
+      <p className="creditos">Relieve LOLA 80 m (al sur de 80° S) · mapa en estereográfica polar · efemérides JPL DE421 · imagen NASA SVS/LROC · <a href="?clasico">versión anterior</a></p>
     </div>
   );
 }
