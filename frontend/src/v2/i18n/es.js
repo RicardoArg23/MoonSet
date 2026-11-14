@@ -87,6 +87,19 @@ export default {
     quitarPunto: "Quitar este punto de mis puntos",
   },
 
+  nasa: {
+    titulo: "Ver en herramientas de NASA",
+    horizons: "Tabla de JPL Horizons (texto)",
+    horizonsAyuda: "Azimut y elevación aparentes desde este sitio, cada hora de la misión, en grados. Es la salida oficial de Horizons: una tabla de texto, no una app.",
+    cuerpo: "Cuerpo en Horizons",
+    sol: "Sol",
+    tierra: "Tierra",
+    mapaAyuda: "Se abre centrado en el sitio, en vista geográfica",
+    buscar: "La vista polar todavía no está enlazada. En el buscador de QuickMap:",
+    copiar: "Copiar",
+    copiado: "Copiado",
+  },
+
   sistema: {
     botonAyuda: "Paneles y batería de la misión",
     perfil: "Perfil",
