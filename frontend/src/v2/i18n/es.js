@@ -90,6 +90,18 @@ export default {
     quitarPunto: "Quitar este punto de mis puntos",
   },
 
+  nasa: {
+    titulo: "Ver en herramientas de NASA",
+    horizonsAyuda: "Efemérides de JPL Horizons desde este sitio, cada hora de la misión (se abre como texto)",
+    cuerpo: "Cuerpo en Horizons",
+    sol: "Sol",
+    tierra: "Tierra",
+    mapaAyuda: "Se abre centrado en el sitio, en vista geográfica",
+    buscar: "La vista polar todavía no está enlazada. En el buscador de QuickMap:",
+    copiar: "Copiar",
+    copiado: "Copiado",
+  },
+
   globo: {
     pistaBackend: "Arrastrá para girar. Tocá la Luna para probar un punto.",
     pistaSinBackend: "Arrastrá para girar. Los puntos amarillos sirven en la fecha elegida; los grises, no.",

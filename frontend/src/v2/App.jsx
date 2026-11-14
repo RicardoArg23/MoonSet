@@ -7,10 +7,12 @@ import Dock from "./Dock";
 import VistaHorizonte from "./VistaHorizonte";
 import Vecindad from "./Vecindad";
 import MapaPolar from "./MapaPolar";
+import EnlacesNasa from "./EnlacesNasa";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
 const DIA_MS = 86_400_000;
+const HORA_MS = 3_600_000;
 const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
 const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"]; // sus nombres están en i18n: vistas.<id>
@@ -328,6 +330,8 @@ function Cabina() {
             </>
           )}
         </div>
+
+        <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} />
 
         <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
           {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}

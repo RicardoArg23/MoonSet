@@ -19,6 +19,10 @@ en el cielo, los compara con el relieve del horizonte y responde:
 Tiene dos modos: **Explorador** (simple, para el público y docentes) y **Planificador**
 (números exactos, para equipos de misión).
 
+Desde el panel del sitio, "Ver en herramientas de NASA" abre JPL Horizons (Sol o Tierra, cada hora de la misión,
+con los mismos parámetros que `backend/scripts/validar_horizons.py`), NASA Moon Trek y LROC QuickMap. Los enlaces se
+arman en `frontend/src/v2/enlaces.js`.
+
 ## Arquitectura
 
 ```

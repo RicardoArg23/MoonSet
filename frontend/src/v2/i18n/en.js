@@ -100,6 +100,18 @@ export default {
     quitarPunto: "Remove this point from my points",
   },
 
+  nasa: {
+    titulo: "View in NASA tools",
+    horizonsAyuda: "JPL Horizons ephemeris from this site, every hour of the mission (opens as text)",
+    cuerpo: "Body in Horizons",
+    sol: "Sun",
+    tierra: "Earth",
+    mapaAyuda: "Opens centered on the site, in the geographic view",
+    buscar: "The polar view isn't linked yet. In QuickMap's search box:",
+    copiar: "Copy",
+    copiado: "Copied",
+  },
+
   globo: {
     pistaBackend: "Drag to rotate. Tap the Moon to try a point.",
     pistaSinBackend: "Drag to rotate. Yellow points work on the chosen date; grey ones don't.",
