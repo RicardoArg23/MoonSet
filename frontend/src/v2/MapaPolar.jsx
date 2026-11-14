@@ -171,7 +171,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
     }
     const [mx, my] = aMundo(e);
     const p = invertir(mx, my);
-    if (p.lat <= latLimite) onPunto(p);
+    if (p.lat <= latLimite) onPunto?.(p);
   }
 
   function verTodo() {

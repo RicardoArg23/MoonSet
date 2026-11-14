@@ -48,11 +48,29 @@ a { color: var(--texto-2); }
 .barra { z-index: 3; }
 
 /* ---------- barra superior ---------- */
-.barra { grid-area: barra; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; pointer-events: none; }
+.barra { grid-area: barra; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; pointer-events: none; }
 .barra > * { pointer-events: auto; }
-.marca { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 20px; border-radius: 999px; font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
-.marca i { width: 12px; height: 12px; border-radius: 50%; background: var(--acento); }
-.vistas { display: flex; padding: 4px; border-radius: 999px; }
+.marca { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 12px; border-radius: 999px; font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.barra .marca { color: inherit; }
+.marca img { display: block; height: 36px; width: auto; }
+.menu-capa { position: fixed; inset: 0; z-index: 10; }
+.menu-fondo { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: rgba(0, 0, 0, 0.58); animation: menu-aparecer 0.2s ease-out both; }
+.menu-lateral { position: absolute; inset: 0 auto 0 0; width: min(380px, 88vw); border-radius: 0 24px 24px 0; padding: 20px; overflow-y: auto; animation: menu-deslizar 0.28s var(--salida) both; }
+.menu-cerrar { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; font-size: 24px; line-height: 1; z-index: 1; }
+.menu-contenido { display: grid; gap: 24px; }
+.menu-cabeza { display: flex; align-items: center; gap: 10px; padding-right: 52px; }
+.menu-cabeza .idioma { border: 1px solid var(--borde); background: var(--relleno); }
+.menu-contenido > h2 { font-size: 24px; font-weight: 500; }
+.menu-grupo { display: grid; gap: 8px; }
+.menu-grupo h3 { margin: 0 0 4px; color: var(--tenue); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; }
+.menu-opcion { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 0 14px; border: 1px solid var(--borde); border-radius: 14px; background: var(--relleno); color: var(--texto-2); cursor: pointer; }
+.menu-opcion input { width: 18px; height: 18px; margin: 0; accent-color: var(--acento); cursor: pointer; }
+.menu-opcion input:disabled { cursor: not-allowed; }
+.menu-inicio { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px 0 12px; border: 1px solid var(--borde-fuerte); border-radius: 999px; font-size: 14px; color: var(--texto); text-decoration: none; }
+.menu-inicio:hover { border-color: rgba(255, 255, 255, 0.5); }
+@keyframes menu-aparecer { from { opacity: 0; } to { opacity: 1; } }
+@keyframes menu-deslizar { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.vistas { display: flex; padding: 4px; border-radius: 999px; margin-left: auto; }
 .vistas button { min-height: 40px; padding: 0 18px; border: 0; font-size: 14px; }
 .vistas button[aria-pressed="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
 .parametros { display: flex; align-items: center; gap: 18px; height: 48px; padding: 0 18px; border-radius: 999px; font-size: 14px; color: var(--texto-2); }
@@ -75,7 +93,17 @@ a { color: var(--texto-2); }
 .puntos-form button { min-height: 38px; flex-shrink: 0; }
 
 /* ---------- panel: cada bloque tiene alto fijo, así nada salta al mover la fecha ---------- */
-.panel { grid-area: panel; border-radius: 24px; padding: 22px 26px; display: flex; flex-direction: column; overflow: hidden auto; }
+.panel { grid-area: panel; border-radius: 24px; padding: 22px 26px; display: flex; flex-direction: column; overflow: hidden auto; animation: panel-entra 0.45s var(--salida) both; }
+/* Si el contenido no entra (ventana baja, grupos desplegados), la barra de desplazamiento es fina y del color del vidrio. */
+.panel, .menu-lateral { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+.panel::-webkit-scrollbar, .menu-lateral::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-track, .menu-lateral::-webkit-scrollbar-track { background: transparent; margin-block: 22px; }
+.panel::-webkit-scrollbar-thumb, .menu-lateral::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 999px; }
+@keyframes panel-entra { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
+/* Perfil explorar: sin panel y sin línea de tiempo, la Luna ocupa toda la cabina. */
+.cabina.sin-panel { grid-template-areas: "barra barra" "centro centro" "dock dock"; }
+.cabina.sin-panel .escena { left: 0; }
+.cabina.sin-dock .escena { bottom: 0; }
 .panel-sitio { flex: 0 0 62px; }
 .panel-sitio select { width: 100%; height: 34px; padding: 0; background: transparent; border: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color-scheme: dark; cursor: pointer; text-overflow: ellipsis; }
 .panel-sitio p { font-size: 13px; }
@@ -107,7 +135,9 @@ a { color: var(--texto-2); }
 .dupla { display: flex; gap: 8px; margin-top: 4px; }
 .dupla button { flex: 1; min-height: 46px; font-size: 15px; }
 .exportar { flex-shrink: 0; min-height: 40px; margin-top: 8px; font-size: 14px; }
-.nasa { flex: 0 0 auto; padding-top: 12px; display: grid; gap: 8px; }
+.nasa { flex: 0 0 auto; margin-top: 10px; font-size: 13px; }
+.nasa summary { cursor: pointer; color: var(--texto-2); }
+.nasa[open] { display: grid; gap: 8px; }
 .nasa-botones { display: flex; flex-wrap: wrap; gap: 8px; }
 .boton { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: 999px; font-size: 13px; color: var(--texto); text-decoration: none; }
 .boton:hover { border-color: rgba(255, 255, 255, 0.5); }
@@ -118,6 +148,9 @@ a { color: var(--texto-2); }
 .nasa-coordenadas code { font-size: 12px; color: var(--texto-2); }
 .nasa-coordenadas button { min-height: 26px; padding: 0 10px; font-size: 12px; }
 .fijar { margin-top: auto; flex-shrink: 0; min-height: 50px; font-size: 16px; }
+.panel-pie { margin-top: auto; flex-shrink: 0; display: flex; gap: 8px; padding-top: 8px; }
+.panel-pie .fijar { margin-top: 0; flex: 1.4 1 0; font-size: 15px; }
+.panel-pie .exportar { margin-top: 0; flex: 1 1 0; min-height: 0; padding: 0 10px; font-size: 13px; line-height: 1.2; }
 .quitar-punto { margin-top: 8px; flex-shrink: 0; min-height: 36px; font-size: 13px; color: var(--texto-2); border-color: var(--borde); }
 
 /* ---------- centro ---------- */
@@ -299,12 +332,14 @@ a { color: var(--texto-2); }
 }
 @media (max-height: 800px) and (min-width: 981px) {
   .cabina { padding-top: 12px; gap: 10px 16px; }
-  .panel { padding: 16px 24px; }
-  .panel-veredicto { flex-basis: 104px; padding-top: 4px; }
+  .panel { padding: 12px 24px; }
+  .panel-veredicto { flex-basis: 92px; padding-top: 4px; }
+  .fijar { min-height: 44px; }
+  .panel-pie { padding-top: 2px; }
   .panel-veredicto h1 { font-size: 46px; }
-  .panel-cifras { flex-basis: 78px; }
+  .panel-cifras { flex-basis: 68px; }
   .panel-cifras dd { font-size: 26px; }
-  .panel-opciones { flex-basis: 158px; padding-top: 10px; }
+  .panel-opciones { flex-basis: 150px; padding-top: 10px; }
   .opcion { height: 56px; }
   .dock { height: 136px; }
   .escena { bottom: 136px; }

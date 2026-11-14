@@ -22,8 +22,45 @@ export default {
     errorAyuda: "Corré backend/scripts/precalcular_anual.py y reiniciá el servidor del frontend.",
     cargando: "Cargando efemérides y relieve…",
     idioma: "Idioma",
-    creditos: "Relieve LOLA 80 m (al sur de 80° S) · mapa en estereográfica polar · efemérides JPL DE421 · imágenes LROC WAC y NAC vía NASA Moon Trek · ",
-    versionAnterior: "versión anterior",
+    abrirMenu: "Abrir menú de MoonSet",
+    cerrarMenu: "Cerrar menú",
+    menu: "Menú de MoonSet",
+    creditos: "Relieve LOLA 80 m (al sur de 80° S) · mapa en estereográfica polar · efemérides JPL DE421 · imágenes LROC WAC y NAC vía NASA Moon Trek",
+  },
+
+  menu: {
+    ajustes: "Personalizar interfaz",
+    vistas: "Vistas",
+    herramientas: "Herramientas",
+    parametros: "Parámetros de misión y batería",
+    puntos: "Mis puntos",
+    lineaTiempo: "Línea de tiempo",
+    inicio: "Volver al inicio",
+  },
+
+  // Pantalla de inicio (src/v2/inicio)
+  inicio: {
+    titular: "Elegí dónde y cuándo alunizar.",
+    bajada: "MoonSet te muestra cuándo se ponen el Sol y la Tierra en cualquier punto de la Luna. Así sabés cuánta luz vas a tener para generar energía y cuándo podés comunicarte con casa.",
+    pregunta: "¿Cómo querés entrar?",
+    explorarT: "Explorar la Luna",
+    explorarD: "Para curiosos. Lo esencial, sin tecnicismos.",
+    planificarT: "Planificar una misión",
+    planificarD: "Para equipos técnicos y científicos. Todas las vistas, números y fuentes.",
+    irSol: "Ir al Sol",
+    irTierra: "Ir a la Tierra",
+    polo: "Polo sur",
+    sol: "Sol",
+    tierra: "Tierra",
+    lSol: "Sol en el horizonte",
+    lTierra: "Tierra en el horizonte",
+    lSitios: "Sitios de alunizaje",
+    aria: "La Luna vista desde el espacio, con el Sol y la Tierra a lo lejos. Arrastrá, usá la rueda o las flechas del teclado para girar la vista.",
+    ocultar: "Ocultar la interfaz",
+    mostrar: "Mostrar la interfaz",
+    creditos1: "NASA Space Apps Challenge 2026 · Lunar Landing Site Navigator",
+    creditos2: "Luna: LROC WAC (NASA/GSFC/ASU) · Tierra: Blue Marble (NASA)",
+    creditos3: "Posición del Sol ilustrativa · Sol y Tierra no están a escala · la luz sobre la Luna es fija",
   },
 
   vistas: {
@@ -172,6 +209,7 @@ export default {
   },
 
   globo: {
+    pistaExplorar: "Arrastrá para girar. Tocá un sitio marcado para ver cuánta luz y cuánto contacto con la Tierra tiene.",
     pistaBackend: "Arrastrá para girar. Tocá la Luna para probar un punto.",
     pistaSinBackend: "Arrastrá para girar. Los puntos amarillos sirven en la fecha elegida; los grises, no.",
     aLaTierra: "a la Tierra",
