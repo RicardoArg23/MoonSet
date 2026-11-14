@@ -14,7 +14,7 @@ const SISTEMA = {
   orientacion: "seguidor",
   reservaPct: 20,
   redundanciaPct: 0,
-  potenciaNominalKW: 1,
+  tasaC: 1,
   calefaccionKW: 0,
 };
 
@@ -68,6 +68,16 @@ test("la cantidad mínima de paneles sobrevive y uno menos no", () => {
   assert.ok(p > 1);
   assert.equal(simular({ ...sistema, paneles: p }, e).sobrevive, true);
   assert.equal(simular({ ...sistema, paneles: p - 1 }, e).sobrevive, false);
+});
+
+test("superar la potencia nominal (capacidad x tasa C) es solo un aviso", () => {
+  // 10 kWh x 0,02 C = 0,2 kW de nominal; de noche la batería entrega 0,25 kW.
+  const sistema = { ...SISTEMA, tasaC: 0.02, calefaccionKW: 0.2 };
+  const r = simular(sistema, entrada(24, 10, 1));
+  assert.equal(r.avisos.potenciaNominalKW, 0.2);
+  assert.equal(r.avisos.potenciaNominal, true);
+  assert.equal(r.sobrevive, true);
+  assert.equal(simular(SISTEMA, entrada(24, 10, 1)).avisos.potenciaNominal, false);
 });
 
 test("si la noche es más larga que lo que aguanta la batería, ningún panel alcanza", () => {

@@ -159,8 +159,8 @@ function Cabina() {
     const p = PERFILES.find((x) => x.id === id);
     if (p) setSistema(p.valores);
   }
-  function cambiarSistema(clave, valor) {
-    setSistema((s) => ({ ...s, [clave]: valor }));
+  function cambiarSistema(cambios) {
+    setSistema((s) => ({ ...s, ...cambios }));
     setPerfilId(PERFIL_PERSONALIZADO);
   }
   const deCerca = detalle.metrosPorPixel < 1000; // el globo está acercado: el botón ofrece volver a la Luna entera
@@ -326,7 +326,7 @@ function Cabina() {
 
         {hayAvisos && (
           <ul className="avisos">
-            {av.potenciaNominal && <li>{t("energia.avisoNominal", { max: num(av.maxDescargaKW, 2), nominal: num(sistema.potenciaNominalKW, 2) })}</li>}
+            {av.potenciaNominal && <li>{t("energia.avisoNominal", { max: num(av.maxDescargaKW, 2), nominal: num(av.potenciaNominalKW, 2) })}</li>}
             {av.ciclos && <li>{t("energia.avisoCiclos", { usados: num(e.ciclos, 1), vida: num(av.vidaCiclos) })}</li>}
             {av.nochesSinCalefaccion && <li>{t("energia.avisoCalefaccion")}</li>}
           </ul>

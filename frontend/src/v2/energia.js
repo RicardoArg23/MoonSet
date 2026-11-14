@@ -15,10 +15,10 @@
 // - La eficiencia de la batería es de ida y vuelta: su raíz cuadrada se aplica al cargar y al descargar.
 // - Los ciclos son equivalentes: energía descargada / capacidad usable.
 // - Hay consumo "de noche" (mínima + calefacción) en toda hora sin luz, aunque sea una sombra corta.
-// - El aviso de potencia nominal compara la potencia que entrega la batería en una hora contra la nominal;
-//   si la nominal no está definida (null) no se avisa.
+// - La potencia nominal es capacidad total x tasa C. Superarla es solo un aviso: no hace fallar la
+//   misión. Se compara contra la potencia que entrega la batería en cada hora.
 import { alturaHorizonte, fraccionDisco, RADIO_SOL_DEG } from "./calculo.js";
-import { CONSTANTE_SOLAR_KW_M2, parametrosBateria } from "./configEnergia.js";
+import { CONSTANTE_SOLAR_KW_M2, parametrosBateria, potenciaNominalKW } from "./configEnergia.js";
 
 const HORAS_POR_MES = 730;
 export const TOLERANCIA_KWH = 0.01; // precisión de la búsqueda de capacidad mínima
@@ -65,7 +65,7 @@ export function entradaHorizonte(sitio, horizonte, desde, hasta, orientacion) {
  * Simula la batería hora por hora entre los índices [desde, hasta) de la entrada.
  *
  * sistema: { tipoBateria, capacidadKWh, paneles, areaPanelM2, potenciaNormalKW, potenciaMinimaKW,
- *            eficienciaPanelPct, reservaPct, redundanciaPct, potenciaNominalKW, calefaccionKW,
+ *            eficienciaPanelPct, reservaPct, redundanciaPct, tasaC, calefaccionKW,
  *            bateria? } — `bateria` reemplaza los valores por defecto del tipo (configEnergia.js).
  * opciones.serie: guardar el estado de carga de cada hora (para la curva).
  * opciones.cortar: dejar de simular en la primera falla (para búsquedas y franjas de fechas).
@@ -140,6 +140,7 @@ export function simular(sistema, entrada, desde = 0, hasta = entrada.luz.length,
   }
 
   const ciclos = usable > 0 ? descargada / usable : 0;
+  const nominal = potenciaNominalKW(sistema);
   return {
     sobrevive: falla === null,
     horaFalla: falla, // horas desde el inicio de la misión
@@ -159,7 +160,8 @@ export function simular(sistema, entrada, desde = 0, hasta = entrada.luz.length,
     autonomiaH: consumoNoche > 0 ? usable / consumoNoche : Infinity,
     ciclos,
     avisos: {
-      potenciaNominal: sistema.potenciaNominalKW != null && maxDescargaKW > sistema.potenciaNominalKW,
+      potenciaNominal: maxDescargaKW > nominal,
+      potenciaNominalKW: nominal,
       maxDescargaKW,
       ciclos: ciclos > b.ciclos,
       vidaCiclos: b.ciclos,

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { BATERIAS, CONSTANTE_SOLAR_KW_M2, PERFIL_PERSONALIZADO, PERFILES } from "./configEnergia";
+import { BATERIAS, CONSTANTE_SOLAR_KW_M2, PERFIL_PERSONALIZADO, PERFILES, potenciaNominalKW } from "./configEnergia";
 import { useIdioma } from "./i18n";
 
 // Campo numérico con su unidad. Guarda el texto tal como se escribe ("0," o vacío) y solo avisa
 // cuando hay un número válido; si el valor cambia desde afuera (otro perfil), se actualiza.
-function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max, entero = false, nulo = false }) {
-  const { t } = useIdioma();
+function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max, entero = false }) {
   const comoTexto = (v) => (v == null ? "" : String(v));
   const [texto, setTexto] = useState(comoTexto(valor));
   useEffect(() => {
@@ -16,10 +15,7 @@ function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max,
 
   function cambiar(s) {
     setTexto(s);
-    if (s === "") {
-      if (nulo) alCambiar(null);
-      return;
-    }
+    if (s === "") return;
     const x = entero ? Math.round(Number(s)) : Number(s);
     if (Number.isFinite(x) && x >= min && (max === undefined || x <= max)) alCambiar(x);
   }
@@ -35,7 +31,6 @@ function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max,
           min={min}
           max={max}
           value={texto}
-          placeholder={nulo ? t("sistema.sinLimite") : undefined}
           onChange={(e) => cambiar(e.target.value)}
         />
         <small>{unidad}</small>
@@ -56,6 +51,7 @@ function Ficha({ tipo }) {
       <div><dt>{t("sistema.ficha.temperatura")}</dt><dd>{t("sistema.ficha.temperaturaValor", { min: f.conSigno(b.temperaturaC.min, 0), max: num(b.temperaturaC.max) })}</dd></div>
       <div><dt>{t("sistema.ficha.autodescarga")}</dt><dd>{num(b.autodescargaMensualPct.defecto, 1)} %/{t("sistema.ficha.mes")} <small>{rango(b.autodescargaMensualPct)}</small></dd></div>
       <div><dt>{t("sistema.ficha.eficiencia")}</dt><dd>{num(b.eficienciaPct.defecto)} % <small>{rango(b.eficienciaPct)}</small></dd></div>
+      <div><dt>{t("sistema.ficha.tasaC")}</dt><dd>{num(b.tasaC.defecto, 1)} C {b.tasaC.ejemplo && <small>{t("sistema.ficha.ejemplo")}</small>}</dd></div>
       <p className="tenue">{t("sistema.ficha.nota")}</p>
     </dl>
   );
@@ -73,7 +69,8 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar }
   const cap = sistema.capacidadKWh;
   const resumen = `${nombrePerfil} · ${BATERIAS[sistema.tipoBateria].nombre} · ${num(cap, cap < 10 && cap % 1 ? 1 : 0)} kWh`;
   const picoKW = CONSTANTE_SOLAR_KW_M2 * sistema.areaPanelM2 * sistema.paneles * (sistema.eficienciaPanelPct / 100);
-  const campo = (clave) => ({ valor: sistema[clave], alCambiar: (v) => alCambiar(clave, v) });
+  const nominalKW = potenciaNominalKW(sistema);
+  const campo = (clave) => ({ valor: sistema[clave], alCambiar: (v) => alCambiar({ [clave]: v }) });
 
   return (
     <div className="sistema">
@@ -97,7 +94,7 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar }
             <span className="rotulo">{t("sistema.bateria")}</span>
             <div className="segmentos" role="group" aria-label={t("sistema.bateria")}>
               {Object.entries(BATERIAS).map(([id, b]) => (
-                <button key={id} type="button" aria-pressed={sistema.tipoBateria === id} onClick={() => alCambiar("tipoBateria", id)}>{b.nombre}</button>
+                <button key={id} type="button" aria-pressed={sistema.tipoBateria === id} onClick={() => alCambiar({ tipoBateria: id, tasaC: BATERIAS[id].tasaC.defecto })}>{b.nombre}</button>
               ))}
             </div>
             <button type="button" className="enlace" aria-expanded={verFicha} onClick={() => setVerFicha((v) => !v)}>ⓘ {t("sistema.verFicha")}</button>
@@ -119,14 +116,15 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar }
               <Campo etiqueta={t("sistema.eficienciaPanel")} unidad="%" max={100} {...campo("eficienciaPanelPct")} />
               <label className="campo">
                 <span>{t("sistema.orientacion")}</span>
-                <select value={sistema.orientacion} onChange={(e) => alCambiar("orientacion", e.target.value)}>
+                <select value={sistema.orientacion} onChange={(e) => alCambiar({ orientacion: e.target.value })}>
                   <option value="seguidor">{t("sistema.seguidor")}</option>
                   <option value="horizontal">{t("sistema.horizontal")}</option>
                 </select>
               </label>
               <Campo etiqueta={t("sistema.reserva")} unidad="%" max={100} {...campo("reservaPct")} />
               <Campo etiqueta={t("sistema.redundancia")} unidad="%" {...campo("redundanciaPct")} />
-              <Campo etiqueta={t("sistema.potenciaNominal")} unidad="kW" paso="0.1" nulo {...campo("potenciaNominalKW")} />
+              <Campo etiqueta={t("sistema.tasaC")} unidad="C" paso="0.1" {...campo("tasaC")} />
+              <p className="campo-dato"><span>{t("sistema.potenciaNominal")}</span><b>{num(nominalKW, nominalKW < 10 ? 2 : 0)} kW</b></p>
               <Campo etiqueta={t("sistema.calefaccion")} unidad="kW" paso="0.01" {...campo("calefaccionKW")} />
             </div>
             <p className="tenue nota-chica">{t("sistema.calefaccionNota")}</p>
