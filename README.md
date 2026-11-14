@@ -19,6 +19,11 @@ en el cielo, los compara con el relieve del horizonte y responde:
 Tiene dos modos: **Explorador** (simple, para el público y docentes) y **Planificador**
 (números exactos, para equipos de misión).
 
+"Exportar misión (CSV)", en el panel del sitio, descarga la misión elegida con una fila por hora (Sol, Tierra, luz,
+contacto, energía y batería, fechas en UTC) y los datos del sistema arriba. "Exportar comparación (CSV)", en la vista
+Comparar, descarga una fila por escenario fijado. Con la interfaz en castellano el separador es ";" y la coma decimal
+(Excel en castellano lo abre con doble clic); en inglés, "," y punto decimal. Los nombres de columna no cambian. Se arma
+en `frontend/src/v2/exportar.js`.
 Desde el panel del sitio, "Ver en herramientas de NASA" abre JPL Horizons (Sol o Tierra, cada hora de la misión,
 con los mismos parámetros que `backend/scripts/validar_horizons.py`), NASA Moon Trek y LROC QuickMap. Los enlaces se
 arman en `frontend/src/v2/enlaces.js`.

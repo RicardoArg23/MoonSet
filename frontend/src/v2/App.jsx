@@ -10,6 +10,7 @@ import VistaHorizonte from "./VistaHorizonte";
 import Vecindad from "./Vecindad";
 import MapaPolar from "./MapaPolar";
 import Sistema from "./Sistema";
+import { csvComparacion, csvMision, nombreArchivo, nombreComparacion } from "./exportar";
 import EnlacesNasa from "./EnlacesNasa";
 import "./estilos.css";
 
@@ -223,6 +224,24 @@ function Cabina() {
     setFijados((x) => x.filter((f) => !ids.has(f.sitioId)));
     if (ids.has(sitioId)) setSitioId(SITIO_INICIAL);
   }
+  // Descargas CSV (exportar.js): separadores según el idioma de la interfaz. La marca BOM hace que
+  // Excel lea bien los acentos de los metadatos.
+  const perfilActual = () => PERFILES.find((p) => p.id === perfilId) ?? { id: perfilId };
+  function exportarCsv() {
+    descargar(csvMision({ sitio, sistema, perfil: perfilActual(), i0, duracionH, idioma }), nombreArchivo(sitio, i0, duracionH));
+  }
+  function exportarComparacion() {
+    const escenarios = fijadosVista.map(({ s, f0 }) => ({ sitio: s, i0: f0 }));
+    descargar(csvComparacion({ escenarios, sistema, perfil: perfilActual(), duracionH, idioma }), nombreComparacion(escenarios.length, duracionH));
+  }
+  function descargar(csv, nombre) {
+    const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   function fijar() {
     if (esPrueba) guardarPrueba(); // un escenario fijado necesita que su punto exista
     setFijados((x) => [...x, { sitioId: sitio.sitio.id, dia, horaLlegada }]);
@@ -398,6 +417,7 @@ function Cabina() {
         <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
           {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
         </button>
+        <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>
         {esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
       </aside>
 
@@ -490,6 +510,11 @@ function Cabina() {
                     </button>
                   </article>
                 ))}
+              </div>
+            )}
+            {fijadosVista.length > 0 && (
+              <div className="comparar-pie">
+                <button type="button" className="exportar" onClick={exportarComparacion} title={t("comparar.exportarAyuda")}>{t("comparar.exportar")}</button>
               </div>
             )}
           </section>
