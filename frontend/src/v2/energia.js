@@ -81,6 +81,8 @@ export function simular(sistema, entrada, desde = 0, hasta = entrada.luz.length,
   const { luz, sol } = entrada;
   const n = Math.max(0, hasta - desde);
   const soc = serie ? new Float32Array(n) : null;
+  const generacionKW = serie ? new Float32Array(n) : null;
+  const consumoKW = serie ? new Float32Array(n) : null;
 
   let e = usable; // arranca llena
   let minimo = usable;
@@ -136,7 +138,11 @@ export function simular(sistema, entrada, desde = 0, hasta = entrada.luz.length,
       if (falla === null) falla = k;
       if (cortar) break;
     }
-    if (soc) soc[k] = usable > 0 ? e / usable : 0;
+    if (soc) {
+      soc[k] = usable > 0 ? e / usable : 0;
+      generacionKW[k] = gen;
+      consumoKW[k] = cons;
+    }
   }
 
   const ciclos = usable > 0 ? descargada / usable : 0;
@@ -150,6 +156,8 @@ export function simular(sistema, entrada, desde = 0, hasta = entrada.luz.length,
     minimoPct: usable > 0 ? (100 * minimo) / usable : 0,
     horaMinimo,
     soc, // estado de carga por hora, 0 a 1 de la capacidad usable
+    generacionKW, // potencia de los paneles en cada hora (con `serie`)
+    consumoKW, // consumo en cada hora (con `serie`)
     generadaKWh: generada,
     consumidaKWh: consumida,
     desperdiciadaKWh: desperdiciada,

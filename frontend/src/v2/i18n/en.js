@@ -92,6 +92,8 @@ export default {
     yaEnComparar: "Already in Compare",
     maximo: "Maximum of {n} scenarios",
     fijar: "Pin to compare",
+    exportar: "Export mission (CSV)",
+    exportarAyuda: "One row per hour: Sun, Earth, sunlight, contact, energy and battery. Times in UTC; comma-separated with a decimal point.",
     quitarPunto: "Remove this point from my points",
   },
 
@@ -185,6 +187,8 @@ export default {
     visible: "visible",
     oculto: "hidden",
     ver: "View this scenario",
+    exportar: "Export comparison (CSV)",
+    exportarAyuda: "One row per pinned scenario, all with the same power system. Times in UTC.",
   },
 
   dock: {

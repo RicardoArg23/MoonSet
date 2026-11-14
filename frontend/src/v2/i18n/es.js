@@ -82,6 +82,8 @@ export default {
     yaEnComparar: "Ya está en Comparar",
     maximo: "Máximo de {n} escenarios",
     fijar: "Fijar para comparar",
+    exportar: "Exportar misión (CSV)",
+    exportarAyuda: "Una fila por hora: Sol, Tierra, luz, contacto, energía y batería. Fechas en UTC; separador \";\" y coma decimal.",
     quitarPunto: "Quitar este punto de mis puntos",
   },
 
@@ -175,6 +177,8 @@ export default {
     visible: "visible",
     oculto: "oculto",
     ver: "Ver este escenario",
+    exportar: "Exportar comparación (CSV)",
+    exportarAyuda: "Una fila por escenario fijado, con el mismo sistema de energía. Fechas en UTC.",
   },
 
   dock: {
