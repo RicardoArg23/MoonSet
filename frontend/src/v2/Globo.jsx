@@ -2,8 +2,19 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Line, OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
+import Teselas from "./globo/Teselas";
+import { CAPAS } from "./globo/teselas";
 
-const TEXTURA = `${import.meta.env.BASE_URL}texturas/luna_lroc_4k.jpg`;
+// Mismo mosaico LROC WAC que las teselas en línea (backend/scripts/generar_textura_luna.py).
+const TEXTURA = `${import.meta.env.BASE_URL}texturas/luna_wac_4k.jpg`;
+
+// Alturas de la cámara sobre la superficie, en radios lunares (1 radio = 1737,4 km).
+const ALTURA_LEJOS = 3.5; // la Luna entera en cuadro
+// Altura de "acercar al sitio": la que deja el píxel de pantalla cerca del píxel de la mejor imagen disponible.
+const ALTURA_CERCA_POLO = 0.012; // ~21 km, mosaico NAC del polo sur
+const ALTURA_CERCA_GLOBAL = 0.05; // ~87 km, mosaico WAC global (~83 m/px)
+const ALTURA_MIN = 0.004; // ~7 km: debajo de esto las teselas ya no dan más detalle
+const ALTURA_MAX = 5;
 
 /**
  * Coordenadas selenográficas → vector unitario de la escena.
@@ -44,17 +55,26 @@ function Luna({ onPunto }) {
   );
 }
 
-function Sol({ lat, lon }) {
-  const luz = useRef();
+// Una sola iluminación a cualquier distancia: luz pareja para que el mosaico se lea en toda la Luna,
+// más un refuerzo desde el Sol real que marca de qué lado es de día sin oscurecer la noche.
+const LUZ_PAREJA = 2.3;
+const LUZ_SOL = 1.1;
+function Luces({ lat, lon }) {
+  const sol = useRef();
   useEffect(() => {
-    latLonAVector(lat, lon, luz.current.position).multiplyScalar(20);
+    latLonAVector(lat, lon, sol.current.position).multiplyScalar(20);
   }, [lat, lon]);
-  return <directionalLight ref={luz} intensity={2.6} />;
+  return (
+    <>
+      <ambientLight intensity={LUZ_PAREJA} />
+      <directionalLight ref={sol} intensity={LUZ_SOL} />
+    </>
+  );
 }
 
 // Línea desde el sitio elegido hacia la Tierra. Solo se dibuja cuando hay contacto directo:
 // si el relieve o la propia Luna la tapan, no hay nada que señalar.
-function HaciaLaTierra({ sitio, lat, lon }) {
+function HaciaLaTierra({ sitio, lat, lon, rotulo }) {
   const { puntos, punta } = useMemo(() => {
     const origen = latLonAVector(sitio.lat, sitio.lon).multiplyScalar(1.004);
     const fin = latLonAVector(lat, lon).multiplyScalar(0.42).add(origen);
@@ -67,16 +87,23 @@ function HaciaLaTierra({ sitio, lat, lon }) {
         <sphereGeometry args={[0.02, 16, 12]} />
         <meshBasicMaterial color="#6faef0" />
       </mesh>
-      <Html className="globo-rotulo tierra" position={punta}>a la Tierra</Html>
+      <Html className="globo-rotulo tierra" position={punta}>{rotulo}</Html>
     </>
   );
 }
 
-function Marcador({ sitio, activo, viable, onElegir }) {
-  const posicion = useMemo(() => latLonAVector(sitio.lat, sitio.lon).multiplyScalar(1.004).toArray(), [sitio.lat, sitio.lon]);
+function Marcador({ sitio, nombre, activo, viable, onElegir }) {
+  const grupo = useRef();
+  const direccion = useMemo(() => latLonAVector(sitio.lat, sitio.lon), [sitio.lat, sitio.lon]);
   const color = activo ? "#ffffff" : viable ? "#ffb84a" : "#8b93a3";
+  // El marcador mantiene su tamaño en pantalla: se achica y baja a la superficie al acercarse.
+  useFrame(({ camera }) => {
+    const escala = THREE.MathUtils.clamp((camera.position.length() - 1) / 2.5, 0.0015, 1);
+    grupo.current.scale.setScalar(escala);
+    grupo.current.position.copy(direccion).multiplyScalar(1.0006 + 0.0034 * escala);
+  });
   return (
-    <group position={posicion}>
+    <group ref={grupo}>
       <mesh
         onClick={(e) => {
           e.stopPropagation();
@@ -89,47 +116,92 @@ function Marcador({ sitio, activo, viable, onElegir }) {
         <meshBasicMaterial color={color} />
       </mesh>
       {activo && (
-        <Html className="globo-rotulo activo" position={[0, 0, 0]}>{sitio.nombre.split(" — ")[0]}</Html>
+        <Html className="globo-rotulo activo" position={[0, 0, 0]}>{nombre}</Html>
       )}
     </group>
   );
 }
 
-// Lleva la cámara frente al sitio elegido. Solo anima mientras "vuela"; después manda el usuario.
-function Camara({ lat, lon, controles }) {
+// Los textos llegan por props (nombreActivo, rotuloTierra): el contexto de idioma no cruza el <Canvas>.
+
+// Lleva la cámara frente al sitio elegido, lejos o cerca según `enfoque`. Solo anima mientras "vuela";
+// si el usuario toca los controles, manda el usuario. También ajusta los planos de recorte y la
+// sensibilidad de los controles a la altura, para que girar y acercar se sientan igual a toda escala.
+function Camara({ lat, lon, enfoque, controles, volando }) {
   const { camera } = useThree();
-  const destino = useRef(new THREE.Vector3());
-  const volando = useRef(false);
+  const destino = useRef({ direccion: new THREE.Vector3(1, 0, 0), altura: ALTURA_LEJOS });
+  const actual = useRef(new THREE.Vector3());
+
   useEffect(() => {
-    // Un poco hacia el ecuador respecto del sitio, para que los polos no queden de canto.
-    latLonAVector(lat * 0.8, lon, destino.current).multiplyScalar(4.5);
+    const cerca = enfoque.modo === "cerca";
+    // De lejos, un poco hacia el ecuador respecto del sitio para que los polos no queden de canto.
+    latLonAVector(cerca ? lat : lat * 0.8, lon, destino.current.direccion);
+    const alturaCerca = lat < CAPAS.nac.latBorde - 0.5 ? ALTURA_CERCA_POLO : ALTURA_CERCA_GLOBAL;
+    destino.current.altura = cerca ? alturaCerca : ALTURA_LEJOS;
     volando.current = true;
-  }, [lat, lon]);
+  }, [lat, lon, enfoque, volando]);
+
   useFrame((_, dt) => {
-    if (!volando.current) return;
-    camera.position.lerp(destino.current, 1 - Math.exp(-4 * dt));
-    camera.lookAt(0, 0, 0);
-    controles.current?.update();
-    if (camera.position.distanceToSquared(destino.current) < 1e-5) volando.current = false;
+    const distancia = camera.position.length();
+    const altura = distancia - 1;
+
+    if (volando.current) {
+      const k = 1 - Math.exp(-3.2 * dt);
+      const d = destino.current;
+      // La dirección y la altura se interpolan por separado (la altura en escala logarítmica):
+      // así la cámara rodea la Luna en lugar de atravesarla y el acercamiento se ve parejo.
+      const nuevaAltura = altura * (d.altura / altura) ** k;
+      actual.current.copy(camera.position).divideScalar(distancia).lerp(d.direccion, k).normalize();
+      camera.position.copy(actual.current).multiplyScalar(1 + nuevaAltura);
+      camera.lookAt(0, 0, 0);
+      if (actual.current.angleTo(d.direccion) < 1e-4 && Math.abs(Math.log(nuevaAltura / d.altura)) < 0.01) volando.current = false;
+    }
+
+    const cerca = Math.max(1e-4, altura * 0.1);
+    if (Math.abs(camera.near - cerca) > cerca * 0.05) {
+      camera.near = cerca;
+      camera.far = distancia + 2;
+      camera.updateProjectionMatrix();
+    }
+    const c = controles.current;
+    if (c) {
+      c.rotateSpeed = Math.min(0.6, 0.15 * altura);
+      c.zoomSpeed = THREE.MathUtils.clamp((2 * altura) / distancia, 0.02, 0.6);
+      if (volando.current) c.update();
+    }
   });
   return null;
 }
 
-export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, onElegir, onPunto }) {
+/**
+ * @param {object} props
+ * @param {{ modo: "lejos"|"cerca", n: number }} props.enfoque a qué altura llevar la cámara; `n` cambia para repetir el vuelo
+ * @param {(d: { capa: string|null, metrosPorPixel: number }) => void} [props.onDetalle] qué imagen se ve bajo la cámara
+ */
+export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto }) {
   const controles = useRef();
+  const volando = useRef(false);
   const activo = sitios.find((s) => s.sitio.id === sitioId).sitio;
   return (
     <Canvas camera={{ position: [0.9, -4.3, 0.7], fov: 35, near: 0.05, far: 100 }} dpr={[1, 2]} gl={{ antialias: true }}>
       <color attach="background" args={["#000000"]} />
-      <ambientLight intensity={0.45} />
-      <Sol lat={sol.lat} lon={sol.lon} />
+      <Luces lat={sol.lat} lon={sol.lon} />
       <Luna onPunto={onPunto} />
-      {hayContacto && <HaciaLaTierra sitio={activo} lat={tierra.lat} lon={tierra.lon} />}
+      <Teselas onDetalle={onDetalle} volando={volando} />
+      {hayContacto && <HaciaLaTierra sitio={activo} lat={tierra.lat} lon={tierra.lon} rotulo={rotuloTierra} />}
       {sitios.map((s) => (
-        <Marcador key={s.sitio.id} sitio={s.sitio} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} />
+        <Marcador key={s.sitio.id} sitio={s.sitio} nombre={nombreActivo} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} />
       ))}
-      <Camara lat={activo.lat} lon={activo.lon} controles={controles} />
-      <OrbitControls ref={controles} enablePan={false} minDistance={1.25} maxDistance={6} rotateSpeed={0.6} zoomSpeed={0.6} />
+      <Camara lat={activo.lat} lon={activo.lon} enfoque={enfoque} controles={controles} volando={volando} />
+      <OrbitControls
+        ref={controles}
+        enablePan={false}
+        minDistance={1 + ALTURA_MIN}
+        maxDistance={1 + ALTURA_MAX}
+        rotateSpeed={0.6}
+        zoomSpeed={0.6}
+        onStart={() => { volando.current = false; }}
+      />
     </Canvas>
   );
 }

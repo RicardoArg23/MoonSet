@@ -58,6 +58,9 @@ a { color: var(--texto-2); }
 .parametros { display: flex; align-items: center; gap: 18px; height: 48px; padding: 0 18px; border-radius: 999px; font-size: 14px; color: var(--texto-2); }
 .parametros label { display: inline-flex; align-items: center; gap: 8px; }
 .parametros input { width: 58px; height: 32px; padding: 0 6px; text-align: center; font-weight: 600; color: var(--texto); background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color-scheme: dark; }
+.idioma { display: flex; padding: 4px; border-radius: 999px; }
+.idioma button { min-width: 40px; min-height: 40px; padding: 0 10px; border: 0; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; color: var(--texto-2); }
+.idioma button[aria-pressed="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
 .puntos { position: relative; }
 .puntos > button { height: 48px; padding: 0 18px; font-size: 14px; }
 .puntos > button[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
@@ -109,7 +112,10 @@ a { color: var(--texto-2); }
 /* ---------- centro ---------- */
 .centro { grid-area: centro; min-height: 0; display: flex; align-items: flex-end; pointer-events: none; }
 .centro > * { pointer-events: auto; }
-.pista-globo { max-width: 520px; padding: 10px 16px; border-radius: 16px; font-size: 13px; color: var(--texto-2); pointer-events: none; }
+.pista-globo { max-width: 620px; padding: 12px 16px; border-radius: 16px; font-size: 13px; color: var(--texto-2); pointer-events: none; display: grid; gap: 10px; }
+.pista-acciones { display: flex; align-items: center; gap: 14px; }
+.pista-acciones button { pointer-events: auto; flex: none; min-height: 36px; padding: 0 16px; font-size: 13px; color: var(--texto); }
+.pista-acciones span { color: var(--tenue); font-size: 12px; white-space: nowrap; }
 .tarjeta { width: 100%; height: 100%; border-radius: 24px; padding: 22px 24px; overflow: auto; }
 .tarjeta-vacia { height: 100%; display: grid; place-items: center; text-align: center; max-width: 52ch; margin: 0 auto; color: var(--texto-2); font-size: 16px; }
 
@@ -177,7 +183,7 @@ a { color: var(--texto-2); }
 .dock { grid-area: dock; height: 148px; border-radius: 24px; padding: 0 24px; display: grid; grid-template-columns: 196px minmax(0, 1fr) 188px; gap: 24px; align-items: center; }
 .fecha-grande { display: flex; align-items: baseline; font-size: 32px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.1; }
 .fecha-grande span { display: inline-block; min-width: 1.22em; text-align: center; }
-.fecha-grande span:last-child { min-width: 2.4em; }
+.fecha-grande span.fecha-anio { min-width: 2.4em; }
 .fecha-grande i { font-style: normal; color: var(--tenue); }
 .hora { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 14px; color: var(--texto-2); }
 .hora span { width: 84px; text-align: center; }

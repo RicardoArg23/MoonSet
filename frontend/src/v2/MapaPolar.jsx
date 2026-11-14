@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cargarMapa } from "./datos";
-import { evaluarVecindad, num } from "./calculo";
+import { evaluarVecindad } from "./calculo";
+import { rico, useIdioma } from "./i18n";
 
 // Mapa 2D del polo sur visto desde arriba.
 // Proyección estereográfica polar sur, la misma de backend/app/horizonte.py (_polar_sur_xy):
@@ -12,7 +13,6 @@ const PARALELOS = [-89, -88, -87, -86, -85, -84, -83, -82, -81];
 const MERIDIANOS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const ESCALAS_KM = [0.5, 1, 2, 5, 10, 20, 50, 100];
 const ANCHO_MIN_M = 3_000;
-const corto = (nombre) => nombre.split(" — ")[0];
 
 export function proyectar(lat, lon) {
   const r = 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
@@ -43,11 +43,9 @@ function radioDeLatitud(lat) {
   return 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
 }
 
-function latLonTexto({ lat, lon }) {
-  return `${num(Math.abs(lat), 2)}° ${lat < 0 ? "S" : "N"} · ${num(lon, 2)}° E`;
-}
-
 export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, autonomiaH, hayBackend }) {
+  const { t, f } = useIdioma();
+  const { num, nombreCorto } = f;
   const [meta, setMeta] = useState(undefined); // undefined = cargando, null = no hay imagen
   const [tam, setTam] = useState({ w: 0, h: 0 });
   const [vista, setVista] = useState(null); // { cx, cy, w } en metros
@@ -212,7 +210,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
         className="mapa-svg"
         viewBox={`${x0} ${y0} ${vista.w} ${altoVista}`}
         role="application"
-        aria-label="Mapa del polo sur lunar. Arrastrá para mover, rueda para acercar, tocá un punto para evaluarlo."
+        aria-label={t("mapa.aria")}
         onPointerDown={bajar}
         onPointerMove={mover}
         onPointerUp={soltar}
@@ -261,7 +259,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
                 stroke={c.viable ? "rgba(255,184,74,0.9)" : "rgba(255,156,138,0.55)"}
                 strokeWidth={px(1)}
               >
-                <title>{`luz ${num(c.luzPct)} % · noche más larga ${c.nocheH} h · terreno ${num(c.alturaM)} m${c.viable ? "" : " · no sirve"}`}</title>
+                <title>{t("mapa.celda", { luz: num(c.luzPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("mapa.noSirveSufijo"))}</title>
               </circle>
             ))}
           </g>
@@ -271,9 +269,9 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
           <g className="mapa-astros">
             <circle cx={solX} cy={solY} r={px(11)} fill="var(--acento)" />
             <circle cx={solX} cy={solY} r={px(20)} fill="var(--acento)" opacity="0.2" />
-            <text x={solX} y={solY + px(30)} textAnchor="middle" fontSize={px(12)}>Sol</text>
+            <text x={solX} y={solY + px(30)} textAnchor="middle" fontSize={px(12)}>{t("mapa.sol")}</text>
             <circle cx={tieX} cy={tieY} r={px(9)} fill="var(--tierra)" />
-            <text x={tieX} y={tieY + px(26)} textAnchor="middle" fontSize={px(12)}>Tierra</text>
+            <text x={tieX} y={tieY + px(26)} textAnchor="middle" fontSize={px(12)}>{t("mapa.tierra")}</text>
           </g>
         )}
 
@@ -289,14 +287,14 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
                 className={`mapa-sitio${elegido ? " elegido" : ""}`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${corto(s.sitio.nombre)}: ${sirve ? "sirve" : "no sirve"} en la fecha elegida`}
+                aria-label={t(sirve ? "mapa.sitioSirve" : "mapa.sitioNoSirve", { sitio: nombreCorto(s.sitio) })}
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onElegir(s.sitio.id)}
               >
                 {elegido && <circle cx={x} cy={y} r={px(13)} fill="none" stroke="#fff" strokeWidth={px(2)} />}
                 <circle cx={x} cy={y} r={px(elegido ? 8 : 6.5)} fill={sirve ? "var(--acento)" : "#8f8a82"} stroke="#000" strokeWidth={px(1.5)} />
                 {conEtiqueta.has(s.sitio.id) && (
                   <text x={x + px(16)} y={y + px(4)} fontSize={px(elegido ? 13 : 12)} fontWeight={elegido ? 600 : 400}>
-                    {corto(s.sitio.nombre)}
+                    {nombreCorto(s.sitio)}
                   </text>
                 )}
               </g>
@@ -309,34 +307,34 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
       </svg>
 
       <div className="mapa-controles">
-        <button type="button" className="vidrio" onClick={verTodo}>Todo el polo</button>
-        <button type="button" className="vidrio" onClick={irAlSitio} disabled={!esPolar}>Ir al sitio</button>
-        <button type="button" className="vidrio redondo" onClick={() => zoom(0.6)} aria-label="Acercar">+</button>
-        <button type="button" className="vidrio redondo" onClick={() => zoom(1 / 0.6)} aria-label="Alejar">−</button>
+        <button type="button" className="vidrio" onClick={verTodo}>{t("mapa.todoElPolo")}</button>
+        <button type="button" className="vidrio" onClick={irAlSitio} disabled={!esPolar}>{t("mapa.irAlSitio")}</button>
+        <button type="button" className="vidrio redondo" onClick={() => zoom(0.6)} aria-label={t("mapa.acercar")}>+</button>
+        <button type="button" className="vidrio redondo" onClick={() => zoom(1 / 0.6)} aria-label={t("mapa.alejar")}>−</button>
       </div>
 
       <Brujula sol={sol} tierra={tierra} />
 
       <div className="mapa-pie vidrio">
         {!esPolar ? (
-          <p><b>{corto(sitio.sitio.nombre)}</b> está fuera del mapa: este mapa cubre el polo sur, al sur de {Math.abs(latLimite)}° S. Miralo en el Globo.</p>
+          <p>{rico(t("mapa.fueraDelMapa", { sitio: nombreCorto(sitio.sitio), lat: Math.abs(latLimite) }))}</p>
         ) : (
           <p>
-            {hayBackend ? "Tocá el mapa para probar un punto. " : "Tocá un sitio para elegirlo. "}
-            {celdas ? (verCeldas ? "Cuadros: la misma misión a pocos cientos de metros (ámbar sirve, rojo no)." : "Acercate al sitio para ver sus alrededores.") : ""}
+            {hayBackend ? t("mapa.tocaMapa") : t("mapa.tocaSitio")}
+            {celdas ? (verCeldas ? t("mapa.cuadros") : t("mapa.acercate")) : ""}
           </p>
         )}
         <p className="tenue mapa-datos">
-          <span className="mapa-leyenda"><i style={{ background: "var(--acento)" }} />Sirve en la fecha elegida</span>
-          <span className="mapa-leyenda"><i style={{ background: "#8f8a82" }} />No sirve</span>
-          <span>{cursor ? latLonTexto(cursor) : " "}</span>
+          <span className="mapa-leyenda"><i style={{ background: "var(--acento)" }} />{t("mapa.leyendaSirve")}</span>
+          <span className="mapa-leyenda"><i style={{ background: "#8f8a82" }} />{t("mapa.leyendaNoSirve")}</span>
+          <span>{cursor ? f.coordenadas(cursor) : " "}</span>
         </p>
         <p className="tenue mapa-fuente">
           {meta === null
-            ? "Sin imagen de fondo: corré backend/scripts/generar_mapa_polo.py"
+            ? t("mapa.sinFondo")
             : fondoDem
-              ? "Fondo: relieve sombreado de LOLA a 80 m (luz cartográfica, no la iluminación real)"
-              : "Fondo: textura LROC de baja resolución. Con el DEM, generar_mapa_polo.py da el relieve real"}
+              ? t("mapa.fondoDem")
+              : t("mapa.fondoTextura")}
         </p>
       </div>
     </div>
@@ -345,11 +343,12 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
 
 // Hacia dónde están el Sol y la Tierra vistos desde el polo, con la misma orientación que el mapa
 function Brujula({ sol, tierra }) {
+  const { t, f } = useIdioma();
   const flecha = (lon, largo) => [Math.sin(lon * RAD) * largo, -Math.cos(lon * RAD) * largo];
   const [sx, sy] = flecha(sol.lon, 30);
   const [tx, ty] = flecha(tierra.lon, 30);
   return (
-    <div className="mapa-brujula vidrio" role="img" aria-label={`El Sol está hacia la longitud ${num(sol.lon)}° y la Tierra hacia ${num(tierra.lon)}°`}>
+    <div className="mapa-brujula vidrio" role="img" aria-label={t("mapa.brujulaAria", { sol: f.num(sol.lon), tierra: f.num(tierra.lon) })}>
       <svg viewBox="-44 -44 88 88" width="88" height="88">
         <circle r="36" fill="none" stroke="var(--borde-fuerte)" />
         <text y="-38" textAnchor="middle" fontSize="8" fill="var(--tenue)">0°</text>
@@ -359,7 +358,7 @@ function Brujula({ sol, tierra }) {
         <circle cx={sx} cy={sy} r="5.5" fill="var(--acento)" />
         <circle r="2" fill="var(--texto)" />
       </svg>
-      <p><span style={{ color: "var(--acento)" }}>Sol</span> y <span style={{ color: "var(--tierra)" }}>Tierra</span> vistos desde el polo</p>
+      <p><span style={{ color: "var(--acento)" }}>{t("mapa.sol")}</span>{t("mapa.brujulaY")}<span style={{ color: "var(--tierra)" }}>{t("mapa.tierra")}</span>{t("mapa.brujulaFin")}</p>
     </div>
   );
 }

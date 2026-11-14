@@ -1,3 +1,4 @@
+// Solo números: los textos y el formato para la pantalla están en formato.js e i18n/.
 // Métricas de misión calculadas en el navegador a partir de los datos anuales de un sitio
 // (data/anual/<id>.json: máscara de horizonte + elevación y azimut horarios del Sol y la Tierra).
 //
@@ -7,7 +8,6 @@
 
 export const RADIO_SOL_DEG = 0.267;
 const HORA_MS = 3_600_000;
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 export function alturaHorizonte(grados, az) {
   const a = ((az % 360) + 360) % 360;
@@ -183,39 +183,4 @@ export function tramos(serie, desde, hasta) {
     i = j;
   }
   return out;
-}
-
-// ---------- formato ----------
-
-export function fechaLarga(ms) {
-  const d = new Date(ms);
-  return `${d.getUTCDate()} de ${["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"][d.getUTCMonth()]}`;
-}
-
-export function fechaCorta(ms) {
-  const d = new Date(ms);
-  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]}`;
-}
-
-export function fechaHora(ms) {
-  const d = new Date(ms);
-  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()} · ${String(d.getUTCHours()).padStart(2, "0")}:00 UTC`;
-}
-
-export function num(x, decimales = 0) {
-  return x.toLocaleString("es-AR", { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
-}
-
-export function conSigno(x, decimales = 2) {
-  return (x < 0 ? "−" : "+") + num(Math.abs(x), decimales);
-}
-
-export function coordenadas(sitio) {
-  const lat = `${num(Math.abs(sitio.lat), 2)}° ${sitio.lat < 0 ? "S" : "N"}`;
-  const lon = ((sitio.lon % 360) + 360) % 360;
-  return `${lat} · ${num(lon, 2)}° E`;
-}
-
-export function cardinal(az) {
-  return ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(az / 45) % 8];
 }

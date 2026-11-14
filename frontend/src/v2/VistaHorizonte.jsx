@@ -1,14 +1,13 @@
-import { cardinal, conSigno, fraccionDisco, num } from "./calculo";
+import { fraccionDisco } from "./calculo";
+import { rico, useIdioma } from "./i18n";
 
 const ANCHO = 1200;
 const ALTO = 380;
 
-function enHoras(h) {
-  return h < 72 ? `${h} h` : `${num(h / 24, 1)} días`;
-}
-
 // Lo que se ve parado en el sitio en el momento elegido: relieve, Sol y Tierra.
 export default function VistaHorizonte({ sitio, i }) {
+  const { t, f } = useIdioma();
+  const { num, conSigno, cardinal, duracion } = f;
   const hz = sitio.horizonte.grados;
   const solEl = sitio.sol_el[i];
   const solAz = sitio.sol_az[i];
@@ -40,25 +39,25 @@ export default function VistaHorizonte({ sitio, i }) {
   const tierraEnCuadro = tieEl > eMin;
   const relieveSol = solEl - sitio.margenSol[i];
   let porQue = "";
-  if (solVisible && solEl < 0) porQue = `El Sol está ${num(-solEl, 1)}° bajo el horizonte plano y aun así ilumina: el terreno cae ${num(-relieveSol, 1)}° en esa dirección.`;
-  else if (!solVisible && solEl > 0) porQue = `El Sol está ${num(solEl, 1)}° sobre el horizonte plano pero no se ve: el terreno se levanta ${num(relieveSol, 1)}° en esa dirección.`;
+  if (solVisible && solEl < 0) porQue = t("horizonte.porQueIlumina", { bajo: num(-solEl, 1), relieve: num(-relieveSol, 1) });
+  else if (!solVisible && solEl > 0) porQue = t("horizonte.porQueTapa", { sobre: num(solEl, 1), relieve: num(relieveSol, 1) });
 
   return (
     <div className="vista-horizonte">
       <div className="estados">
         <p className={solVisible ? "estado si" : "estado no"}>
           <i className="punto sol" aria-hidden="true" />
-          <span>{solVisible ? "Hay luz." : "No hay luz."} {hSol === null ? "Sin cambios en lo que queda del año." : <>El Sol {solVisible ? "se pone" : "sale"} en <b>{enHoras(hSol)}</b>.</>}</span>
+          <span>{solVisible ? t("horizonte.hayLuz") : t("horizonte.noHayLuz")} {hSol === null ? t("horizonte.sinCambios") : rico(t(solVisible ? "horizonte.solSePone" : "horizonte.solSale", { t: duracion(hSol) }))}</span>
         </p>
         <p className={tierraVisible ? "estado si" : "estado no"}>
           <i className="punto tierra" aria-hidden="true" />
-          <span>{tierraVisible ? "Hay contacto." : "Sin contacto."} {hTierra === null ? (tierraVisible ? "La Tierra se ve siempre." : "La Tierra no se ve nunca desde acá.") : <>La Tierra {tierraVisible ? "se oculta" : "aparece"} en <b>{enHoras(hTierra)}</b>.</>}</span>
+          <span>{tierraVisible ? t("horizonte.hayContacto") : t("horizonte.sinContacto")} {hTierra === null ? (tierraVisible ? t("horizonte.tierraSiempre") : t("horizonte.tierraNunca")) : rico(t(tierraVisible ? "horizonte.tierraSeOculta" : "horizonte.tierraAparece", { t: duracion(hTierra) }))}</span>
         </p>
       </div>
 
       <svg
         role="img"
-        aria-label={`Panorama del horizonte. Sol a ${num(solEl, 1)} grados de elevación. Tierra a ${num(tieEl, 1)} grados.`}
+        aria-label={t("horizonte.panoramaAria", { sol: num(solEl, 1), tierra: num(tieEl, 1) })}
         viewBox={`0 0 ${ANCHO} ${ALTO}`}
         className="cielo"
       >
@@ -75,21 +74,21 @@ export default function VistaHorizonte({ sitio, i }) {
           </g>
         )}
         <path d={relieve} className="relieve" />
-        <text x={ANCHO / 2} y={Y(0) + 17} textAnchor="middle" className="eje">horizonte plano</text>
-        {tierraEnCuadro && <text x={dentro(X(tieAz))} y={Math.max(20, Y(tieEl) - 26)} textAnchor="middle" className="rotulo">Tierra, {conSigno(tieEl, 1)}°{tierraVisible ? "" : " (oculta)"}</text>}
-        {solEnCuadro && <text x={dentro(X(solAz))} y={Math.max(20, Y(solEl) - 36)} textAnchor="middle" className="rotulo">Sol, {conSigno(solEl, 1)}°{solVisible ? "" : " (oculto)"}</text>}
-        {!solEnCuadro && <text x={dentro(X(solAz))} y={ALTO - 34} textAnchor="middle" className="rotulo">Sol, {num(-solEl)}° bajo el horizonte</text>}
-        {!tierraEnCuadro && <text x={dentro(X(tieAz))} y={ALTO - 56} textAnchor="middle" className="rotulo">Tierra, {num(-tieEl)}° bajo el horizonte</text>}
-        <text x="12" y={ALTO - 12} className="eje">Norte</text>
-        <text x={ANCHO / 4} y={ALTO - 12} textAnchor="middle" className="eje">Este</text>
-        <text x={ANCHO / 2} y={ALTO - 12} textAnchor="middle" className="eje">Sur</text>
-        <text x={(ANCHO * 3) / 4} y={ALTO - 12} textAnchor="middle" className="eje">Oeste</text>
+        <text x={ANCHO / 2} y={Y(0) + 17} textAnchor="middle" className="eje">{t("horizonte.horizontePlano")}</text>
+        {tierraEnCuadro && <text x={dentro(X(tieAz))} y={Math.max(20, Y(tieEl) - 26)} textAnchor="middle" className="rotulo">{t("horizonte.tierraRotulo", { el: conSigno(tieEl, 1) })}{tierraVisible ? "" : t("horizonte.oculta")}</text>}
+        {solEnCuadro && <text x={dentro(X(solAz))} y={Math.max(20, Y(solEl) - 36)} textAnchor="middle" className="rotulo">{t("horizonte.solRotulo", { el: conSigno(solEl, 1) })}{solVisible ? "" : t("horizonte.oculto")}</text>}
+        {!solEnCuadro && <text x={dentro(X(solAz))} y={ALTO - 34} textAnchor="middle" className="rotulo">{t("horizonte.solBajo", { el: num(-solEl) })}</text>}
+        {!tierraEnCuadro && <text x={dentro(X(tieAz))} y={ALTO - 56} textAnchor="middle" className="rotulo">{t("horizonte.tierraBajo", { el: num(-tieEl) })}</text>}
+        <text x="12" y={ALTO - 12} className="eje">{t("horizonte.norte")}</text>
+        <text x={ANCHO / 4} y={ALTO - 12} textAnchor="middle" className="eje">{t("horizonte.este")}</text>
+        <text x={ANCHO / 2} y={ALTO - 12} textAnchor="middle" className="eje">{t("horizonte.sur")}</text>
+        <text x={(ANCHO * 3) / 4} y={ALTO - 12} textAnchor="middle" className="eje">{t("horizonte.oeste")}</text>
       </svg>
 
       <div className="exactos">
-        <p><b>Sol</b> elevación {conSigno(solEl)}° · {conSigno(sitio.margenSol[i])}° sobre el relieve · azimut {num(solAz, 1)}° ({cardinal(solAz)}) · disco visible {num(100 * fraccionDisco(sitio.margenSol[i]))} %</p>
-        <p><b>Tierra</b> elevación {conSigno(tieEl)}° · {conSigno(sitio.margenTierra[i])}° sobre el relieve · azimut {num(tieAz, 1)}° ({cardinal(tieAz)})</p>
-        <p className="porque">{porQue || "Parado en el sitio, a 2 m del suelo. El Sol cuenta como visible si asoma el borde del disco."}</p>
+        <p><b>{t("horizonte.sol")}</b> {t("horizonte.exactoSol", { el: conSigno(solEl), margen: conSigno(sitio.margenSol[i]), az: num(solAz, 1), cardinal: cardinal(solAz), disco: num(100 * fraccionDisco(sitio.margenSol[i])) })}</p>
+        <p><b>{t("horizonte.tierra")}</b> {t("horizonte.exactoTierra", { el: conSigno(tieEl), margen: conSigno(sitio.margenTierra[i]), az: num(tieAz, 1), cardinal: cardinal(tieAz) })}</p>
+        <p className="porque">{porQue || t("horizonte.nota")}</p>
       </div>
     </div>
   );

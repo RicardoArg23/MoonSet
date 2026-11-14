@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import config  # noqa: E402
 
 R = config.RADIO_LUNA_M
-TEXTURA = config.REPO_DIR / "frontend" / "public" / "texturas" / "luna_lroc_4k.jpg"
+TEXTURA = config.REPO_DIR / "frontend" / "public" / "texturas" / "luna_wac_4k.jpg"
 FONDO = 0  # negro fuera del círculo, igual que el fondo de la interfaz
 
 

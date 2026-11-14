@@ -18,7 +18,7 @@ cruza el resultado con la duración de la misión y la autonomía de la batería
 | Datos | 30 días, resumen de métricas por sitio | **Año 2027 completo, cada hora** (`data/anual/`): horizonte + elevación y azimut del Sol y la Tierra |
 | API | `/salud`, `/sitios`, `/sitios/{id}`, `/evaluar` | Lo mismo **+ `GET /anual?lat=&lon=`** para coordenadas propias |
 | Interfaz | Explorador / Planificador (`src/`) | **Interfaz nueva `src/v2/`**, la principal. La anterior **no se borró**: sigue en `/?clasico` |
-| Textura | — | Mosaico LROC 4k para el globo (`frontend/public/texturas/`) |
+| Textura | — | Mosaico LROC WAC 4k para el globo (`frontend/public/texturas/luna_wac_4k.jpg`) |
 
 Los JSON de `data/precalculado/` de los sitios polares cambiaron porque ahora se calculan con relieve:
 **los números de `main` para esos sitios ya no valen**.
@@ -58,6 +58,20 @@ data/sitios.json ─► backend/scripts/precalcular_*.py ─► data/anual/*.jso
    - **viable** si la noche más larga de la misión es menor que la autonomía de la batería.
    Como luz y señal no se guardan, cambiar duración o batería no necesita recalcular nada.
 4. Las coordenadas propias pasan por `/anual`, que genera el mismo formato al vuelo.
+
+## Idioma y globo con detalle (14/11)
+
+- **Español / inglés**: los textos de la interfaz están en `frontend/src/v2/i18n/es.js` y `en.js`, agrupados por
+  apartado. En los componentes se usa `const { t, f } = useIdioma()`: `t("panel.sobrevive")` para textos y `f` para
+  números, fechas, coordenadas y nombres de sitios (`frontend/src/v2/formato.js`). **Un texto nuevo va en los dos
+  archivos, no en el componente.** `calculo.js` devuelve solo números. La interfaz clásica (`?clasico`) no se tradujo.
+- **Globo con detalle progresivo**: a cualquier distancia se ve el mismo mosaico; sobre la textura local
+  (`texturas/luna_wac_4k.jpg`, generada con `backend/scripts/generar_textura_luna.py` desde ese mosaico) se cargan teselas de NASA Moon Trek
+  (`frontend/src/v2/globo/`): mosaico LROC WAC global (hasta ~83 m/px) y mosaico LROC NAC del polo sur
+  (85,5° S al polo, hasta ~4 m/px). El botón "Acercar al sitio" lleva la cámara sobre el sitio elegido y la pista
+  dice qué imagen se está viendo y a qué resolución. **Necesita internet**; sin red queda la textura local de 4k.
+  El mosaico polar es una foto promedio: sus sombras no son las de la fecha elegida.
+- Chequeos rápidos: `node scripts/probar-i18n.mjs` y `node scripts/probar-teselas.mjs` (desde `frontend/`).
 
 ## Qué NO está bien todavía (importante para la presentación)
 

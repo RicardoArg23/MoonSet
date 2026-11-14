@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { cargarCoordenadas, cargarGeometria, cargarSitios, cargarVecindad, hayBackend } from "./datos";
-import { coordenadas, evaluarMision, fechaCorta, fechaLarga, fechaViableCercana, num, porDia, tramos } from "./calculo";
+import { evaluarMision, fechaViableCercana, porDia, tramos } from "./calculo";
+import { ProveedorIdioma, useIdioma } from "./i18n";
+import { BASE_METROS_POR_PIXEL, CAPAS } from "./globo/teselas";
 import Dock from "./Dock";
 import VistaHorizonte from "./VistaHorizonte";
 import Vecindad from "./Vecindad";
@@ -11,14 +13,7 @@ const Globo = lazy(() => import("./Globo"));
 const DIA_MS = 86_400_000;
 const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
-const VISTAS = [
-  { id: "globo", nombre: "Globo" },
-  { id: "mapa", nombre: "Mapa" },
-  { id: "horizonte", nombre: "Horizonte" },
-  { id: "alrededores", nombre: "Alrededores" },
-  { id: "comparar", nombre: "Comparar" },
-];
-const corto = (nombre) => nombre.split(" — ")[0];
+const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"]; // sus nombres están en i18n: vistas.<id>
 const dos = (n) => String(n).padStart(2, "0");
 
 function Cinta({ serie, desde, hasta, color }) {
@@ -33,8 +28,9 @@ function Cinta({ serie, desde, hasta, color }) {
 
 // Barra que compara la noche más larga con la batería. La escala es compartida para poder comparar.
 function Medidor({ nocheH, autonomiaH, tope }) {
+  const { t } = useIdioma();
   return (
-    <div className="medidor" role="img" aria-label={`Noche más larga de ${nocheH} horas, batería para ${autonomiaH} horas`}>
+    <div className="medidor" role="img" aria-label={t("panel.medidorAria", { noche: nocheH, bateria: autonomiaH })}>
       <i style={{ transform: `scaleX(${Math.min(1, nocheH / tope)})`, background: nocheH <= autonomiaH ? "var(--bien)" : "var(--mal)" }} />
       <b style={{ left: `${Math.min(100, (autonomiaH / tope) * 100)}%` }} />
     </div>
@@ -42,6 +38,16 @@ function Medidor({ nocheH, autonomiaH, tope }) {
 }
 
 export default function App() {
+  return (
+    <ProveedorIdioma>
+      <Cabina />
+    </ProveedorIdioma>
+  );
+}
+
+function Cabina() {
+  const { idioma, setIdioma, idiomas, t, f } = useIdioma();
+  const { num, coordenadas, fechaCorta, fechaLarga, nombreCorto } = f;
   const [base, setBase] = useState(null); // sitios de la lista curada
   const [guardados, setGuardados] = useState([]); // puntos propios que el usuario decidió conservar
   const [prueba, setPrueba] = useState(null); // punto tocado en la Luna, todavía sin guardar
@@ -59,6 +65,8 @@ export default function App() {
   const [verPuntos, setVerPuntos] = useState(false);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
   const [estadoCoord, setEstadoCoord] = useState(""); // "", "cargando" o un mensaje de error
+  const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
+  const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
 
   useEffect(() => {
     Promise.all([cargarSitios(), cargarGeometria()])
@@ -93,12 +101,12 @@ export default function App() {
   if (error) {
     return (
       <main className="aviso">
-        <p>No se pudieron cargar los datos: {error}</p>
-        <p className="tenue">Corré backend/scripts/precalcular_anual.py y reiniciá el servidor del frontend.</p>
+        <p>{t("app.errorCarga", { error })}</p>
+        <p className="tenue">{t("app.errorAyuda")}</p>
       </main>
     );
   }
-  if (!sitio || !geometria) return <main className="aviso tenue">Cargando efemérides y relieve…</main>;
+  if (!sitio || !geometria) return <main className="aviso tenue">{t("app.cargando")}</main>;
 
   const m = evaluados.find((r) => r.s === sitio).m;
   const viables = new Set(evaluados.filter((r) => r.m.viable).map((r) => r.s.sitio.id));
@@ -115,12 +123,14 @@ export default function App() {
   const vecindad = vecindades[sitio.sitio.id];
   const yaFijado = fijados.some((f) => f.sitioId === sitio.sitio.id && f.dia === dia && f.horaLlegada === horaLlegada);
   const tope = Math.max(200, autonomiaH * 2);
+  const deCerca = detalle.metrosPorPixel < 1000; // el globo está acercado: el botón ofrece volver a la Luna entera
 
   function elegirSitio(id) {
     // Salir de un punto de prueba lo descarta: no se acumulan puntos que nadie pidió guardar.
     if (prueba && id !== prueba.sitio.id) setPrueba(null);
     setSitioId(id);
     setHoraMision(0);
+    setEnfoque({ modo: "lejos" }); // al cambiar de sitio se vuelve a ver la Luna entera
   }
   function cambiarLlegada(d, h) {
     setDia(d);
@@ -130,7 +140,7 @@ export default function App() {
 
   async function probarPunto(lat, lon) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90) {
-      setEstadoCoord("Revisá los valores: la latitud va de −90 a 90.");
+      setEstadoCoord(t("puntos.errorRango"));
       return;
     }
     setEstadoCoord("cargando");
@@ -142,7 +152,7 @@ export default function App() {
       setHoraMision(0);
       setEstadoCoord("");
     } catch (e) {
-      setEstadoCoord(`No se pudo calcular: ${e.message}`);
+      setEstadoCoord(t("puntos.errorCalculo", { error: e.message }));
     }
   }
   function puntoEnGlobo({ lat, lon }) {
@@ -196,6 +206,10 @@ export default function App() {
             sol={{ lat: geometria.sol_lat[iGeo], lon: geometria.sol_lon[iGeo] }}
             tierra={{ lat: geometria.tierra_lat[iGeo], lon: geometria.tierra_lon[iGeo] }}
             hayContacto={sitio.senal[iAhora] === 1}
+            nombreActivo={nombreCorto(sitio.sitio)}
+            rotuloTierra={t("globo.aLaTierra")}
+            enfoque={enfoque}
+            onDetalle={setDetalle}
             onElegir={elegirSitio}
             onPunto={puntoEnGlobo}
           />
@@ -205,32 +219,32 @@ export default function App() {
 
       <header className="barra">
         <div className="marca vidrio"><i aria-hidden="true" />MoonSet</div>
-        <nav className="vistas vidrio" aria-label="Vistas">
+        <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
           {VISTAS.map((v) => (
-            <button key={v.id} type="button" aria-pressed={vista === v.id} onClick={() => setVista(v.id)}>
-              {v.nombre}{v.id === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
+            <button key={v} type="button" aria-pressed={vista === v} onClick={() => setVista(v)}>
+              {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
             </button>
           ))}
         </nav>
         <div className="parametros vidrio">
-          <label>Misión de<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />días</label>
-          <label>Batería<input type="number" min="0" max="720" step="10" value={autonomiaH} onChange={(e) => setAutonomiaH(Math.max(0, Math.min(720, Number(e.target.value) || 0)))} />h</label>
+          <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
+          <label>{t("parametros.bateria")}<input type="number" min="0" max="720" step="10" value={autonomiaH} onChange={(e) => setAutonomiaH(Math.max(0, Math.min(720, Number(e.target.value) || 0)))} />h</label>
         </div>
         <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
-            Mis puntos{guardados.length > 0 ? ` · ${guardados.length}` : ""}
+            {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}
           </button>
           {verPuntos && (
             <div className="puntos-lista vidrio">
               <div className="puntos-cabeza">
-                <b>Mis puntos</b>
-                <button type="button" disabled={guardados.length === 0} onClick={quitarTodos}>Quitar todos</button>
+                <b>{t("puntos.titulo")}</b>
+                <button type="button" disabled={guardados.length === 0} onClick={quitarTodos}>{t("puntos.quitarTodos")}</button>
               </div>
-              {guardados.length === 0 && <p className="tenue">Todavía no guardaste ninguno. Tocá la Luna para probar un punto y guardalo si te sirve.</p>}
+              {guardados.length === 0 && <p className="tenue">{t("puntos.vacio")}</p>}
               {guardados.map((s) => (
                 <div className="punto-fila" key={s.sitio.id}>
                   <button type="button" className="enlace" onClick={() => elegirSitio(s.sitio.id)}>{coordenadas(s.sitio)}</button>
-                  <button type="button" onClick={() => quitarPunto(s.sitio.id)}>Quitar</button>
+                  <button type="button" onClick={() => quitarPunto(s.sitio.id)}>{t("puntos.quitar")}</button>
                 </div>
               ))}
               <form
@@ -240,87 +254,98 @@ export default function App() {
                   probarPunto(Number(coord.lat), Number(coord.lon));
                 }}
               >
-                <label>Latitud<input type="number" step="any" min="-90" max="90" value={coord.lat} onChange={(e) => setCoord({ ...coord, lat: e.target.value })} /></label>
-                <label>Longitud este<input type="number" step="any" min="-180" max="360" value={coord.lon} onChange={(e) => setCoord({ ...coord, lon: e.target.value })} /></label>
-                <button type="submit" className="primario" disabled={!hayBackend || estadoCoord === "cargando"}>{estadoCoord === "cargando" ? "Calculando…" : "Probar"}</button>
+                <label>{t("puntos.latitud")}<input type="number" step="any" min="-90" max="90" value={coord.lat} onChange={(e) => setCoord({ ...coord, lat: e.target.value })} /></label>
+                <label>{t("puntos.longitud")}<input type="number" step="any" min="-180" max="360" value={coord.lon} onChange={(e) => setCoord({ ...coord, lon: e.target.value })} /></label>
+                <button type="submit" className="primario" disabled={!hayBackend || estadoCoord === "cargando"}>{estadoCoord === "cargando" ? t("puntos.calculando") : t("puntos.probar")}</button>
               </form>
-              {!hayBackend && <p className="tenue">Probar puntos propios necesita el servidor de cálculo encendido.</p>}
+              {!hayBackend && <p className="tenue">{t("puntos.sinBackend")}</p>}
               {estadoCoord && estadoCoord !== "cargando" && <p className="error" role="alert">{estadoCoord}</p>}
             </div>
           )}
+        </div>
+        <div className="idioma vidrio" role="group" aria-label={t("app.idioma")}>
+          {idiomas.map((i) => (
+            <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)}>{i.toUpperCase()}</button>
+          ))}
         </div>
       </header>
 
       <aside className={`panel vidrio ${m.viable ? "si" : "no"}`} aria-live="polite">
         <div className="panel-sitio">
-          <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label="Sitio de alunizaje">
-            {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{corto(s.sitio.nombre)}</option>)}
+          <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
+            {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
           </select>
-          <p className="tenue">{coordenadas(sitio.sitio)} · {sitio.horizonte.fuente === "esfera" ? "sin relieve" : "con relieve real"}</p>
+          <p className="tenue">{coordenadas(sitio.sitio)} · {sitio.horizonte.fuente === "esfera" ? t("panel.sinRelieve") : t("panel.conRelieve")}</p>
         </div>
 
         <div className="panel-veredicto">
-          <p className="chip"><i aria-hidden="true" />{m.nocheH === 0 ? "Hay luz toda la misión" : m.viable ? `Le sobran ${autonomiaH - m.nocheH} h de batería` : `Le faltan ${m.faltanH} h de batería`}</p>
-          <h1>{m.viable ? "Sobrevive" : "No sobrevive"}</h1>
+          <p className="chip"><i aria-hidden="true" />{m.nocheH === 0 ? t("panel.luzToda") : m.viable ? t("panel.sobran", { h: autonomiaH - m.nocheH }) : t("panel.faltan", { h: m.faltanH })}</p>
+          <h1>{m.viable ? t("panel.sobrevive") : t("panel.noSobrevive")}</h1>
         </div>
 
         <div className="panel-medidor">
-          <p><span>Noche más larga <b>{m.nocheH} h</b></span><span>Batería <b>{autonomiaH} h</b></span></p>
+          <p><span>{t("panel.nocheLarga")} <b>{m.nocheH} h</b></span><span>{t("panel.bateria")} <b>{autonomiaH} h</b></span></p>
           <Medidor nocheH={m.nocheH} autonomiaH={autonomiaH} tope={tope} />
         </div>
 
         <dl className="panel-cifras">
-          <div><dt>Luz solar</dt><dd>{num(m.luzPct)}<small> %</small></dd></div>
-          <div><dt>Contacto</dt><dd>{num(m.senalPct)}<small> %</small></dd></div>
-          <div title="Energía que recibe un panel que sigue al Sol, respecto del máximo posible"><dt>Energía</dt><dd>{num(m.energiaSeguidorPct)}<small> %</small></dd></div>
+          <div><dt>{t("panel.luzSolar")}</dt><dd>{num(m.luzPct)}<small> %</small></dd></div>
+          <div><dt>{t("panel.contacto")}</dt><dd>{num(m.senalPct)}<small> %</small></dd></div>
+          <div title={t("panel.energiaAyuda")}><dt>{t("panel.energia")}</dt><dd>{num(m.energiaSeguidorPct)}<small> %</small></dd></div>
         </dl>
 
         <div className="panel-opciones">
           {esPrueba ? (
             <>
-              <p className="rotulo">Punto de prueba, sin guardar</p>
-              <p className="nota">El próximo toque en la Luna lo reemplaza. Guardalo si querés conservarlo.</p>
+              <p className="rotulo">{t("panel.pruebaRotulo")}</p>
+              <p className="nota">{t("panel.pruebaNota")}</p>
               <div className="dupla">
-                <button type="button" className="primario" onClick={guardarPrueba}>Guardar punto</button>
-                <button type="button" onClick={descartarPrueba}>Descartar</button>
+                <button type="button" className="primario" onClick={guardarPrueba}>{t("panel.guardar")}</button>
+                <button type="button" onClick={descartarPrueba}>{t("panel.descartar")}</button>
               </div>
             </>
           ) : m.viable ? (
             <>
-              <p className="rotulo">Qué se puede hacer</p>
-              <p className="nota vacio">No hace falta cambiar nada: con esta fecha y esta hora la misión llega al final.</p>
+              <p className="rotulo">{t("panel.queHacer")}</p>
+              <p className="nota vacio">{t("panel.nadaQueCambiar")}</p>
             </>
           ) : (
             <>
-              <p className="rotulo">Qué se puede hacer</p>
+              <p className="rotulo">{t("panel.queHacer")}</p>
               {diaViable !== null && (
                 <button type="button" className="opcion" onClick={() => cambiarLlegada(diaViable, horaLlegada)}>
-                  <span><b>Esperar al {fechaLarga(sitio.t0 + diaViable * DIA_MS)}</b><small>{diaViable - dia} {diaViable - dia === 1 ? "día" : "días"} más · noche de {porDia(sitio, duracionH, horaLlegada).nocheH[diaViable]} h</small></span>
+                  <span><b>{t("panel.esperar", { fecha: fechaLarga(sitio.t0 + diaViable * DIA_MS) })}</b><small>{t("panel.esperarDetalle", { n: diaViable - dia, h: porDia(sitio, duracionH, horaLlegada).nocheH[diaViable] })}</small></span>
                   <i aria-hidden="true">→</i>
                 </button>
               )}
               {mejorOtro && (
                 <button type="button" className="opcion" onClick={() => elegirSitio(mejorOtro.s.sitio.id)}>
-                  <span><b>Ir a {corto(mejorOtro.s.sitio.nombre)}</b><small>noche de {mejorOtro.m.nocheH} h · {mejorOtro.m.senalPct === 0 ? "sin contacto" : `${num(mejorOtro.m.senalPct)} % de contacto`}</small></span>
+                  <span><b>{t("panel.irA", { sitio: nombreCorto(mejorOtro.s.sitio) })}</b><small>{t("panel.irADetalle", { h: mejorOtro.m.nocheH, contacto: mejorOtro.m.senalPct === 0 ? t("panel.sinContacto") : t("panel.pctContacto", { pct: num(mejorOtro.m.senalPct) }) })}</small></span>
                   <i aria-hidden="true">→</i>
                 </button>
               )}
-              {diaViable === null && !mejorOtro && <p className="nota vacio">Ninguna alternativa con estos parámetros. Probá con más batería o una misión más corta.</p>}
+              {diaViable === null && !mejorOtro && <p className="nota vacio">{t("panel.sinAlternativa")}</p>}
             </>
           )}
         </div>
 
         <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
-          {yaFijado ? "Ya está en Comparar" : fijados.length >= MAX_FIJADOS ? `Máximo de ${MAX_FIJADOS} escenarios` : "Fijar para comparar"}
+          {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
         </button>
-        {esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>Quitar este punto de mis puntos</button>}
+        {esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
       </aside>
 
       <main className="centro">
         {vista === "globo" && (
-          <p className="pista-globo vidrio">
-            {hayBackend ? "Arrastrá para girar. Tocá la Luna para probar un punto." : "Arrastrá para girar. Los puntos amarillos sirven en la fecha elegida; los grises, no."}
-          </p>
+          <div className="pista-globo vidrio">
+            <p>{hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
+            <div className="pista-acciones">
+              <button type="button" onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}>
+                {deCerca ? t("globo.alejar") : t("globo.acercar")}
+              </button>
+              <span>{t("globo.detalle", { capa: CAPAS[detalle.capa].nombre, resolucion: f.longitud(detalle.metrosPorPixel) })}</span>
+            </div>
+          </div>
         )}
 
         {vista === "mapa" && (
@@ -353,7 +378,7 @@ export default function App() {
             {vecindad ? (
               <Vecindad sitio={sitio} vecindad={vecindad} i0={i0} duracionH={duracionH} autonomiaH={autonomiaH} />
             ) : (
-              <p className="tarjeta-vacia">El mapa de alrededores está calculado para los sitios de la lista al sur de 85° S: Connecting Ridge, Borde de Shackleton, Borde de de Gerlache y Macizo Malapert.</p>
+              <p className="tarjeta-vacia">{t("alrededores.vacio")}</p>
             )}
           </section>
         )}
@@ -361,29 +386,29 @@ export default function App() {
         {vista === "comparar" && (
           <section className="tarjeta vidrio comparar">
             {fijadosVista.length === 0 ? (
-              <p className="tarjeta-vacia">Todavía no fijaste escenarios. Elegí un sitio y una fecha y tocá "Fijar para comparar"; podés fijar hasta {MAX_FIJADOS}.</p>
+              <p className="tarjeta-vacia">{t("comparar.vacio", { n: MAX_FIJADOS })}</p>
             ) : (
               <div className="columnas" style={{ "--n": fijadosVista.length }}>
                 {fijadosVista.map(({ f, k, s, f0, r }) => (
                   <article key={`${f.sitioId}/${f.dia}/${f.horaLlegada}`} className={`columna ${r.viable ? "si" : "no"}${mejorFijado && mejorFijado.k === k ? " mejor" : ""}`}>
                     <header>
                       <div>
-                        <p className="rotulo">{mejorFijado && mejorFijado.k === k ? "Noche más corta" : `Escenario ${"ABCD"[k]}`}</p>
-                        <h3>{corto(s.sitio.nombre)}</h3>
+                        <p className="rotulo">{mejorFijado && mejorFijado.k === k ? t("comparar.nocheCorta") : t("comparar.escenario", { letra: "ABCD"[k] })}</p>
+                        <h3>{nombreCorto(s.sitio)}</h3>
                         <p className="tenue">{fechaCorta(s.t0 + f.dia * DIA_MS)} · {dos(f.horaLlegada)}:00 UTC</p>
                       </div>
-                      <button type="button" className="equis" aria-label="Quitar este escenario" onClick={() => setFijados((x) => x.filter((_, j) => j !== k))}>
+                      <button type="button" className="equis" aria-label={t("comparar.quitarAria")} onClick={() => setFijados((x) => x.filter((_, j) => j !== k))}>
                         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" /></svg>
                       </button>
                     </header>
-                    <p className="veredicto-chico">{r.viable ? "Sobrevive" : "No sobrevive"}</p>
-                    <p className="tenue margen">{r.viable ? `Le sobran ${autonomiaH - r.nocheH} h` : `Le faltan ${r.faltanH} h`}</p>
-                    <p className="par"><span>Noche más larga</span><b>{r.nocheH} h</b></p>
+                    <p className="veredicto-chico">{r.viable ? t("panel.sobrevive") : t("panel.noSobrevive")}</p>
+                    <p className="tenue margen">{r.viable ? t("comparar.sobran", { h: autonomiaH - r.nocheH }) : t("comparar.faltan", { h: r.faltanH })}</p>
+                    <p className="par"><span>{t("panel.nocheLarga")}</span><b>{r.nocheH} h</b></p>
                     <Medidor nocheH={r.nocheH} autonomiaH={autonomiaH} tope={Math.max(tope, ...fijadosVista.map((x) => x.r.nocheH))} />
-                    <p className="par"><span>Luz solar</span><b>{num(r.luzPct)} %</b></p>
-                    <p className="par"><span>Contacto</span><b>{num(r.senalPct)} %</b></p>
-                    <p className="par"><span>Energía</span><b>{num(r.energiaSeguidorPct)} %</b></p>
-                    <p className="par"><span>Sol al llegar</span><b>{r.solVisible ? "visible" : "oculto"}{r.hCambioSol !== null && `, ${r.hCambioSol} h`}</b></p>
+                    <p className="par"><span>{t("panel.luzSolar")}</span><b>{num(r.luzPct)} %</b></p>
+                    <p className="par"><span>{t("panel.contacto")}</span><b>{num(r.senalPct)} %</b></p>
+                    <p className="par"><span>{t("panel.energia")}</span><b>{num(r.energiaSeguidorPct)} %</b></p>
+                    <p className="par"><span>{t("comparar.solAlLlegar")}</span><b>{r.solVisible ? t("comparar.visible") : t("comparar.oculto")}{r.hCambioSol !== null && `, ${r.hCambioSol} h`}</b></p>
                     <Cinta serie={s.luz} desde={f0} hasta={f0 + duracionH} color="var(--acento)" />
                     <Cinta serie={s.senal} desde={f0} hasta={f0 + duracionH} color="var(--tierra)" />
                     <button
@@ -395,7 +420,7 @@ export default function App() {
                         setVista("globo");
                       }}
                     >
-                      Ver este escenario
+                      {t("comparar.ver")}
                     </button>
                   </article>
                 ))}
@@ -417,7 +442,7 @@ export default function App() {
         setHoraMision={setHoraMision}
       />
 
-      <p className="creditos">Relieve LOLA 80 m (al sur de 80° S) · mapa en estereográfica polar · efemérides JPL DE421 · imagen NASA SVS/LROC · <a href="?clasico">versión anterior</a></p>
+      <p className="creditos">{t("app.creditos")}<a href="?clasico">{t("app.versionAnterior")}</a></p>
     </div>
   );
 }
