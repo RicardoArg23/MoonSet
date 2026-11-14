@@ -5,7 +5,7 @@
  "radio_luna_m": 1737400.0,
  "lat_limite": -80.0,
  "extension_m": 304005.6,
- "lado_px": 1024,
- "fuente": "textura_lroc_4k",
- "descripcion": "Respaldo de baja resolución: casquete polar de la textura LROC 4k reproyectado"
+ "lado_px": 2048,
+ "fuente": "dem_lola_80s_80m",
+ "descripcion": "Relieve sombreado del DEM de LOLA a 80 m (luz cartográfica, no la iluminación real)"
 }
