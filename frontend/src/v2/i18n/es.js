@@ -87,7 +87,8 @@ export default {
 
   nasa: {
     titulo: "Ver en herramientas de NASA",
-    horizonsAyuda: "Efemérides de JPL Horizons desde este sitio, cada hora de la misión (se abre como texto)",
+    horizons: "Tabla de JPL Horizons (texto)",
+    horizonsAyuda: "Azimut y elevación aparentes desde este sitio, cada hora de la misión, en grados. Es la salida oficial de Horizons: una tabla de texto, no una app.",
     cuerpo: "Cuerpo en Horizons",
     sol: "Sol",
     tierra: "Tierra",

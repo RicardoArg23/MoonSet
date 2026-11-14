@@ -27,7 +27,7 @@ export default function EnlacesNasa({ lat, lon, inicioMs, finMs }) {
       <p className="rotulo">{t("nasa.titulo")}</p>
       <div className="nasa-botones">
         <span className="nasa-horizons">
-          <a className="boton" href={e.horizons[cuerpo]} target="_blank" rel="noopener noreferrer" title={t("nasa.horizonsAyuda")}>Horizons</a>
+          <a className="boton" href={e.horizons[cuerpo]} target="_blank" rel="noopener noreferrer" title={t("nasa.horizonsAyuda")}>{t("nasa.horizons")}</a>
           <span className="segmentos" role="group" aria-label={t("nasa.cuerpo")}>
             {["sol", "tierra"].map((c) => (
               <button key={c} type="button" aria-pressed={cuerpo === c} onClick={() => setCuerpo(c)}>{t(`nasa.${c}`)}</button>

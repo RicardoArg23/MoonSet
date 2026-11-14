@@ -23,7 +23,13 @@ app = FastAPI(
                 "y comunicación. NASA Space Apps 2026 — Lunar Landing Site Navigator.",
     version="0.1.0",
 )
-app.add_middleware(CORSMiddleware, allow_origins=config.CORS_ORIGINS, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_origin_regex=config.CORS_ORIGEN_LOCAL,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Pedido(BaseModel):

@@ -67,9 +67,10 @@ npm install
 npm run dev
 ```
 
-Si los puertos 8000/5173 están ocupados, usá otros: `uvicorn ... --port 8010`, `npm run dev -- --port 5174`,
-y agregá el origen del frontend en `MOONSET_CORS` (por ejemplo
-`MOONSET_CORS="http://localhost:5174" uvicorn app.main:app --port 8010`).
+Si los puertos 8000/5173 están ocupados, usá otros: `uvicorn ... --port 8010`, `npm run dev -- --port 5174`.
+En desarrollo el backend acepta cualquier puerto de `localhost`/`127.0.0.1`. En producción, fijá los orígenes
+permitidos con `MOONSET_CORS` (por ejemplo `MOONSET_CORS="https://moonset.ejemplo.org"`): si está definida,
+solo se aceptan esos.
 
 `npm run dev` y `npm run build` copian `data/precalculado` y `data/anual` a `frontend/public/` solos.
 

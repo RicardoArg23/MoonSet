@@ -36,5 +36,8 @@ RADIO_APARENTE_SOL_DEG = 0.267  # medio diámetro del disco solar visto desde la
 MAX_DIAS = 366
 MAX_MUESTRAS = 10_000
 
-# Orígenes permitidos para el frontend (Vite usa el 5173)
-CORS_ORIGINS = os.getenv("MOONSET_CORS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+# Orígenes permitidos para el frontend.
+# - Producción: MOONSET_CORS con la lista exacta, separada por comas. Si está, es lo único que se acepta.
+# - Desarrollo (sin MOONSET_CORS): cualquier puerto de localhost, así Vite puede usar otro que no sea el 5173.
+CORS_ORIGINS = [o.strip() for o in os.getenv("MOONSET_CORS", "").split(",") if o.strip()]
+CORS_ORIGEN_LOCAL = None if CORS_ORIGINS else r"http://(localhost|127\.0\.0\.1):\d+"

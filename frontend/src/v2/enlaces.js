@@ -1,7 +1,8 @@
 // Solo texto: enlaces a herramientas de NASA posicionadas en un sitio. Sin React, se prueba con Node.
 //
 // - JPL Horizons: la API en formato texto, que el navegador muestra como tabla. Mismos parámetros que
-//   backend/scripts/validar_horizons.py, pero con un intervalo (llegada a fin de misión, cada hora).
+//   backend/scripts/validar_horizons.py, salvo dos: un intervalo (llegada a fin de misión, cada hora)
+//   y CSV_FORMAT='NO', para que se lea como tabla de columnas alineadas y no como CSV.
 // - Moon Trek y LROC QuickMap: deep links en vista geográfica, con el formato deducido de URLs reales
 //   de cada visor (ver enlaceMoonTrek y enlaceQuickmap). La vista polar todavía no está enlazada: para
 //   los sitios al sur de 80° S se abre la geográfica y la interfaz ofrece copiar las coordenadas.
@@ -46,7 +47,7 @@ export function enlaceHorizons({ lat, lon, inicioMs, finMs, cuerpo = "sol" }) {
     STEP_SIZE: "'1 h'",
     TIME_TYPE: "'UT'",
     QUANTITIES: "'4'",
-    CSV_FORMAT: "'YES'",
+    CSV_FORMAT: "'NO'",
     ANG_FORMAT: "'DEG'",
     EXTRA_PREC: "'YES'",
   });

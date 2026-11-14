@@ -97,7 +97,8 @@ export default {
 
   nasa: {
     titulo: "View in NASA tools",
-    horizonsAyuda: "JPL Horizons ephemeris from this site, every hour of the mission (opens as text)",
+    horizons: "JPL Horizons table (text)",
+    horizonsAyuda: "Apparent azimuth and elevation from this site, every hour of the mission, in degrees. It's Horizons' official output: a text table, not an app.",
     cuerpo: "Body in Horizons",
     sol: "Sun",
     tierra: "Earth",

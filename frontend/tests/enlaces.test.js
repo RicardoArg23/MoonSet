@@ -17,7 +17,7 @@ test("las fechas van en UTC con el formato de Horizons", () => {
   assert.equal(fechaHorizons(FIN), "2027-05-16 00:00");
 });
 
-test("el enlace de Horizons lleva los mismos parámetros que validar_horizons.py", () => {
+test("el enlace de Horizons lleva los parámetros de validar_horizons.py, en tabla alineada", () => {
   const url = new URL(enlaceHorizons({ lat: -3.01239, lon: -23.42157, inicioMs: LLEGADA, finMs: FIN, cuerpo: "tierra" }));
   assert.equal(url.origin + url.pathname, "https://ssd.jpl.nasa.gov/api/horizons.api");
   const p = Object.fromEntries(url.searchParams);
@@ -35,7 +35,7 @@ test("el enlace de Horizons lleva los mismos parámetros que validar_horizons.py
     STEP_SIZE: "'1 h'",
     TIME_TYPE: "'UT'",
     QUANTITIES: "'4'",
-    CSV_FORMAT: "'YES'",
+    CSV_FORMAT: "'NO'",
     ANG_FORMAT: "'DEG'",
     EXTRA_PREC: "'YES'",
   });
