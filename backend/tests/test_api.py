@@ -11,6 +11,15 @@ def test_salud():
     assert cliente.get("/salud").json() == {"estado": "ok"}
 
 
+def test_cors_en_desarrollo_acepta_cualquier_puerto_de_localhost():
+    """Sin MOONSET_CORS, el frontend puede correr en cualquier puerto local; un origen externo no pasa."""
+    for origen in ("http://localhost:5173", "http://localhost:5180", "http://127.0.0.1:4173"):
+        r = cliente.get("/salud", headers={"Origin": origen})
+        assert r.headers.get("access-control-allow-origin") == origen
+    r = cliente.get("/salud", headers={"Origin": "http://ejemplo.com:5173"})
+    assert "access-control-allow-origin" not in r.headers
+
+
 def test_lista_de_sitios():
     sitios = cliente.get("/sitios").json()
     assert any(s["id"] == "apollo-11" for s in sitios)

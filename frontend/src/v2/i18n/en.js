@@ -95,6 +95,19 @@ export default {
     quitarPunto: "Remove this point from my points",
   },
 
+  nasa: {
+    titulo: "View in NASA tools",
+    horizons: "JPL Horizons table (text)",
+    horizonsAyuda: "Apparent azimuth and elevation from this site, every hour of the mission, in degrees. It's Horizons' official output: a text table, not an app.",
+    cuerpo: "Body in Horizons",
+    sol: "Sun",
+    tierra: "Earth",
+    mapaAyuda: "Opens centered on the site, in the geographic view",
+    buscar: "The polar view isn't linked yet. In QuickMap's search box:",
+    copiar: "Copy",
+    copiado: "Copied",
+  },
+
   sistema: {
     botonAyuda: "Mission panels and battery",
     perfil: "Profile",
