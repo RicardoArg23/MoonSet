@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cargarMapa } from "./datos";
-import { evaluarVecindad } from "./calculo";
+import { evaluarVecindadEnergia } from "./energia";
 import { rico, useIdioma } from "./i18n";
 
 // Mapa 2D del polo sur visto desde arriba.
@@ -43,7 +43,7 @@ function radioDeLatitud(lat) {
   return 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
 }
 
-export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, autonomiaH, hayBackend }) {
+export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, sistema, hayBackend }) {
   const { t, f } = useIdioma();
   const { num, nombreCorto } = f;
   const [meta, setMeta] = useState(undefined); // undefined = cargando, null = no hay imagen
@@ -94,14 +94,14 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
 
   const celdas = useMemo(() => {
     if (!vecindad || !esPolar) return null;
-    const evaluadas = evaluarVecindad(sitio, vecindad, i0, duracionH, autonomiaH);
+    const evaluadas = evaluarVecindadEnergia(sitio, vecindad, sistema, i0, duracionH);
     const { n, paso_m: paso } = vecindad;
     const medio = Math.floor(n / 2);
     return evaluadas.map((c, k) => {
       const p = destino(sitio.sitio.lat, sitio.sitio.lon, ((k % n) - medio) * paso, (medio - Math.floor(k / n)) * paso);
       return { ...c, xy: proyectar(p.lat, p.lon), paso };
     });
-  }, [vecindad, esPolar, sitio, i0, duracionH, autonomiaH]);
+  }, [vecindad, esPolar, sitio, i0, duracionH, sistema]);
 
   // Zoom con la rueda, alrededor del cursor. El listener no puede ser pasivo para frenar el scroll.
   useEffect(() => {
@@ -259,7 +259,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
                 stroke={c.viable ? "rgba(255,184,74,0.9)" : "rgba(255,156,138,0.55)"}
                 strokeWidth={px(1)}
               >
-                <title>{t("mapa.celda", { luz: num(c.luzPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("mapa.noSirveSufijo"))}</title>
+                <title>{t("mapa.celda", { luz: num(c.luzPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("mapa.noSirveSufijo"))}</title>
               </circle>
             ))}
           </g>

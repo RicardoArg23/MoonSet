@@ -179,6 +179,51 @@ a { color: var(--texto-2); }
 .cinta { display: flex; gap: 2px; }
 .cinta i { display: block; border-radius: 999px; min-width: 1px; }
 
+/* Sistema de energía: botón con resumen y panel desplegable (Sistema.jsx) */
+.sistema { position: relative; }
+.sistema > button { height: 48px; padding: 0 18px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.sistema > button[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
+.sistema-icono { color: var(--acento); }
+.sistema > button[aria-expanded="true"] .sistema-icono { color: inherit; }
+.sistema-panel { position: absolute; right: 0; top: 56px; width: 400px; max-height: calc(100vh - 110px); overflow: auto; padding: 16px 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; z-index: 5; }
+.sistema-perfil { display: flex; align-items: flex-end; gap: 10px; }
+.sistema-perfil label { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.sistema-panel select { height: 38px; padding: 0 10px; background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color: var(--texto); color-scheme: dark; }
+.etiqueta-ejemplo { flex-shrink: 0; height: 26px; margin-bottom: 6px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--acento); background: rgba(255, 184, 74, 0.14); border: 1px dashed rgba(255, 184, 74, 0.6); }
+.sistema-bateria { display: flex; align-items: center; gap: 10px; }
+.sistema-bateria .rotulo { min-width: 56px; }
+.sistema-bateria .enlace { margin-left: auto; min-height: 30px; padding: 0; font-size: 13px; }
+.segmentos { display: flex; padding: 3px; border-radius: 999px; background: var(--relleno); }
+.segmentos button { min-height: 30px; padding: 0 14px; border: 0; font-size: 13px; }
+.segmentos button[aria-pressed="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
+.ficha { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; background: var(--relleno); font-size: 13px; }
+.ficha div { display: flex; justify-content: space-between; gap: 10px; }
+.ficha dt { color: var(--tenue); }
+.ficha dd { text-align: right; }
+.ficha small { color: var(--tenue); margin-left: 4px; }
+.ficha p { font-size: 12px; }
+.campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.campo { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tenue); min-width: 0; }
+.campo-entrada { display: flex; align-items: center; gap: 6px; }
+.campo input { width: 100%; min-width: 0; height: 36px; padding: 0 10px; font-size: 14px; font-weight: 600; color: var(--texto); background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color-scheme: dark; }
+.campo small { flex-shrink: 0; min-width: 2.2em; font-size: 12px; color: var(--texto-2); }
+.campo select { width: 100%; }
+.campo-dato { display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--tenue); }
+.campo-dato b { height: 36px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: var(--texto-2); }
+.avanzado { border-top: 1px solid var(--borde); padding-top: 10px; }
+.avanzado summary { cursor: pointer; font-size: 13px; color: var(--texto-2); margin-bottom: 10px; }
+.avanzado .nota-chica { margin-top: 10px; font-size: 12px; }
+
+/* Salidas del modelo de energía en el panel */
+.avisos { list-style: none; display: grid; gap: 6px; margin: 0 0 12px; padding: 0; }
+.avisos li { padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #ffd9a0; background: rgba(255, 184, 74, 0.12); border-left: 3px solid var(--acento); }
+.panel-accion { flex: 0 0 auto; margin: -2px 0 14px; font-size: 14px; color: var(--texto-2); line-height: 1.35; }
+.panel-detalle { flex: 0 0 auto; margin-top: 10px; font-size: 13px; }
+.panel-detalle summary { cursor: pointer; color: var(--texto-2); }
+.panel-detalle dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; margin-top: 8px; }
+.panel-detalle dt { font-size: 12px; color: var(--tenue); }
+.panel-detalle dd { font-weight: 500; }
+
 /* ---------- barra de tiempo ---------- */
 .dock { grid-area: dock; height: 148px; border-radius: 24px; padding: 0 24px; display: grid; grid-template-columns: 196px minmax(0, 1fr) 188px; gap: 24px; align-items: center; }
 .fecha-grande { display: flex; align-items: baseline; font-size: 32px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.1; }
@@ -197,6 +242,7 @@ a { color: var(--texto-2); }
 .meses { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); margin-top: 7px; font-size: 12px; color: var(--tenue); }
 .pista.mision { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .pista.mision .cinta { height: 8px; }
+.curva-carga { display: block; width: 100%; height: 18px; overflow: visible; }
 .cabezal { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1px; background: #fff; border-radius: 2px; pointer-events: none; }
 .leyenda { display: flex; flex-wrap: wrap; gap: 2px 18px; margin-top: 8px; font-size: 12px; color: var(--tenue); height: 18px; overflow: hidden; }
 .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
@@ -262,6 +308,8 @@ a { color: var(--texto-2); }
   .tarjeta { height: auto; }
   .dock { order: 5; height: auto; padding: 18px; grid-template-columns: minmax(0, 1fr); }
   .puntos-lista { right: auto; left: 0; max-width: calc(100vw - 28px); }
+  .sistema-panel { right: auto; left: 0; width: min(400px, calc(100vw - 28px)); }
+  .sistema > button { max-width: calc(100vw - 28px); overflow: hidden; text-overflow: ellipsis; }
   .creditos { position: static; order: 6; text-align: left; }
   .columnas { grid-template-columns: repeat(var(--n), minmax(240px, 1fr)); }
   .vistas { flex: 1 1 100%; min-width: 0; overflow-x: auto; }

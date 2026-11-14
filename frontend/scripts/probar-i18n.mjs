@@ -61,8 +61,8 @@ igual(fEs.duracion(48), "48 h", "es duracion corta");
 igual(fEs.duracion(84), "3,5 días", "es duracion larga");
 igual(fEs.nombreCorto(sitio), "Borde de Shackleton", "es nombre (cae al de los datos)");
 igual(fEs.nombreSitio(propio), "Punto propio 88,80° S · 125,00° E", "es punto propio");
-igual(tEs("panel.esperarDetalle", { n: 1, h: 90 }), "1 día más · noche de 90 h", "es singular");
-igual(tEs("panel.esperarDetalle", { n: 3, h: 90 }), "3 días más · noche de 90 h", "es plural");
+igual(tEs("panel.esperarDetalle", { n: 1, pct: 40 }), "1 día más · batería mínima 40 %", "es singular");
+igual(tEs("panel.esperarDetalle", { n: 3, pct: 40 }), "3 días más · batería mínima 40 %", "es plural");
 igual(tEs("no.existe"), "no.existe", "clave inexistente");
 
 const tEn = crearTraductor("en");
@@ -73,7 +73,7 @@ igual(fEn.meses.join(" "), "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", "e
 igual(fEn.cardinal(270), "W", "en cardinal");
 igual(fEn.duracion(84), "3.5 days", "en duracion larga");
 igual(fEn.nombreCorto(sitio), "Shackleton rim", "en nombre");
-igual(tEn("panel.esperarDetalle", { n: 1, h: 90 }), "1 more day · 90 h night", "en singular");
+igual(tEn("panel.esperarDetalle", { n: 1, pct: 40 }), "1 more day · lowest charge 40%", "en singular");
 
 if (fallas.length) {
   console.error(`i18n: ${fallas.length} problema(s)\n- ${fallas.join("\n- ")}`);

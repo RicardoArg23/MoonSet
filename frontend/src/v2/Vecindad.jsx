@@ -1,21 +1,21 @@
 import { useMemo } from "react";
-import { evaluarVecindad } from "./calculo";
+import { evaluarVecindadEnergia } from "./energia";
 import { rico, useIdioma } from "./i18n";
 
 // Qué le pasa a la misma misión si se aluniza a unos cientos de metros del sitio.
-export default function Vecindad({ sitio, vecindad, i0, duracionH, autonomiaH }) {
+export default function Vecindad({ sitio, vecindad, i0, duracionH, sistema }) {
   const { t, f } = useIdioma();
   const { num } = f;
   const { n, paso_m: paso } = vecindad;
-  const celdas = useMemo(() => evaluarVecindad(sitio, vecindad, i0, duracionH, autonomiaH), [sitio, vecindad, i0, duracionH, autonomiaH]);
+  const celdas = useMemo(() => evaluarVecindadEnergia(sitio, vecindad, sistema, i0, duracionH), [sitio, vecindad, sistema, i0, duracionH]);
   const medio = Math.floor(n / 2);
   const centro = celdas[medio * n + medio];
 
-  // El mejor punto: primero que sobreviva, después la noche más corta, después más luz.
+  // El mejor punto: primero que sobreviva, después el que más batería conserva, después más luz.
   let mejor = medio * n + medio;
   celdas.forEach((c, k) => {
     const m = celdas[mejor];
-    if (Number(c.viable) > Number(m.viable) || (c.viable === m.viable && (c.nocheH < m.nocheH || (c.nocheH === m.nocheH && c.luzPct > m.luzPct)))) mejor = k;
+    if (Number(c.viable) > Number(m.viable) || (c.viable === m.viable && (c.minimoPct > m.minimoPct || (c.minimoPct === m.minimoPct && c.luzPct > m.luzPct)))) mejor = k;
   });
   const fila = Math.floor(mejor / n);
   const col = mejor % n;
@@ -30,7 +30,7 @@ export default function Vecindad({ sitio, vecindad, i0, duracionH, autonomiaH })
   if (mejor === medio * n + medio) frase = t("alrededores.yaMejor");
   else {
     const metros = distancia >= 1000 ? `${num(distancia / 1000, 1)} km` : `${num(distancia)} m`;
-    frase = t("alrededores.frase", { distancia: metros, rumbo, noche0: centro.nocheH, noche1: b.nocheH, luz0: num(centro.luzPct), luz1: num(b.luzPct) });
+    frase = t("alrededores.frase", { distancia: metros, rumbo, bateria0: num(centro.minimoPct), bateria1: num(b.minimoPct), luz0: num(centro.luzPct), luz1: num(b.luzPct) });
   }
 
   return (
@@ -41,7 +41,7 @@ export default function Vecindad({ sitio, vecindad, i0, duracionH, autonomiaH })
             key={k}
             className={`${c.viable ? "si" : "no"}${k === medio * n + medio ? " elegido" : ""}${k === mejor && k !== medio * n + medio ? " mejor" : ""}`}
             style={c.viable ? { background: `rgba(255,184,74,${(0.3 + (0.7 * c.luzPct) / 100).toFixed(2)})` } : undefined}
-            title={t("alrededores.celda", { distancia: num(Math.hypot((k % n) - medio, Math.floor(k / n) - medio) * paso), luz: num(c.luzPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("alrededores.noSirveSufijo"))}
+            title={t("alrededores.celda", { distancia: num(Math.hypot((k % n) - medio, Math.floor(k / n) - medio) * paso), luz: num(c.luzPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("alrededores.noSirveSufijo"))}
           />
         ))}
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Line, OrbitControls, useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import Teselas from "./globo/Teselas";
+import Teselas from "./globo/Teselas.jsx"; // con extensión: en Windows "Teselas" y "teselas" son el mismo nombre
 import { CAPAS } from "./globo/teselas";
 
 // Mismo mosaico LROC WAC que las teselas en línea (backend/scripts/generar_textura_luna.py).

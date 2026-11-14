@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { porDia, tramos } from "./calculo";
+import { sobrevivePorDia } from "./energia";
 import { useIdioma } from "./i18n";
 
 const DIA_MS = 86_400_000;
@@ -15,8 +16,24 @@ function Cinta({ serie, desde, hasta, color }) {
   );
 }
 
+// Estado de carga de la batería hora por hora, con la reserva punteada. Comparte el ancho y el
+// cabezal con las cintas de luz y contacto, así cada hora queda alineada.
+function CurvaCarga({ soc, reservaPct, sobrevive }) {
+  const n = soc.length;
+  let puntos = "";
+  for (let k = 0; k < n; k++) puntos += `${k + 0.5},${(1 - soc[k]).toFixed(4)} `;
+  const yReserva = 1 - reservaPct / 100;
+  return (
+    <svg className="curva-carga" viewBox={`0 0 ${n} 1`} preserveAspectRatio="none" aria-hidden="true">
+      <polygon points={`0.5,1 ${puntos}${n - 0.5},1`} fill={sobrevive ? "rgba(123,220,162,.16)" : "rgba(255,156,138,.16)"} />
+      <polyline points={puntos} fill="none" stroke={sobrevive ? "var(--bien)" : "var(--mal)"} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      <line x1="0" x2={n} y1={yReserva} y2={yReserva} stroke="var(--texto-2)" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
 // Barra de tiempo fija: fecha y hora de llegada, el año del sitio y el avance dentro de la misión.
-export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, autonomiaH, horaMision, setHoraMision }) {
+export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, sistema, soc, sobrevive, horaMision, setHoraMision }) {
   const { t, f: formato } = useIdioma();
   const [animando, setAnimando] = useState(false);
   useEffect(() => {
@@ -27,16 +44,17 @@ export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duraci
 
   const { fondo, viables } = useMemo(() => {
     const p = porDia(sitio, duracionH, horaLlegada);
+    const sirve = sobrevivePorDia(sitio, sistema, duracionH, horaLlegada);
     const paradas = [];
     let n = 0;
     for (let d = 0; d < 365; d++) {
-      const ok = p.nocheH[d] <= autonomiaH;
+      const ok = sirve[d] === 1;
       if (ok) n += 1;
       const color = ok ? `rgba(255,184,74,${(0.3 + (0.7 * p.luzPct[d]) / 100).toFixed(2)})` : "rgba(255,255,255,.08)";
       paradas.push(`${color} ${((d / 365) * 100).toFixed(3)}% ${(((d + 1) / 365) * 100).toFixed(3)}%`);
     }
     return { fondo: `linear-gradient(90deg, ${paradas.join(", ")})`, viables: n };
-  }, [sitio, duracionH, autonomiaH, horaLlegada]);
+  }, [sitio, duracionH, sistema, horaLlegada]);
 
   const f = new Date(sitio.t0 + dia * DIA_MS);
   const i0 = dia * 24 + horaLlegada;
@@ -74,10 +92,11 @@ export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duraci
         <div className="pista mision">
           <Cinta serie={sitio.luz} desde={i0} hasta={i0 + duracionH} color="var(--acento)" />
           <Cinta serie={sitio.senal} desde={i0} hasta={i0 + duracionH} color="var(--tierra)" />
+          <CurvaCarga soc={soc} reservaPct={sistema.reservaPct} sobrevive={sobrevive} />
           <div className="cabezal" style={{ left: `${(horaMision / (duracionH - 1)) * 100}%` }} aria-hidden="true" />
           <input type="range" min="0" max={duracionH - 1} value={horaMision} onChange={(e) => setHoraMision(Number(e.target.value))} aria-label={t("dock.momentoAria")} />
         </div>
-        <p className="leyenda"><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+        <p className="leyenda"><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span><i style={{ background: "var(--bien)" }} />{t("dock.leyendaBateria")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
       </div>
 
       <div className="dock-reloj">
