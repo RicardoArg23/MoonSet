@@ -70,11 +70,12 @@ export function fraccionDisco(margenSol) {
 }
 
 // Métricas de una misión que llega en el índice i0 y dura `duracionH` horas.
+// Si sobrevive o no lo decide la simulación de energía (energia.js), no este módulo.
 // Energía: sin atmósfera, la luz no se atenúa cerca del horizonte; lo que cambia con la elevación
 // es cuánto recibe un panel según su orientación.
 //  - energiaSeguidorPct: panel que sigue al Sol (o vertical giratorio): fracción de disco visible.
 //  - energiaHorizontalPct: panel fijo acostado: fracción de disco x seno de la elevación.
-export function evaluarMision(sitio, i0, duracionH, autonomiaH) {
+export function evaluarMision(sitio, i0, duracionH) {
   const fin = Math.min(sitio.muestras, i0 + duracionH);
   const n = fin - i0;
   let conLuz = 0;
@@ -105,8 +106,6 @@ export function evaluarMision(sitio, i0, duracionH, autonomiaH) {
     elMediaConLuz: conLuz ? elSuma / conLuz : null,
     energiaSeguidorPct: (100 * seguidor) / n,
     energiaHorizontalPct: (100 * horizontal) / n,
-    viable: noche <= autonomiaH,
-    faltanH: Math.max(0, noche - autonomiaH),
     solVisible: sitio.luz[i0] === 1,
     tierraVisible: sitio.senal[i0] === 1,
     hCambioSol: horasHastaCambio(sitio.luz, i0),
@@ -115,7 +114,7 @@ export function evaluarMision(sitio, i0, duracionH, autonomiaH) {
 }
 
 // Para cada día de llegada del año (a la hora UTC indicada): luz, noche más larga y señal de la misión.
-// Se memoriza por duración y hora porque alimenta la franja de fechas y la búsqueda de alternativas.
+// Se memoriza por duración y hora porque alimenta la franja de fechas.
 export function porDia(sitio, duracionH, horaLlegada = 0) {
   const clave = `${duracionH}/${horaLlegada}`;
   const cache = sitio._porDia.get(clave);
@@ -139,36 +138,6 @@ export function porDia(sitio, duracionH, horaLlegada = 0) {
   const res = { dias, luzPct, senalPct, nocheH };
   sitio._porDia.set(clave, res);
   return res;
-}
-
-// Primer día viable desde `dia` en el mismo sitio (hacia adelante, porque la misión ya se atrasó).
-export function fechaViableCercana(sitio, dia, duracionH, autonomiaH, horaLlegada = 0) {
-  const p = porDia(sitio, duracionH, horaLlegada);
-  for (let d = dia; d < Math.min(365, p.dias); d++) {
-    if (p.nocheH[d] <= autonomiaH) return d;
-  }
-  return null;
-}
-
-// Misma misión evaluada en una grilla de puntos alrededor del sitio (data/anual/vecindad-<id>.json).
-// Usa la posición del Sol del sitio central con la máscara de horizonte de cada punto.
-export function evaluarVecindad(sitio, vecindad, i0, duracionH, autonomiaH) {
-  const fin = Math.min(sitio.muestras, i0 + duracionH);
-  return vecindad.horizontes.map((hz, k) => {
-    let conLuz = 0;
-    let noche = 0;
-    let racha = 0;
-    for (let i = i0; i < fin; i++) {
-      if (sitio.sol_el[i] - alturaHorizonte(hz, sitio.sol_az[i]) > -RADIO_SOL_DEG) {
-        conLuz += 1;
-        racha = 0;
-      } else {
-        racha += 1;
-        if (racha > noche) noche = racha;
-      }
-    }
-    return { luzPct: (100 * conLuz) / (fin - i0), nocheH: noche, viable: noche <= autonomiaH, alturaM: vecindad.alturas[k] };
-  });
 }
 
 // Tramos consecutivos de una serie 0/1 entre dos índices: [{ valor, horas }]

@@ -1,12 +1,15 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { cargarCoordenadas, cargarGeometria, cargarSitios, cargarVecindad, hayBackend } from "./datos";
-import { evaluarMision, fechaViableCercana, porDia, tramos } from "./calculo";
+import { evaluarMision, tramos } from "./calculo";
+import { entradaSitio, evaluarEnergia, fechaViableEnergia, recomendar } from "./energia";
+import { PERFIL_INICIAL, PERFIL_PERSONALIZADO, PERFILES } from "./configEnergia";
 import { ProveedorIdioma, useIdioma } from "./i18n";
 import { BASE_METROS_POR_PIXEL, CAPAS } from "./globo/teselas";
 import Dock from "./Dock";
 import VistaHorizonte from "./VistaHorizonte";
 import Vecindad from "./Vecindad";
 import MapaPolar from "./MapaPolar";
+import Sistema from "./Sistema";
 import EnlacesNasa from "./EnlacesNasa";
 import "./estilos.css";
 
@@ -28,16 +31,19 @@ function Cinta({ serie, desde, hasta, color }) {
   );
 }
 
-// Barra que compara la noche más larga con la batería. La escala es compartida para poder comparar.
-function Medidor({ nocheH, autonomiaH, tope }) {
-  const { t } = useIdioma();
+// Batería mínima de la misión (% de la capacidad usable) frente a la reserva, que es la marca.
+function BarraCarga({ minimoPct, reservaPct, sobrevive }) {
+  const { t, f } = useIdioma();
   return (
-    <div className="medidor" role="img" aria-label={t("panel.medidorAria", { noche: nocheH, bateria: autonomiaH })}>
-      <i style={{ transform: `scaleX(${Math.min(1, nocheH / tope)})`, background: nocheH <= autonomiaH ? "var(--bien)" : "var(--mal)" }} />
-      <b style={{ left: `${Math.min(100, (autonomiaH / tope) * 100)}%` }} />
+    <div className="medidor" role="img" aria-label={t("energia.barraAria", { minimo: f.num(minimoPct), reserva: f.num(reservaPct) })}>
+      <i style={{ transform: `scaleX(${Math.max(0, Math.min(1, minimoPct / 100))})`, background: sobrevive ? "var(--bien)" : "var(--mal)" }} />
+      <b style={{ left: `${Math.min(100, reservaPct)}%` }} />
     </div>
   );
 }
+
+// kWh redondeados hacia arriba: lo que falta nunca se muestra menor de lo que es.
+const kwhArriba = (x) => (x < 10 ? Math.ceil(x * 10) / 10 : Math.ceil(x));
 
 export default function App() {
   return (
@@ -49,7 +55,7 @@ export default function App() {
 
 function Cabina() {
   const { idioma, setIdioma, idiomas, t, f } = useIdioma();
-  const { num, coordenadas, fechaCorta, fechaLarga, nombreCorto } = f;
+  const { num, coordenadas, fechaCorta, fechaLarga, nombreCorto, duracion } = f;
   const [base, setBase] = useState(null); // sitios de la lista curada
   const [guardados, setGuardados] = useState([]); // puntos propios que el usuario decidió conservar
   const [prueba, setPrueba] = useState(null); // punto tocado en la Luna, todavía sin guardar
@@ -60,7 +66,8 @@ function Cabina() {
   const [dia, setDia] = useState(121); // 2 de mayo de 2027
   const [horaLlegada, setHoraLlegada] = useState(0);
   const [duracionDias, setDuracionDias] = useState(14);
-  const [autonomiaH, setAutonomiaH] = useState(100);
+  const [perfilId, setPerfilId] = useState(PERFIL_INICIAL);
+  const [sistema, setSistema] = useState(() => PERFILES.find((p) => p.id === PERFIL_INICIAL).valores); // paneles + batería
   const [horaMision, setHoraMision] = useState(0);
   const [fijados, setFijados] = useState([]); // [{ sitioId, dia, horaLlegada }]
   const [vecindades, setVecindades] = useState({}); // id -> grilla | null
@@ -96,9 +103,15 @@ function Cabina() {
 
   // Todos los sitios evaluados en la fecha elegida: colorea el globo y alimenta la sugerencia.
   const evaluados = useMemo(
-    () => (sitios ? sitios.map((s) => ({ s, m: evaluarMision(s, i0, duracionH, autonomiaH) })) : []),
-    [sitios, i0, duracionH, autonomiaH]
+    () => (sitios ? sitios.map((s) => ({ s, m: evaluarMision(s, i0, duracionH), e: evaluarEnergia(s, sistema, i0, duracionH) })) : []),
+    [sitios, i0, duracionH, sistema]
   );
+  // Cuánto falta o sobra en el sitio elegido (búsquedas sobre la simulación): no depende de la hora que se mira.
+  const accion = useMemo(() => {
+    if (!sitio) return null;
+    const fin = Math.min(sitio.muestras, i0 + duracionH);
+    return recomendar(sistema, entradaSitio(sitio, sistema.orientacion), i0, fin, evaluarEnergia(sitio, sistema, i0, duracionH, { serie: false }));
+  }, [sitio, sistema, i0, duracionH]);
 
   if (error) {
     return (
@@ -110,21 +123,48 @@ function Cabina() {
   }
   if (!sitio || !geometria) return <main className="aviso tenue">{t("app.cargando")}</main>;
 
-  const m = evaluados.find((r) => r.s === sitio).m;
-  const viables = new Set(evaluados.filter((r) => r.m.viable).map((r) => r.s.sitio.id));
+  const { m, e } = evaluados.find((r) => r.s === sitio);
+  const viables = new Set(evaluados.filter((r) => r.e.sobrevive).map((r) => r.s.sitio.id));
   const hora = Math.min(horaMision, duracionH - 1);
   const iAhora = i0 + hora;
   const iGeo = Math.min(geometria.sol_lat.length - 1, iAhora);
   const esPrueba = prueba !== null && sitio === prueba;
   const esGuardado = guardados.includes(sitio);
-  const diaViable = m.viable ? null : fechaViableCercana(sitio, dia, duracionH, autonomiaH, horaLlegada);
+  const diaViable = e.sobrevive ? null : fechaViableEnergia(sitio, sistema, dia, duracionH, horaLlegada);
+  const minimoDiaViable = diaViable === null ? null : evaluarEnergia(sitio, sistema, diaViable * 24 + horaLlegada, duracionH, { serie: false }).minimoPct;
   // Entre los sitios que sí sirven, el que más contacto con la Tierra tiene (y a igual contacto, más luz).
-  const mejorOtro = m.viable
+  const mejorOtro = e.sobrevive
     ? null
-    : evaluados.filter((r) => r.m.viable && r.s !== sitio).sort((a, b) => b.m.senalPct - a.m.senalPct || b.m.luzPct - a.m.luzPct)[0];
+    : evaluados.filter((r) => r.e.sobrevive && r.s !== sitio).sort((a, b) => b.m.senalPct - a.m.senalPct || b.m.luzPct - a.m.luzPct)[0];
   const vecindad = vecindades[sitio.sitio.id];
   const yaFijado = fijados.some((f) => f.sitioId === sitio.sitio.id && f.dia === dia && f.horaLlegada === horaLlegada);
-  const tope = Math.max(200, autonomiaH * 2);
+  const av = e.avisos;
+  const hayAvisos = av.potenciaNominal || av.ciclos || av.nochesSinCalefaccion;
+  const kwh = (x) => num(kwhArriba(x), x < 10 ? 1 : 0);
+  let fraseAccion;
+  if (e.sobrevive) {
+    fraseAccion = accion.capacidadMinimaKWh === 0
+      ? t("energia.sinBateria")
+      : t("energia.sobra", { pct: num(Math.floor(accion.sobraPct)), kwh: kwh(accion.capacidadMinimaKWh) });
+  } else if (accion.faltanKWh !== null && accion.faltanPaneles !== null) {
+    fraseAccion = t("energia.faltan", { kwh: kwh(accion.faltanKWh), n: accion.faltanPaneles });
+  } else if (accion.faltanKWh !== null) {
+    fraseAccion = t("energia.panelesNoAlcanzan", { h: e.nocheMaxH, kwh: kwh(accion.faltanKWh) });
+  } else if (accion.faltanPaneles !== null) {
+    fraseAccion = t("energia.faltanPaneles", { n: accion.faltanPaneles });
+  } else {
+    fraseAccion = t("energia.nadaAlcanza");
+  }
+
+  function elegirPerfil(id) {
+    setPerfilId(id);
+    const p = PERFILES.find((x) => x.id === id);
+    if (p) setSistema(p.valores);
+  }
+  function cambiarSistema(cambios) {
+    setSistema((s) => ({ ...s, ...cambios }));
+    setPerfilId(PERFIL_PERSONALIZADO);
+  }
   const deCerca = detalle.metrosPorPixel < 1000; // el globo está acercado: el botón ofrece volver a la Luna entera
 
   function elegirSitio(id) {
@@ -192,10 +232,11 @@ function Cabina() {
     .map((f, k) => {
       const s = sitios.find((x) => x.sitio.id === f.sitioId);
       const f0 = f.dia * 24 + f.horaLlegada;
-      return s ? { f, k, s, f0, r: evaluarMision(s, f0, duracionH, autonomiaH) } : null;
+      return s ? { f, k, s, f0, r: evaluarMision(s, f0, duracionH), en: evaluarEnergia(s, sistema, f0, duracionH, { serie: false }) } : null;
     })
     .filter(Boolean);
-  const mejorFijado = fijadosVista.length > 1 ? fijadosVista.reduce((a, b) => (b.r.nocheH < a.r.nocheH ? b : a)) : null;
+  // El de más margen: el que termina con más batería en su peor momento.
+  const mejorFijado = fijadosVista.length > 1 ? fijadosVista.reduce((a, b) => (b.en.minimoPct > a.en.minimoPct ? b : a)) : null;
 
   return (
     <div className={`cabina en-${vista}`}>
@@ -230,8 +271,8 @@ function Cabina() {
         </nav>
         <div className="parametros vidrio">
           <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
-          <label>{t("parametros.bateria")}<input type="number" min="0" max="720" step="10" value={autonomiaH} onChange={(e) => setAutonomiaH(Math.max(0, Math.min(720, Number(e.target.value) || 0)))} />h</label>
         </div>
+        <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} />
         <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
             {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}
@@ -272,7 +313,7 @@ function Cabina() {
         </div>
       </header>
 
-      <aside className={`panel vidrio ${m.viable ? "si" : "no"}`} aria-live="polite">
+      <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
         <div className="panel-sitio">
           <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
             {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
@@ -281,20 +322,41 @@ function Cabina() {
         </div>
 
         <div className="panel-veredicto">
-          <p className="chip"><i aria-hidden="true" />{m.nocheH === 0 ? t("panel.luzToda") : m.viable ? t("panel.sobran", { h: autonomiaH - m.nocheH }) : t("panel.faltan", { h: m.faltanH })}</p>
-          <h1>{m.viable ? t("panel.sobrevive") : t("panel.noSobrevive")}</h1>
+          <p className="chip"><i aria-hidden="true" />{!e.sobrevive ? t("energia.chipFalla", { t: duracion(e.horaFalla + 1) }) : m.nocheH === 0 ? t("panel.luzToda") : t("energia.chipNoche", { t: duracion(m.nocheH) })}</p>
+          <h1>{e.sobrevive ? t("panel.sobrevive") : t("panel.noSobrevive")}</h1>
         </div>
 
+        {hayAvisos && (
+          <ul className="avisos">
+            {av.potenciaNominal && <li>{t("energia.avisoNominal", { max: num(av.maxDescargaKW, 2), nominal: num(av.potenciaNominalKW, 2) })}</li>}
+            {av.ciclos && <li>{t("energia.avisoCiclos", { usados: num(e.ciclos, 1), vida: num(av.vidaCiclos) })}</li>}
+            {av.nochesSinCalefaccion && <li>{t("energia.avisoCalefaccion")}</li>}
+          </ul>
+        )}
+
         <div className="panel-medidor">
-          <p><span>{t("panel.nocheLarga")} <b>{m.nocheH} h</b></span><span>{t("panel.bateria")} <b>{autonomiaH} h</b></span></p>
-          <Medidor nocheH={m.nocheH} autonomiaH={autonomiaH} tope={tope} />
+          <p><span>{t("energia.minima")} <b>{num(e.minimoPct)} %</b></span><span>{t("energia.reserva")} <b>{num(sistema.reservaPct)} %</b></span></p>
+          <BarraCarga minimoPct={e.minimoPct} reservaPct={sistema.reservaPct} sobrevive={e.sobrevive} />
         </div>
+        <p className="panel-accion">{fraseAccion}</p>
 
         <dl className="panel-cifras">
           <div><dt>{t("panel.luzSolar")}</dt><dd>{num(m.luzPct)}<small> %</small></dd></div>
           <div><dt>{t("panel.contacto")}</dt><dd>{num(m.senalPct)}<small> %</small></dd></div>
           <div title={t("panel.energiaAyuda")}><dt>{t("panel.energia")}</dt><dd>{num(m.energiaSeguidorPct)}<small> %</small></dd></div>
         </dl>
+
+        <details className="panel-detalle">
+          <summary>{t("energia.detalle")}</summary>
+          <dl>
+            <div><dt>{t("energia.generada")}</dt><dd>{num(e.generadaKWh, 1)} kWh</dd></div>
+            <div><dt>{t("energia.consumida")}</dt><dd>{num(e.consumidaKWh, 1)} kWh</dd></div>
+            <div><dt>{t("energia.masa")}</dt><dd>{num(e.masaKg, 1)} kg</dd></div>
+            <div><dt>{t("energia.autonomia")}</dt><dd>{Number.isFinite(e.autonomiaH) ? duracion(Math.round(e.autonomiaH)) : t("energia.sinConsumo")}</dd></div>
+            <div><dt>{t("energia.bajoReserva")}</dt><dd>{e.horasBajoReserva} h</dd></div>
+            <div><dt>{t("energia.nocheLarga")}</dt><dd>{m.nocheH} h</dd></div>
+          </dl>
+        </details>
 
         <div className="panel-opciones">
           {esPrueba ? (
@@ -306,7 +368,7 @@ function Cabina() {
                 <button type="button" onClick={descartarPrueba}>{t("panel.descartar")}</button>
               </div>
             </>
-          ) : m.viable ? (
+          ) : e.sobrevive ? (
             <>
               <p className="rotulo">{t("panel.queHacer")}</p>
               <p className="nota vacio">{t("panel.nadaQueCambiar")}</p>
@@ -316,13 +378,13 @@ function Cabina() {
               <p className="rotulo">{t("panel.queHacer")}</p>
               {diaViable !== null && (
                 <button type="button" className="opcion" onClick={() => cambiarLlegada(diaViable, horaLlegada)}>
-                  <span><b>{t("panel.esperar", { fecha: fechaLarga(sitio.t0 + diaViable * DIA_MS) })}</b><small>{t("panel.esperarDetalle", { n: diaViable - dia, h: porDia(sitio, duracionH, horaLlegada).nocheH[diaViable] })}</small></span>
+                  <span><b>{t("panel.esperar", { fecha: fechaLarga(sitio.t0 + diaViable * DIA_MS) })}</b><small>{t("panel.esperarDetalle", { n: diaViable - dia, pct: num(minimoDiaViable) })}</small></span>
                   <i aria-hidden="true">→</i>
                 </button>
               )}
               {mejorOtro && (
                 <button type="button" className="opcion" onClick={() => elegirSitio(mejorOtro.s.sitio.id)}>
-                  <span><b>{t("panel.irA", { sitio: nombreCorto(mejorOtro.s.sitio) })}</b><small>{t("panel.irADetalle", { h: mejorOtro.m.nocheH, contacto: mejorOtro.m.senalPct === 0 ? t("panel.sinContacto") : t("panel.pctContacto", { pct: num(mejorOtro.m.senalPct) }) })}</small></span>
+                  <span><b>{t("panel.irA", { sitio: nombreCorto(mejorOtro.s.sitio) })}</b><small>{t("panel.irADetalle", { pct: num(mejorOtro.e.minimoPct), contacto: mejorOtro.m.senalPct === 0 ? t("panel.sinContacto") : t("panel.pctContacto", { pct: num(mejorOtro.m.senalPct) }) })}</small></span>
                   <i aria-hidden="true">→</i>
                 </button>
               )}
@@ -365,7 +427,7 @@ function Cabina() {
               vecindad={vecindad}
               i0={i0}
               duracionH={duracionH}
-              autonomiaH={autonomiaH}
+              sistema={sistema}
               hayBackend={hayBackend}
             />
           </section>
@@ -380,7 +442,7 @@ function Cabina() {
         {vista === "alrededores" && (
           <section className="tarjeta vidrio">
             {vecindad ? (
-              <Vecindad sitio={sitio} vecindad={vecindad} i0={i0} duracionH={duracionH} autonomiaH={autonomiaH} />
+              <Vecindad sitio={sitio} vecindad={vecindad} i0={i0} duracionH={duracionH} sistema={sistema} />
             ) : (
               <p className="tarjeta-vacia">{t("alrededores.vacio")}</p>
             )}
@@ -393,11 +455,11 @@ function Cabina() {
               <p className="tarjeta-vacia">{t("comparar.vacio", { n: MAX_FIJADOS })}</p>
             ) : (
               <div className="columnas" style={{ "--n": fijadosVista.length }}>
-                {fijadosVista.map(({ f, k, s, f0, r }) => (
-                  <article key={`${f.sitioId}/${f.dia}/${f.horaLlegada}`} className={`columna ${r.viable ? "si" : "no"}${mejorFijado && mejorFijado.k === k ? " mejor" : ""}`}>
+                {fijadosVista.map(({ f, k, s, f0, r, en }) => (
+                  <article key={`${f.sitioId}/${f.dia}/${f.horaLlegada}`} className={`columna ${en.sobrevive ? "si" : "no"}${mejorFijado && mejorFijado.k === k ? " mejor" : ""}`}>
                     <header>
                       <div>
-                        <p className="rotulo">{mejorFijado && mejorFijado.k === k ? t("comparar.nocheCorta") : t("comparar.escenario", { letra: "ABCD"[k] })}</p>
+                        <p className="rotulo">{mejorFijado && mejorFijado.k === k ? t("comparar.masMargen") : t("comparar.escenario", { letra: "ABCD"[k] })}</p>
                         <h3>{nombreCorto(s.sitio)}</h3>
                         <p className="tenue">{fechaCorta(s.t0 + f.dia * DIA_MS)} · {dos(f.horaLlegada)}:00 UTC</p>
                       </div>
@@ -405,10 +467,10 @@ function Cabina() {
                         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" /></svg>
                       </button>
                     </header>
-                    <p className="veredicto-chico">{r.viable ? t("panel.sobrevive") : t("panel.noSobrevive")}</p>
-                    <p className="tenue margen">{r.viable ? t("comparar.sobran", { h: autonomiaH - r.nocheH }) : t("comparar.faltan", { h: r.faltanH })}</p>
+                    <p className="veredicto-chico">{en.sobrevive ? t("panel.sobrevive") : t("panel.noSobrevive")}</p>
+                    <p className="tenue margen">{en.sobrevive ? t("comparar.minima", { pct: num(en.minimoPct) }) : t("energia.chipFalla", { t: duracion(en.horaFalla + 1) })}</p>
                     <p className="par"><span>{t("panel.nocheLarga")}</span><b>{r.nocheH} h</b></p>
-                    <Medidor nocheH={r.nocheH} autonomiaH={autonomiaH} tope={Math.max(tope, ...fijadosVista.map((x) => x.r.nocheH))} />
+                    <BarraCarga minimoPct={en.minimoPct} reservaPct={sistema.reservaPct} sobrevive={en.sobrevive} />
                     <p className="par"><span>{t("panel.luzSolar")}</span><b>{num(r.luzPct)} %</b></p>
                     <p className="par"><span>{t("panel.contacto")}</span><b>{num(r.senalPct)} %</b></p>
                     <p className="par"><span>{t("panel.energia")}</span><b>{num(r.energiaSeguidorPct)} %</b></p>
@@ -441,7 +503,9 @@ function Cabina() {
         alCambiarLlegada={cambiarLlegada}
         duracionDias={duracionDias}
         duracionH={duracionH}
-        autonomiaH={autonomiaH}
+        sistema={sistema}
+        soc={e.soc}
+        sobrevive={e.sobrevive}
         horaMision={hora}
         setHoraMision={setHoraMision}
       />
