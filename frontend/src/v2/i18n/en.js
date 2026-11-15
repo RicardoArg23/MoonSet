@@ -106,6 +106,7 @@ export default {
     error: "Couldn't compute the point: {error}",
     reintentar: "Retry",
     volver: "Back to the previous site",
+    alrededoresPropio: "Surroundings are precomputed only for the listed sites south of 85° S: when it's done, the view switches to the Globe.",
   },
 
   panel: {
