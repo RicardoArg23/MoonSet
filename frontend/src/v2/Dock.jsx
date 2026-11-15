@@ -33,7 +33,7 @@ function CurvaCarga({ soc, reservaPct, sobrevive }) {
 }
 
 // Barra de tiempo fija: fecha y hora de llegada, el año del sitio y el avance dentro de la misión.
-export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, sistema, soc, sobrevive, horaMision, setHoraMision }) {
+export default function Dock({ esperando = false, sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, sistema, soc, sobrevive, horaMision, setHoraMision }) {
   const { t, f: formato } = useIdioma();
   const [animando, setAnimando] = useState(false);
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function Dock({ sitio, dia, horaLlegada, alCambiarLlegada, duraci
   }
 
   return (
-    <section className="dock vidrio" aria-label={t("dock.aria")}>
+    <section className={`dock vidrio${esperando ? " esperando" : ""}`} aria-label={t("dock.aria")} aria-hidden={esperando || undefined} inert={esperando ? "" : undefined}>
       <div className="dock-fecha">
         <p className="rotulo">{t("dock.llegada")}</p>
         <p className="fecha-grande" aria-label={`${formato.fechaLarga(f.getTime())} 2027`}>

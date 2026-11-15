@@ -96,11 +96,16 @@ export default {
     longitud: "East longitude",
     probar: "Try",
     calculando: "Computing…",
-    calculandoPunto: "Computing {lat}°, {lon}°…",
-    cerrarAviso: "Close",
     sinBackend: "Trying your own points needs the computation server running.",
     errorRango: "Check the values: latitude goes from −90 to 90.",
-    errorCalculo: "Could not compute: {error}",
+  },
+
+  carga: {
+    calculando: "Computing a year of Sun and Earth…",
+    calculandoPolar: "Computing a year of Sun and Earth with LOLA terrain at 80 m…",
+    error: "Couldn't compute the point: {error}",
+    reintentar: "Retry",
+    volver: "Back to the previous site",
   },
 
   panel: {
