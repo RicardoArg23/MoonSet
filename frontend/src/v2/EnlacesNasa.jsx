@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { enlacesNasa, VALIDACION_ERROR_MAX_DEG, VALIDACION_ERROR_TOPE_DEG, VALIDACION_URL } from "./enlaces";
+import { enlacesNasa, VALIDACION_ERROR_MAX_DEG, VALIDACION_ERROR_TOPE_DEG } from "./enlaces";
 import { useIdioma } from "./i18n";
 
 // Grupo plegable "Ver en herramientas de NASA" (cerrado al entrar, para que el panel no necesite scroll):
@@ -41,13 +41,14 @@ export default function EnlacesNasa({ lat, lon, inicioMs, finMs, conHorizons }) 
   );
 }
 
-// Sello con el resultado de docs/VALIDACION.md (el tope y el máximo salen de ese documento; un test lo comprueba).
+// Sello con el resultado de la validación. Lleva a validacion.html, que genera scripts/generar-validacion.mjs desde
+// data/validacion/horizons.json (el tope y el máximo salen de docs/VALIDACION.md; un test lo comprueba).
 export function SelloValidacion() {
   const { t, f } = useIdioma();
   return (
     <a
       className="sello-validacion"
-      href={VALIDACION_URL}
+      href={`${import.meta.env.BASE_URL}validacion.html`}
       target="_blank"
       rel="noopener noreferrer"
       title={t("nasa.validadoAyuda", { max: f.num(VALIDACION_ERROR_MAX_DEG, 5) })}

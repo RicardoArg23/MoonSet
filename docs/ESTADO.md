@@ -110,12 +110,19 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
   `?clasico`) y el menú lateral.
 - Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
 
+## Página de validación (16/11)
+
+El sello «Validado contra JPL Horizons» abre `validacion.html`, una página de la propia app (resumen, tablas global y por
+sitio, y el detalle por instante, en es/en). La genera `frontend/scripts/generar-validacion.mjs` desde
+`data/validacion/horizons.json` en cada `dev` y `build` (no se versiona: `public/validacion.html`). Antes llevaba al
+markdown del repo en GitHub.
+
 ## Notebooks chicas (16/11)
 
 Medido con `.herramientas/pw/medidas.mjs` (líneas de la barra, desborde del panel y de la página, en es-AR): el panel de
 Planificar entra sin scroll en 1440×900, 1233×790, 1280×720, 1366×650 y 1920×960. Para eso, por alto: hasta ~1010 px
 el veredicto muestra solo su razón principal, hasta 800/740/680 px se compactan tipografía y bloques, y el alto mínimo de
-la cabina bajó de 680 a 600 px. Por ancho: hasta 1320 px la barra se compacta, hasta 1180 px el panel pasa a 350 px y la
+la cabina bajó de 680 a 600 px. Por ancho: hasta 1320 px la barra se compacta, hasta 1320 px el sistema de energía queda solo con su ícono, hasta 1180 px el panel pasa a 350 px y la
 línea de tiempo usa leyendas cortas, y hasta 1060 px la barra va en dos líneas (herramientas arriba, vistas abajo).
 
 ## Tutorial guiado (15/11)

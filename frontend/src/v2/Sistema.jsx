@@ -130,8 +130,8 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar, 
 
   return (
     <div className="sistema" data-tutorial="sistema">
-      <button type="button" className="vidrio" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} title={t("sistema.botonAyuda")}>
-        <span className="sistema-icono" aria-hidden="true">⚡</span>{resumen}
+      <button type="button" className="vidrio" aria-expanded={abierto} aria-label={`${t("sistema.botonAyuda")}: ${resumen}`} onClick={() => setAbierto((a) => !a)} title={`${t("sistema.botonAyuda")}: ${resumen}`}>
+        <span className="sistema-icono" aria-hidden="true">⚡</span><span className="sistema-texto">{resumen}</span>
       </button>
       {abierto && (
         <div className="sistema-panel vidrio">

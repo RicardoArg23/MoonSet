@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/copiar-datos.mjs",
+    "predev": "node scripts/copiar-datos.mjs && node scripts/generar-validacion.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/copiar-datos.mjs",
+    "prebuild": "node scripts/copiar-datos.mjs && node scripts/generar-validacion.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test \"tests/*.test.js\""

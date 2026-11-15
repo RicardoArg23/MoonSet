@@ -17,7 +17,6 @@ export const CUERPOS_HORIZONS = { sol: "10", tierra: "399" };
 // Validación de nuestras efemérides contra Horizons (docs/VALIDACION.md, tabla "Global"): error máximo
 // de 0.00006° (Δaz de la Tierra); el sello dice "< 0,0001°". tests/enlaces.test.js lee el documento y
 // falla si estos valores dejan de coincidir con él.
-export const VALIDACION_URL = "https://github.com/RicardoArg23/MoonSet/blob/main/docs/VALIDACION.md";
 export const VALIDACION_ERROR_MAX_DEG = 0.00006;
 export const VALIDACION_ERROR_TOPE_DEG = 0.0001;
 export const LAT_POLAR_SUR = -80; // al sur de esto conviene la proyección polar sur
