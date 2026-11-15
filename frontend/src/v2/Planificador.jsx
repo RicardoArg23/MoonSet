@@ -283,6 +283,18 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
         <p className="tenue">{t(sirven > 0 ? "plan.ordenSirven" : "plan.ordenNinguno")}</p>
       </div>
 
+      {alComparar && (
+        <div className="plan-comparar">
+          <button type="button" onClick={alComparar}>{t("plan.comparar", { n: nMejores })}</button>
+          {aviso && (
+            <p className="plan-aviso" role="status">
+              {t("plan.reemplazados", { n: aviso.n })}
+              <button type="button" className="enlace" onClick={alDeshacer}>{t("plan.deshacer")}</button>
+            </p>
+          )}
+        </div>
+      )}
+
       <ol className="plan-lista">
         {r.filas.map((fila, k) => {
           const desplegada = fila.id === abierta.id;
@@ -348,17 +360,6 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
         </div>
       </section>
 
-      {alComparar && (
-        <div className="plan-comparar">
-          <button type="button" onClick={alComparar}>{t("plan.comparar", { n: nMejores })}</button>
-          {aviso && (
-            <p className="plan-aviso" role="status">
-              {t("plan.reemplazados", { n: aviso.n })}
-              <button type="button" className="enlace" onClick={alDeshacer}>{t("plan.deshacer")}</button>
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

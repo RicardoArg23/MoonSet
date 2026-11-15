@@ -33,6 +33,10 @@
 .tt-pie .tt-salir { margin-right: auto; padding: 0 6px; border: 0; color: var(--tenue); }
 .tt-pie .tt-siguiente { background: var(--texto); border-color: var(--texto); color: #14110d; font-weight: 600; }
 
+/* En el paso que enseña a sumar herramientas, el cajón y sus pantallas quedan por encima del oscurecido: se usan de verdad. */
+.cabina.tutorial-cajon .cajon { z-index: 62; }
+.tutorial-cajon .cj-flotante { z-index: 62; }
+
 /* Botón del tutorial en la barra, par del engranaje. */
 .ayuda-boton { flex: none; width: 48px; height: 48px; padding: 0; display: grid; place-items: center; border-color: transparent; color: var(--tenue); font-size: 18px; font-weight: 500; }
 .ayuda-boton:hover:not(:disabled) { color: var(--texto); border-color: var(--borde); background: rgba(255, 255, 255, 0.06); }

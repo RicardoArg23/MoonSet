@@ -11,6 +11,15 @@ const SEPARACION = 14;
 const BORDE = 10;
 const PARTE_GRANDE = 0.5;
 
+// El control que señala un paso: con varias opciones, el primero que está a la vista.
+function buscarObjetivo(paso) {
+  for (const nombre of [].concat(paso.objetivo)) {
+    const elemento = document.querySelector(`[data-tutorial="${nombre}"]`);
+    if (elemento) return elemento;
+  }
+  return null;
+}
+
 /**
  * Estado del recorrido guiado. `cumplir(accion)` se llama desde la cabina cuando la persona hace algo
  * (elegir un sitio, cambiar la duración…): si es lo que pide el paso, se marca hecho y avanza solo.
@@ -76,7 +85,7 @@ export default function Tutorial({ tutorial }) {
     const foco = focoRef.current;
     const cartel = cartelRef.current;
     if (!paso || !foco || !cartel) return;
-    const objetivo = document.querySelector(`[data-tutorial="${paso.objetivo}"]`);
+    const objetivo = buscarObjetivo(paso);
     const caja = objetivo?.getBoundingClientRect();
     if (!caja || caja.width === 0) {
       // El control no está (un panel oculto desde Personalizar, una vista apagada): pasado un momento, el paso se saltea.
@@ -104,6 +113,7 @@ export default function Tutorial({ tutorial }) {
     if (x + ancho + SEPARACION + cw <= W - BORDE) [cx, cy] = [x + ancho + SEPARACION, y];
     else if (x - SEPARACION - cw >= BORDE) [cx, cy] = [x - SEPARACION - cw, y];
     else if (y + alto + SEPARACION + ch <= H - BORDE) cy = y + alto + SEPARACION;
+    if (paso.lugar === "izquierda") [cx, cy] = [BORDE + SEPARACION, (H - ch) / 2];
     // Un control que ocupa casi toda la pantalla (la Luna sin panel): el cartel va adentro, en su esquina.
     else if (alto > H * PARTE_GRANDE) [cx, cy] = [x + 2 * SEPARACION, y + 2 * SEPARACION];
     cartel.style.left = `${Math.max(BORDE, Math.min(cx, W - cw - BORDE))}px`;
@@ -112,7 +122,7 @@ export default function Tutorial({ tutorial }) {
 
   useLayoutEffect(() => {
     sinObjetivoDesde.current = 0;
-    if (paso) document.querySelector(`[data-tutorial="${paso.objetivo}"]`)?.scrollIntoView({ block: "nearest" });
+    if (paso) buscarObjetivo(paso)?.scrollIntoView({ block: "nearest" });
     ubicar();
   }, [paso, ubicar]);
   useEffect(() => {

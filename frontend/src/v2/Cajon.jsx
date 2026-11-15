@@ -303,7 +303,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
 
   return (
     <>
-      <aside ref={raizRef} id="cajon-ajustes" className="cajon cj-nivel" data-nivel="0" aria-label={t("ajustes.titulo")} onMouseOver={alPasar} onMouseMove={alMover} onMouseLeave={() => clearTimeout(esperaRef.current)}>
+      <aside ref={raizRef} id="cajon-ajustes" data-tutorial="cajon" className="cajon cj-nivel" data-nivel="0" aria-label={t("ajustes.titulo")} onMouseOver={alPasar} onMouseMove={alMover} onMouseLeave={() => clearTimeout(esperaRef.current)}>
         <div className="cj-cabeza">
           <div className="cj-titulo">
             {enAngosto && volver}

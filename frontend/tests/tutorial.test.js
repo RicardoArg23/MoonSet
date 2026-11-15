@@ -7,11 +7,13 @@ import { IDIOMAS } from "../src/v2/i18n/traductor.js";
 const inicio = { paso: 0, hecho: false, sentido: 1 };
 
 test("cada perfil tiene su recorrido: corto en explorar, completo en planificar", () => {
-  assert.deepEqual(pasosDe("explorar").map((p) => p.id), ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "finExplorar"]);
+  assert.deepEqual(pasosDe("explorar").map((p) => p.id), ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "agregar", "fechaNueva", "finExplorar"]);
   assert.equal(pasosDe("planificar").length, 12);
   assert.ok(pasosDe("explorar").every((p) => p.necesita !== "plan" && p.accion !== "plan"), "explorar presenta el asistente pero no lo abre");
   assert.deepEqual(pasosDe("otro"), pasosDe("planificar"));
-  assert.ok(pasosDe("explorar").every((p) => !["fecha", "sistema", "fijar"].includes(p.objetivo)), "explorar no señala herramientas que no tiene");
+  const ids = pasosDe("explorar").map((p) => p.id);
+  assert.ok(pasosDe("explorar").every((p) => ![].concat(p.objetivo).some((o) => ["sistema", "fijar"].includes(o))), "explorar no señala herramientas que no tiene");
+  assert.ok(ids.indexOf("agregar") < ids.indexOf("fechaNueva"), "la línea de tiempo se señala recién después de enseñar a sumarla");
 });
 
 test("todos los pasos tienen sus textos en los dos idiomas, y los que piden una acción dicen cuál", () => {

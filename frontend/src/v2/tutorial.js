@@ -4,7 +4,8 @@
 export const CLAVE_VISTO = "moonset.tutorial";
 
 /**
- * objetivo: valor de data-tutorial del control que se señala.
+ * objetivo: valor de data-tutorial del control que se señala; con una lista, el primero que esté a la vista.
+ * lugar:    "izquierda" fija el cartel al costado izquierdo (cuando el control señalado abre cosas a su alrededor).
  * accion:   lo que la persona tiene que hacer para que el paso se dé por hecho (si falta, es solo para leer).
  * vista:    vista que tiene que estar abierta para que el control exista.
  * necesita: qué tiene que estar a la vista: "panel" o "dock" (paneles flotantes) o "plan" (el modo planificación abierto).
@@ -25,13 +26,16 @@ const PASO = {
   astronautaExplorar: { id: "astronautaExplorar", objetivo: "astronauta" },
   plan: { id: "plan", objetivo: "plan", necesita: "plan" },
   ajustes: { id: "ajustes", objetivo: "ajustes" },
+  // Explorar arranca sin línea de tiempo: este paso enseña a sumarla desde Personalizar y el siguiente la usa.
+  agregar: { id: "agregar", objetivo: ["cajon", "ajustes"], accion: "lineaTiempo", lugar: "izquierda" },
+  fechaNueva: { id: "fechaNueva", objetivo: "fecha", necesita: "dock", accion: "fecha" },
   finExplorar: { id: "finExplorar", objetivo: "ayuda" },
   fin: { id: "fin", objetivo: "ayuda" },
 };
 
 const RECORRIDOS = {
   // Explorar: lo mínimo, y el asistente solo presentado (hace preguntas técnicas: no se lo empuja a quien recién mira).
-  explorar: ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "finExplorar"],
+  explorar: ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "agregar", "fechaNueva", "finExplorar"],
   planificar: ["sitio", "respuesta", "duracion", "vistas", "fecha", "sistema", "puntos", "fijar", "astronauta", "plan", "ajustes", "fin"],
 };
 

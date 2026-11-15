@@ -113,8 +113,9 @@ form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de a
 }
 @keyframes plan-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-.plan-comparar { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--borde); }
-.plan-comparar > button { min-height: 44px; font-size: 14px; }
+.plan-comparar { display: flex; flex-direction: column; gap: 8px; }
+.plan-comparar > button { min-height: 44px; font-size: 14px; font-weight: 600; border-color: rgba(255, 184, 74, 0.55); color: var(--acento); }
+.plan-comparar > button:hover:not(:disabled) { background: rgba(255, 184, 74, 0.1); border-color: var(--acento); }
 .plan-aviso { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #ffd9a0; background: rgba(255, 184, 74, 0.12); border-left: 3px solid var(--acento); }
 .plan-aviso .enlace { flex: none; color: var(--texto); font-weight: 600; }
 

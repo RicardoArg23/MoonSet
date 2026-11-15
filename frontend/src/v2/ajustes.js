@@ -4,7 +4,7 @@
 
 export const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"];
 /** Bloques del panel de respuesta que se pueden ocultar y reordenar. */
-export const BLOQUES = ["medidor", "cifras", "detalle", "opciones", "sello", "enlaces"];
+export const BLOQUES = ["medidor", "opciones", "cifras", "detalle", "sello", "enlaces"];
 /** Botones del pie del panel: se ocultan, pero siempre van al final. */
 export const ACCIONES = ["fijar", "exportar"];
 export const CIFRAS = ["luz", "contacto", "energia", "noche", "autonomia", "minimo"];

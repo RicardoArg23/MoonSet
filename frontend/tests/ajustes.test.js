@@ -38,7 +38,7 @@ test("no se puede apagar la última vista", () => {
 
 test("mover un bloque cambia su lugar y respeta los bordes", () => {
   const c = configDePerfil("planificar");
-  assert.deepEqual(conBloqueMovido(c, "cifras", -1).orden.slice(0, 2), ["cifras", "medidor"]);
+  assert.deepEqual(conBloqueMovido(c, "opciones", -1).orden.slice(0, 2), ["opciones", "medidor"]);
   assert.equal(conBloqueMovido(c, BLOQUES[0], -1), c);
   assert.equal(conBloqueMovido(c, BLOQUES.at(-1), 1), c);
   assert.deepEqual([...conBloqueMovido(c, "sello", 1).orden].sort(), [...BLOQUES].sort());

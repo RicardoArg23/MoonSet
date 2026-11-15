@@ -131,6 +131,7 @@ function Cabina({ perfil }) {
   useEffect(() => {
     if (!pasoTutorial) return;
     if (pasoTutorial.vista) setVista(pasoTutorial.vista);
+    if (pasoTutorial.id !== "agregar") setCajonAbierto(false); // solo ese paso trabaja con el cajón abierto
     // El modo planificación se abre solo en los pasos que lo muestran; en el resto, el recorrido sigue en la cabina.
     if (pasoTutorial.necesita === "plan" && !plan.abierto) alternarModoPlan();
     else if (pasoTutorial.necesita !== "plan" && plan.abierto) cerrarPlan();
@@ -315,6 +316,7 @@ function Cabina({ perfil }) {
   function cambiarConfig(cambio) {
     const siguiente = cambio(config);
     if (siguiente === config) return;
+    if (siguiente.herramientas.lineaTiempo && !config.herramientas.lineaTiempo) tutorial.cumplir("lineaTiempo");
     const base = activo === PERSONALIZADO ? origen : activo;
     setConfig(siguiente);
     setActivo(PERSONALIZADO);
@@ -593,7 +595,7 @@ function Cabina({ perfil }) {
   };
 
   return (
-    <div className={`cabina en-${vista}${hayPanel ? "" : " sin-panel"}${config.herramientas.lineaTiempo ? "" : " sin-dock"}${cajonAbierto ? " con-cajon" : ""}${hayPanel && plegarPanel ? " panel-plegado" : ""}${plegarDock ? " dock-plegado" : ""}${plan.abierto ? " con-plan" : ""}`}>
+    <div className={`cabina en-${vista}${hayPanel ? "" : " sin-panel"}${config.herramientas.lineaTiempo ? "" : " sin-dock"}${cajonAbierto ? " con-cajon" : ""}${hayPanel && plegarPanel ? " panel-plegado" : ""}${plegarDock ? " dock-plegado" : ""}${plan.abierto ? " con-plan" : ""}${pasoTutorial?.id === "agregar" ? " tutorial-cajon" : ""}`}>
       <div className="escena" aria-hidden={vista !== "globo"}>
         <Suspense fallback={null}>
           <Globo
@@ -828,10 +830,9 @@ function Cabina({ perfil }) {
           <div className="pista-globo vidrio">
             <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
             <div className="pista-acciones">
-              <button type="button" onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}>
+              <button type="button" title={t("globo.detalle", { capa: CAPAS[detalle.capa].nombre, resolucion: f.longitud(detalle.metrosPorPixel) })} onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}>
                 {deCerca ? t("globo.alejar") : t("globo.acercar")}
               </button>
-              <span>{t("globo.detalle", { capa: CAPAS[detalle.capa].nombre, resolucion: f.longitud(detalle.metrosPorPixel) })}</span>
             </div>
           </div>
         )}
