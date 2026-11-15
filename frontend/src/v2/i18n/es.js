@@ -151,11 +151,17 @@ export default {
     longitud: "Longitud este",
     probar: "Probar",
     calculando: "Calculando…",
-    calculandoPunto: "Calculando {lat}°, {lon}°…",
-    cerrarAviso: "Cerrar",
     sinBackend: "Probar puntos propios necesita el servidor de cálculo encendido.",
     errorRango: "Revisá los valores: la latitud va de −90 a 90.",
-    errorCalculo: "No se pudo calcular: {error}",
+  },
+
+  carga: {
+    calculando: "Calculando un año de Sol y Tierra…",
+    calculandoPolar: "Calculando un año de Sol y Tierra con el relieve de LOLA a 80 m…",
+    error: "No se pudo calcular el punto: {error}",
+    reintentar: "Reintentar",
+    volver: "Volver al sitio anterior",
+    alrededoresPropio: "Los alrededores están precalculados solo para los sitios de la lista al sur de 85° S: al terminar, la vista pasa al Globo.",
   },
 
   panel: {

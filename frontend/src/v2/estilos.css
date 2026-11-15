@@ -75,12 +75,6 @@ a { color: var(--texto-2); }
 .vistas button[aria-disabled="true"]:active { transform: none; }
 
 /* Aviso flotante mientras se calcula un punto tocado (y si falla): arriba al centro, sobre todo. */
-.calculando { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 10px; max-width: min(480px, calc(100vw - 32px)); padding: 8px 14px; border-radius: 999px; font-size: 13px; color: var(--texto-2); }
-.calculando.con-error { color: var(--mal); }
-.calculando button { flex-shrink: 0; min-height: 28px; padding: 0 12px; font-size: 12px; color: var(--texto); }
-.girando { flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--borde-fuerte); border-top-color: var(--acento); animation: girar 0.8s linear infinite; }
-@keyframes girar { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .girando { animation-duration: 2.4s; } }
 .parametros { display: flex; align-items: center; gap: 18px; height: 48px; padding: 0 18px; border-radius: 999px; font-size: 14px; color: var(--texto-2); }
 .parametros label { display: inline-flex; align-items: center; gap: 8px; }
 .parametros input { width: 58px; height: 32px; padding: 0 6px; text-align: center; font-weight: 600; color: var(--texto); background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color-scheme: dark; }
@@ -101,7 +95,7 @@ a { color: var(--texto-2); }
 .puntos-form button { min-height: 38px; flex-shrink: 0; }
 
 /* ---------- panel: cada bloque tiene alto fijo, así nada salta al mover la fecha ---------- */
-.panel { grid-area: panel; border-radius: 24px; padding: 22px 26px; display: flex; flex-direction: column; overflow: hidden auto; animation: panel-entra 0.45s var(--salida) both; }
+.panel { position: relative; grid-area: panel; border-radius: 24px; padding: 22px 26px; display: flex; flex-direction: column; overflow: hidden auto; animation: panel-entra 0.45s var(--salida) both; }
 /* Si el contenido no entra (ventana baja, grupos desplegados), la barra de desplazamiento es fina y del color del vidrio. */
 /* (el cajón de personalización tiene sus estilos en cajon.css) */
 .panel { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
@@ -123,6 +117,29 @@ a { color: var(--texto-2); }
 .panel.no .chip { background: rgba(255, 156, 138, 0.16); color: var(--mal); }
 .panel-veredicto h1 { font-size: clamp(44px, 4.3vw, 60px); line-height: 1.05; font-weight: 500; letter-spacing: -0.04em; margin-top: 8px; white-space: nowrap; }
 .panel-medidor { flex: 0 0 62px; }
+
+/* Mientras se calcula un punto tocado: barra de avance arriba y bloques de carga en lugar de los valores. */
+.progreso { position: absolute; top: 0; left: 0; right: 0; height: 3px; pointer-events: none; }
+.progreso i { display: block; height: 100%; background: var(--acento); transform: scaleX(0); transform-origin: left; }
+.progreso.listo i { transition: transform 0.2s var(--salida); }
+.progreso.listo { opacity: 0; transition: opacity 0.35s ease 0.25s; }
+.panel-punto { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; line-height: 34px; }
+.esqueleto { display: flex; flex-direction: column; }
+.bloque { display: block; border-radius: 10px; background: linear-gradient(90deg, var(--relleno) 0%, rgba(255, 255, 255, 0.13) 50%, var(--relleno) 100%); background-size: 200% 100%; animation: bloque-brillo 1.4s ease-in-out infinite; }
+.bloque.chip { width: 150px; height: 26px; border-radius: 999px; }
+.bloque.veredicto { width: 70%; height: 52px; margin-top: 12px; }
+.bloque.linea { height: 14px; margin-bottom: 12px; }
+.bloque.barra { height: 12px; border-radius: 999px; }
+.bloque.tarjeta { border-radius: 16px; }
+@keyframes bloque-brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.vista-pendiente { height: 100%; min-height: 260px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.vista-pendiente .bloque.panorama { align-self: stretch; flex: 1; min-height: 180px; margin-top: 8px; border-radius: 16px; }
+.vista-pendiente button { min-height: 42px; padding: 0 18px; font-size: 14px; }
+.panel-fallo { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; }
+.panel-fallo button { min-height: 42px; padding: 0 18px; font-size: 14px; }
+.dock.esperando { opacity: 0.35; transition: opacity 0.2s; }
+.mapa-pendiente .halo { fill: var(--acento); opacity: 0.35; transform-box: fill-box; transform-origin: center; animation: mapa-latido 1.6s ease-in-out infinite; }
+@keyframes mapa-latido { 0%, 100% { transform: scale(0.8); opacity: 0.45; } 50% { transform: scale(1.35); opacity: 0.12; } }
 .panel-medidor p { display: flex; justify-content: space-between; font-size: 13px; color: var(--tenue); margin-bottom: 12px; }
 .panel-medidor b { color: var(--texto); font-weight: 500; }
 .medidor { position: relative; height: 12px; background: var(--apagado); border-radius: 999px; }

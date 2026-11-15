@@ -43,7 +43,7 @@ function radioDeLatitud(lat) {
   return 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
 }
 
-export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, sistema, hayBackend }) {
+export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, sistema, hayBackend, pendiente }) {
   const { t, f } = useIdioma();
   const { num, nombreCorto } = f;
   const [meta, setMeta] = useState(undefined); // undefined = cargando, null = no hay imagen
@@ -301,6 +301,17 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
             );
           })}
         </g>
+
+        {/* Punto tocado que todavía se está calculando: aparece al instante, con un halo que late (CSS). */}
+        {pendiente && (() => {
+          const [x, y] = proyectar(pendiente.lat, pendiente.lon);
+          return (
+            <g className="mapa-pendiente" aria-hidden="true">
+              <circle className="halo" cx={x} cy={y} r={px(14)} />
+              <circle cx={x} cy={y} r={px(7)} fill="var(--acento)" stroke="#000" strokeWidth={px(1.5)} />
+            </g>
+          );
+        })()}
 
         <rect x={x0 + px(20)} y={y0 + altoVista - px(30)} width={(escalaKm * 1000)} height={px(3)} fill="var(--texto)" />
         <text x={x0 + px(20)} y={y0 + altoVista - px(38)} fontSize={px(11)} className="mapa-escala">{escalaKm} km</text>
