@@ -75,7 +75,7 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar, 
   const campo = (clave) => ({ valor: sistema[clave], alCambiar: (v) => alCambiar({ [clave]: v }) });
 
   return (
-    <div className="sistema">
+    <div className="sistema" data-tutorial="sistema">
       <button type="button" className="vidrio" aria-expanded={abierto} onClick={() => setAbierto((a) => !a)} title={t("sistema.botonAyuda")}>
         <span className="sistema-icono" aria-hidden="true">⚡</span>{resumen}
       </button>

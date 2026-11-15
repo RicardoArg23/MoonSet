@@ -16,6 +16,7 @@ import { PERFILES_BASE, PERSONALIZADO, VISTAS, borrarPersonalizado, configDePerf
 import { ANGOSTO, useMedia } from "./useMedia";
 import Cajon from "./Cajon";
 import Asa from "./Asa";
+import Tutorial, { useTutorial } from "./Tutorial";
 import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import "./estilos.css";
 
@@ -110,6 +111,18 @@ function Cabina({ perfil }) {
   const [panelPlegado, setPanelPlegado] = useState(false);
   const [dockPlegado, setDockPlegado] = useState(false);
   const angosto = useMedia(ANGOSTO);
+  const tutorial = useTutorial(origen);
+  const pasoTutorial = tutorial.paso;
+  // Cada paso del tutorial deja a la vista el control que va a señalar.
+  useEffect(() => {
+    if (!pasoTutorial) return;
+    if (pasoTutorial.vista) setVista(pasoTutorial.vista);
+    if (pasoTutorial.necesita === "panel") {
+      setPanelAbierto(true);
+      setPanelPlegado(false);
+    }
+    if (pasoTutorial.necesita === "dock") setDockPlegado(false);
+  }, [pasoTutorial]);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
   const [estadoCoord, setEstadoCoord] = useState(""); // error de validación del formulario de "Mis puntos"
   // Punto tocado que se está calculando (o que falló): { lat, lon, estado: "cargando" | "error", error, n }.
@@ -229,6 +242,10 @@ function Cabina({ perfil }) {
     fraseAccion = t("energia.nadaAlcanza");
   }
 
+  function cambiarDuracion(dias) {
+    setDuracionDias(dias);
+    tutorial.cumplir("duracion");
+  }
   function elegirPerfil(id) {
     setPerfilId(id);
     const p = PERFILES.find((x) => x.id === id);
@@ -273,6 +290,7 @@ function Cabina({ perfil }) {
   }
 
   function elegirSitio(id) {
+    tutorial.cumplir("sitio");
     cancelarPendiente(); // elegir otro sitio mientras se calcula un punto lo deja de lado
     // Salir de un punto de prueba lo descarta: no se acumulan puntos que nadie pidió guardar.
     if (prueba && id !== prueba.sitio.id) setPrueba(null);
@@ -282,6 +300,7 @@ function Cabina({ perfil }) {
     setEnfoque({ modo: "lejos" }); // al cambiar de sitio se vuelve a ver la Luna entera
   }
   function cambiarLlegada(d, h) {
+    tutorial.cumplir("fecha");
     setDia(d);
     setHoraLlegada(h);
     setHoraMision(0);
@@ -308,6 +327,7 @@ function Cabina({ perfil }) {
       pedido.current = null;
       const existente = guardados.find((s) => s.sitio.id === nuevo.sitio.id);
       setPrueba(existente ? null : nuevo); // reemplaza al punto de prueba anterior
+      tutorial.cumplir("sitio");
       if (!existente) setVerPuntos(true); // guardar o descartar se hace desde "Mis puntos"
       setSitioId(nuevo.sitio.id);
       setHoraMision(0);
@@ -377,6 +397,7 @@ function Cabina({ perfil }) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function fijar() {
+    tutorial.cumplir("fijar");
     if (esPrueba) guardarPrueba(); // un escenario fijado necesita que su punto exista
     setFijados((x) => [...x, { sitioId: sitio.sitio.id, dia, horaLlegada }]);
   }
@@ -436,8 +457,8 @@ function Cabina({ perfil }) {
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
         </a>
         {/* La duración se ve siempre, en cualquier perfil: sin ella "sobrevive" no dice a qué. */}
-        <div className="parametros vidrio">
-          <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
+        <div className="parametros vidrio" data-tutorial="duracion">
+          <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => cambiarDuracion(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
         </div>
         {config.herramientas.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
         {config.herramientas.puntos && <div className="puntos">
@@ -495,7 +516,12 @@ function Cabina({ perfil }) {
                   aria-pressed={vista === v}
                   aria-disabled={bloqueada || undefined}
                   title={bloqueada ? motivoSinVecindad : undefined}
-                  onClick={() => !bloqueada && setVista(v)}
+                  data-tutorial={v === "horizonte" ? "horizonte" : undefined}
+                  onClick={() => {
+                    if (bloqueada) return;
+                    setVista(v);
+                    if (v === "horizonte") tutorial.cumplir("horizonte");
+                  }}
                 >
                   {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
                 </button>
@@ -503,7 +529,8 @@ function Cabina({ perfil }) {
             })}
           </nav>
         )}
-        <button ref={ajustesRef} type="button" className="ajustes con-ayuda a-derecha" aria-expanded={cajonAbierto} aria-controls="cajon-ajustes" aria-label={t("ajustes.abrir")} data-ayuda={cajonAbierto ? undefined : t("ajustes.abrir")} onClick={() => setCajonAbierto((abierto) => !abierto)}>
+        <button type="button" className="ayuda-boton con-ayuda a-derecha" data-tutorial="ayuda" aria-pressed={pasoTutorial !== null} aria-label={t("tutorial.titulo")} data-ayuda={pasoTutorial ? undefined : t("tutorial.titulo")} onClick={() => (pasoTutorial ? tutorial.salir() : tutorial.empezar())}>?</button>
+        <button ref={ajustesRef} type="button" data-tutorial="ajustes" className="ajustes con-ayuda a-derecha" aria-expanded={cajonAbierto} aria-controls="cajon-ajustes" aria-label={t("ajustes.abrir")} data-ayuda={cajonAbierto ? undefined : t("ajustes.abrir")} onClick={() => setCajonAbierto((abierto) => !abierto)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2.2" /><circle cx="9" cy="17" r="2.2" /></svg>
         </button>
       </header>
@@ -520,7 +547,7 @@ function Cabina({ perfil }) {
           <p className="tenue">{coordenadas(sitio.sitio)} · {sitio.horizonte.fuente === "esfera" ? t("panel.sinRelieve") : t("panel.conRelieve")}</p>
         </div>
 
-        <div className="panel-veredicto">
+        <div className="panel-veredicto" data-tutorial="respuesta">
           <p className="chip"><i aria-hidden="true" />{!e.sobrevive ? t("energia.chipFalla", { t: duracion(e.horaFalla + 1) }) : m.nocheH === 0 ? t("panel.luzToda") : t("energia.chipNoche", { t: duracion(m.nocheH) })}</p>
           <h1>{e.sobrevive ? t("panel.sobrevive") : t("panel.noSobrevive")}</h1>
         </div>
@@ -596,7 +623,7 @@ function Cabina({ perfil }) {
         {(config.acciones.fijar || config.acciones.exportar) && (
           <div className="panel-pie">
             {config.acciones.fijar && (
-              <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
+              <button type="button" className="primario fijar" data-tutorial="fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
                 {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
               </button>
             )}
@@ -608,7 +635,7 @@ function Cabina({ perfil }) {
       </aside>}
       {hayPanel && <Asa lado="panel" plegada={plegarPanel} etiqueta={t(plegarPanel ? "ajustes.plegar.abrirPanel" : "ajustes.plegar.panel")} alAlternar={() => setPanelPlegado((plegado) => !plegado)} />}
 
-      <main className="centro">
+      <main className="centro" data-tutorial="luna">
         {vista === "globo" && config.pistaGlobo && (
           <div className="pista-globo vidrio">
             <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
@@ -744,11 +771,13 @@ function Cabina({ perfil }) {
           alRestablecer={restablecerPropio}
           alCerrar={() => { setCajonAbierto(false); ajustesRef.current?.focus(); }}
           duracionDias={duracionDias}
-          alCambiarDuracion={setDuracionDias}
+          alCambiarDuracion={cambiarDuracion}
           margenCom={margenCom}
           alCambiarMargen={setMargenCom}
         />
       )}
+
+      <Tutorial tutorial={tutorial} conDock={config.herramientas.lineaTiempo && !plegarDock} />
 
       <p className="creditos">{t("app.creditos")}</p>
     </div>

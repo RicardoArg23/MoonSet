@@ -83,7 +83,7 @@ export default function Dock({ esperando = false, sitio, dia, horaLlegada, alCam
       </div>
 
       <div className="dock-lineas">
-        <div className="pista anio">
+        <div className="pista anio" data-tutorial="fecha">
           <div className="pista-color" style={{ background: fondo }} aria-hidden="true" />
           <div className="aro" style={{ left: `${((dia + 0.5) / 365) * 100}%` }} aria-hidden="true" />
           <input type="range" min="0" max="364" value={dia} onChange={(e) => alCambiarLlegada(Number(e.target.value), horaLlegada)} aria-label={t("dock.fechaAria")} />

@@ -75,6 +75,17 @@ data/sitios.json ─► backend/scripts/precalcular_*.py ─► data/anual/*.jso
   `?clasico`) y el menú lateral.
 - Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
 
+## Tutorial guiado (15/11)
+
+- **Qué es** (`frontend/src/v2/Tutorial.jsx`, estilos en `tutorial.css`): la primera visita muestra una invitación
+  chica abajo a la derecha, que no bloquea. El botón «?» de la barra lo abre cuando se quiera. Cada paso oscurece
+  todo menos un control y, si pide una acción, avanza solo cuando se la hace (o con «Siguiente»).
+- **Pasos** (`frontend/src/v2/tutorial.js`, sin React, con tests): una lista por perfil, 5 en explorar y 8 en
+  planificar. Cada paso dice qué control señala (`data-tutorial="…"` en el componente), qué acción lo completa y
+  qué tiene que estar a la vista. Los textos van en i18n (`tutorial.pasos.<id>`). La cabina avisa las acciones con
+  `tutorial.cumplir("…")`. Si el control está oculto desde Personalizar, el paso se saltea solo.
+- Se recuerda en `localStorage` (`moonset.tutorial`) que la invitación ya se mostró.
+
 ## Idioma y globo con detalle (14/11)
 
 - **Español / inglés**: los textos de la interfaz están en `frontend/src/v2/i18n/es.js` y `en.js`, agrupados por

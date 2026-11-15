@@ -25,6 +25,33 @@ export default {
     creditos: "Relieve LOLA 80 m (al sur de 80° S) · mapa en estereográfica polar · efemérides JPL DE421 · imágenes LROC WAC y NAC vía NASA Moon Trek",
   },
 
+  // Recorrido guiado (Tutorial.jsx); los pasos están en tutorial.js
+  tutorial: {
+    titulo: "Tutorial",
+    invitacion: "¿Primera vez acá?",
+    invitacionDetalle: "Te muestro cómo se usa en un minuto.",
+    empezar: "Empezar",
+    ahoraNo: "Ahora no",
+    paso: "Paso {n} de {total}",
+    siguiente: "Siguiente",
+    atras: "Atrás",
+    salir: "Salir",
+    terminar: "Terminar",
+    hecho: "Hecho",
+    pasos: {
+      sitio: { titulo: "Elegí dónde alunizar", texto: "Cada punto es un sitio. Los amarillos sirven para la misión en la fecha elegida; los grises, no.", hace: "Tocá un punto de la Luna" },
+      respuesta: { titulo: "La respuesta, primero", texto: "Sobrevive o no sobrevive. Arriba dice por qué: cuánto dura la noche más larga o en qué momento se queda sin energía." },
+      duracion: { titulo: "¿Sobrevive a qué?", texto: "A una misión de esta cantidad de días. Más días suelen traer una noche más larga.", hace: "Cambiá los días de misión" },
+      horizonte: { titulo: "Mirá el cielo desde ahí", texto: "Horizonte muestra el relieve alrededor del sitio y por dónde pasan el Sol y la Tierra.", hace: "Abrí la vista Horizonte" },
+      fecha: { titulo: "¿Y si llego otro día?", texto: "La luz en el polo cambia a lo largo del año. Las franjas ámbar son las fechas en que la misión sobrevive.", hace: "Mové la fecha de llegada" },
+      sistema: { titulo: "Con qué batería", texto: "Paneles y batería definen cuánta noche aguanta la misión. Hay sistemas de ejemplo y podés cargar el tuyo." },
+      fijar: { titulo: "Guardá un escenario", texto: "Fijar guarda este sitio con esta fecha para ponerlo al lado de otros en la vista Comparar.", hace: "Fijá este escenario" },
+      ajustes: { titulo: "Armá tu cabina", texto: "Personalizar deja elegir qué bloques, cifras y vistas ver. Lo que cambies queda guardado en este navegador." },
+      finExplorar: { titulo: "Eso es todo", texto: "El tutorial queda en este botón por si querés repasarlo. Para ver todas las herramientas, volvé al inicio y entrá a planificar." },
+      fin: { titulo: "Eso es todo", texto: "El tutorial queda en este botón por si querés repasarlo." },
+    },
+  },
+
   // Cajón de personalización (Cajon.jsx) y asas para plegar paneles
   ajustes: {
     titulo: "Personalizar",

@@ -35,6 +35,33 @@ export default {
     creditos: "LOLA 80 m terrain (south of 80° S) · polar stereographic map · JPL DE421 ephemerides · LROC WAC and NAC imagery via NASA Moon Trek",
   },
 
+  // Guided tour (Tutorial.jsx); the steps live in tutorial.js
+  tutorial: {
+    titulo: "Tutorial",
+    invitacion: "First time here?",
+    invitacionDetalle: "I'll show you how it works in a minute.",
+    empezar: "Start",
+    ahoraNo: "Not now",
+    paso: "Step {n} of {total}",
+    siguiente: "Next",
+    atras: "Back",
+    salir: "Exit",
+    terminar: "Finish",
+    hecho: "Done",
+    pasos: {
+      sitio: { titulo: "Choose where to land", texto: "Each dot is a site. Yellow ones work for the mission on the chosen date; grey ones don't.", hace: "Tap a dot on the Moon" },
+      respuesta: { titulo: "The answer first", texto: "It survives or it doesn't. Above it says why: how long the longest night is, or when it runs out of energy." },
+      duracion: { titulo: "Survives what?", texto: "A mission this many days long. More days usually bring a longer night.", hace: "Change the mission days" },
+      horizonte: { titulo: "Look at the sky from there", texto: "Horizon shows the terrain around the site and where the Sun and Earth travel.", hace: "Open the Horizon view" },
+      fecha: { titulo: "What if I arrive another day?", texto: "Light at the pole changes through the year. The amber bands are the dates when the mission survives.", hace: "Move the arrival date" },
+      sistema: { titulo: "With which battery", texto: "Panels and battery define how much night the mission can take. There are sample systems and you can enter your own." },
+      fijar: { titulo: "Save a scenario", texto: "Pin keeps this site with this date so you can put it next to others in the Compare view.", hace: "Pin this scenario" },
+      ajustes: { titulo: "Build your cockpit", texto: "Customize lets you choose which blocks, figures and views to see. What you change is saved in this browser." },
+      finExplorar: { titulo: "That's all", texto: "The tutorial stays on this button if you want to go over it again. To see every tool, go back to the start and enter to plan." },
+      fin: { titulo: "That's all", texto: "The tutorial stays on this button if you want to go over it again." },
+    },
+  },
+
   // Customization drawer (Cajon.jsx) and fold handles
   ajustes: {
     titulo: "Customize",
