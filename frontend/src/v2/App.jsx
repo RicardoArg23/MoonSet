@@ -12,6 +12,7 @@ import MapaPolar from "./MapaPolar";
 import Sistema from "./Sistema";
 import { csvComparacion, csvMision, nombreArchivo, nombreComparacion } from "./exportar";
 import EnlacesNasa, { SelloValidacion } from "./EnlacesNasa";
+import { BarraProgreso, PanelPendiente } from "./CargaPunto";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
@@ -103,7 +104,13 @@ function Cabina({ perfil }) {
   const [panelAbierto, setPanelAbierto] = useState(perfil !== "explorar");
   const [funciones, setFunciones] = useState(FUNCIONES_POR_PERFIL[perfil]);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
-  const [estadoCoord, setEstadoCoord] = useState(""); // "", "cargando" o un mensaje de error
+  const [estadoCoord, setEstadoCoord] = useState(""); // error de validación del formulario de "Mis puntos"
+  // Punto tocado que se está calculando (o que falló): { lat, lon, estado: "cargando" | "error", error, n }.
+  const [pendiente, setPendiente] = useState(null);
+  const [progreso, setProgreso] = useState(null); // barra del panel: { n, estado: "cargando" | "listo" }
+  const pedido = useRef(null); // AbortController del último pedido: solo cuenta el último punto tocado
+  const pedidosHechos = useRef(0);
+  useEffect(() => () => pedido.current?.abort(), []); // al salir de la cabina no queda un pedido colgado
   const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
   const marcaRef = useRef(null);
@@ -252,6 +259,7 @@ function Cabina({ perfil }) {
   }
 
   function elegirSitio(id) {
+    cancelarPendiente(); // elegir otro sitio mientras se calcula un punto lo deja de lado
     // Salir de un punto de prueba lo descarta: no se acumulan puntos que nadie pidió guardar.
     if (prueba && id !== prueba.sitio.id) setPrueba(null);
     setSitioId(id);
@@ -265,23 +273,44 @@ function Cabina({ perfil }) {
     setHoraMision(0);
   }
 
+  // Pide un año de datos para el punto. El panel pasa enseguida al punto nuevo (bloques de carga, nunca los
+  // valores del sitio anterior) y, si se toca otro punto antes de la respuesta, el pedido viejo se cancela.
   async function probarPunto(lat, lon) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90) {
       setEstadoCoord(t("puntos.errorRango"));
       return;
     }
-    setEstadoCoord("cargando");
+    setEstadoCoord("");
+    pedido.current?.abort();
+    const control = new AbortController();
+    pedido.current = control;
+    const n = ++pedidosHechos.current;
+    setPendiente({ lat, lon, estado: "cargando", n });
+    setProgreso({ n, estado: "cargando" });
+    setPanelAbierto(true);
     try {
-      const nuevo = await cargarCoordenadas(lat, lon);
+      const nuevo = await cargarCoordenadas(lat, lon, { signal: control.signal });
+      if (pedido.current !== control) return; // llegó tarde: ya se tocó otro punto
+      pedido.current = null;
       const existente = guardados.find((s) => s.sitio.id === nuevo.sitio.id);
       setPrueba(existente ? null : nuevo); // reemplaza al punto de prueba anterior
       setSitioId(nuevo.sitio.id);
-      setPanelAbierto(true);
       setHoraMision(0);
-      setEstadoCoord("");
-    } catch (e) {
-      setEstadoCoord(t("puntos.errorCalculo", { error: e.message }));
+      setPendiente(null);
+      setProgreso({ n, estado: "listo" });
+      setTimeout(() => setProgreso((p) => (p?.n === n ? null : p)), 700); // se completa y se desvanece
+    } catch (err) {
+      if (control.signal.aborted || pedido.current !== control) return; // cancelado a propósito
+      pedido.current = null;
+      setPendiente({ lat, lon, estado: "error", error: err.message, n });
+      setProgreso(null);
     }
+  }
+  function cancelarPendiente() {
+    pedido.current?.abort();
+    pedido.current = null;
+    setPendiente(null);
+    setProgreso(null);
   }
   function puntoEnGlobo({ lat, lon }) {
     setCoord({ lat: lat.toFixed(2), lon: lon.toFixed(2) });
@@ -359,6 +388,7 @@ function Cabina({ perfil }) {
             onDetalle={setDetalle}
             onElegir={elegirSitio}
             onPunto={tocarLuna ? puntoEnGlobo : null}
+            pendiente={pendiente?.estado === "cargando" ? pendiente : null}
           />
         </Suspense>
       </div>
@@ -408,10 +438,10 @@ function Cabina({ perfil }) {
               >
                 <label>{t("puntos.latitud")}<input type="number" step="any" min="-90" max="90" value={coord.lat} onChange={(e) => setCoord({ ...coord, lat: e.target.value })} /></label>
                 <label>{t("puntos.longitud")}<input type="number" step="any" min="-180" max="360" value={coord.lon} onChange={(e) => setCoord({ ...coord, lon: e.target.value })} /></label>
-                <button type="submit" className="primario" disabled={!hayBackend || estadoCoord === "cargando"}>{estadoCoord === "cargando" ? t("puntos.calculando") : t("puntos.probar")}</button>
+                <button type="submit" className="primario" disabled={!hayBackend || pendiente?.estado === "cargando"}>{pendiente?.estado === "cargando" ? t("puntos.calculando") : t("puntos.probar")}</button>
               </form>
               {!hayBackend && <p className="tenue">{t("puntos.sinBackend")}</p>}
-              {estadoCoord && estadoCoord !== "cargando" && <p className="error" role="alert">{estadoCoord}</p>}
+              {estadoCoord && <p className="error" role="alert">{estadoCoord}</p>}
             </div>
           )}
         </div>}
@@ -504,7 +534,11 @@ function Cabina({ perfil }) {
         </div>
       )}
 
-      {panelAbierto && <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
+      {panelAbierto && <aside className={`panel vidrio ${pendiente ? "cargando" : e.sobrevive ? "si" : "no"}`} aria-live="polite" aria-busy={pendiente?.estado === "cargando" || undefined}>
+        <BarraProgreso key={progreso?.n} estado={progreso?.estado ?? null} />
+        {pendiente ? (
+          <PanelPendiente pendiente={pendiente} alReintentar={() => probarPunto(pendiente.lat, pendiente.lon)} alVolver={cancelarPendiente} />
+        ) : (<>
         <div className="panel-sitio">
           <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
             {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
@@ -598,23 +632,8 @@ function Cabina({ perfil }) {
           {perfil !== "explorar" && <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>}
         </div>
         {funciones.puntos && esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
+        </>)}
       </aside>}
-
-      {estadoCoord && (
-        <div className={`calculando vidrio${estadoCoord === "cargando" ? "" : " con-error"}`} role={estadoCoord === "cargando" ? "status" : "alert"} aria-live="polite">
-          {estadoCoord === "cargando" ? (
-            <>
-              <i className="girando" aria-hidden="true" />
-              <span>{t("puntos.calculandoPunto", { lat: num(Number(coord.lat), 2), lon: num(Number(coord.lon), 2) })}</span>
-            </>
-          ) : (
-            <>
-              <span>{estadoCoord}</span>
-              <button type="button" onClick={() => setEstadoCoord("")}>{t("puntos.cerrarAviso")}</button>
-            </>
-          )}
-        </div>
-      )}
 
       <main className="centro">
         {vista === "globo" && (
@@ -644,6 +663,7 @@ function Cabina({ perfil }) {
               duracionH={duracionH}
               sistema={sistema}
               hayBackend={hayBackend}
+              pendiente={pendiente?.estado === "cargando" ? pendiente : null}
             />
           </section>
         )}
@@ -717,6 +737,7 @@ function Cabina({ perfil }) {
       </main>
 
       {funciones.lineaTiempo && <Dock
+        esperando={pendiente !== null}
         sitio={sitio}
         dia={dia}
         horaLlegada={horaLlegada}

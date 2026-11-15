@@ -7,8 +7,8 @@ const API = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 /** true si hay backend configurado (frontend/.env con VITE_API_URL): habilita coordenadas propias. */
 export const hayBackend = Boolean(API);
 
-async function pedir(url) {
-  const r = await fetch(url);
+async function pedir(url, opciones) {
+  const r = await fetch(url, opciones);
   if (!r.ok) throw new Error(`${url}: ${r.status} ${r.statusText}`);
   return r.json();
 }
@@ -25,11 +25,14 @@ export function cargarGeometria() {
   return pedir(`${BASE}anual/geometria.json`);
 }
 
-/** Un año de datos para coordenadas cualesquiera, calculado por el backend. */
-export async function cargarCoordenadas(lat, lon) {
+/**
+ * Un año de datos para coordenadas cualesquiera, calculado por el backend.
+ * signal: de un AbortController, para cancelar el pedido si se toca otro punto (rechaza con AbortError).
+ */
+export async function cargarCoordenadas(lat, lon, { signal } = {}) {
   if (!hayBackend) throw new Error("Las coordenadas propias necesitan el backend encendido.");
   const q = new URLSearchParams({ lat: String(lat), lon: String(lon) });
-  return prepararSitio(await pedir(`${API}/anual?${q}`));
+  return prepararSitio(await pedir(`${API}/anual?${q}`, { signal }));
 }
 
 /** Grilla de horizontes alrededor de un sitio polar. null si ese sitio no la tiene precalculada. */

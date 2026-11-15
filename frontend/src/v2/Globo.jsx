@@ -122,6 +122,35 @@ function Marcador({ sitio, nombre, activo, viable, onElegir }) {
   );
 }
 
+// Punto tocado que todavía se está calculando: aparece al instante donde se tocó, con un halo que
+// late suave. Con prefers-reduced-motion el halo queda quieto.
+function MarcadorPendiente({ lat, lon }) {
+  const grupo = useRef();
+  const halo = useRef();
+  const direccion = useMemo(() => latLonAVector(lat, lon), [lat, lon]);
+  const quieto = useMemo(() => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false, []);
+  useFrame(({ camera, clock }) => {
+    const escala = THREE.MathUtils.clamp((camera.position.length() - 1) / 2.5, 0.0015, 1);
+    grupo.current.scale.setScalar(escala);
+    grupo.current.position.copy(direccion).multiplyScalar(1.0006 + 0.0034 * escala);
+    const fase = quieto ? 0.5 : (Math.sin(clock.elapsedTime * 3) + 1) / 2;
+    halo.current.scale.setScalar(1 + 0.6 * fase);
+    halo.current.material.opacity = 0.45 - 0.3 * fase;
+  });
+  return (
+    <group ref={grupo}>
+      <mesh>
+        <sphereGeometry args={[0.02, 16, 12]} />
+        <meshBasicMaterial color="#ffb84a" />
+      </mesh>
+      <mesh ref={halo}>
+        <sphereGeometry args={[0.034, 20, 14]} />
+        <meshBasicMaterial color="#ffb84a" transparent opacity={0.3} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
 // Los textos llegan por props (nombreActivo, rotuloTierra): el contexto de idioma no cruza el <Canvas>.
 
 // Lleva la cámara frente al sitio elegido, lejos o cerca según `enfoque`. Solo anima mientras "vuela";
@@ -178,7 +207,7 @@ function Camara({ lat, lon, enfoque, controles, volando }) {
  * @param {{ modo: "lejos"|"cerca", n: number }} props.enfoque a qué altura llevar la cámara; `n` cambia para repetir el vuelo
  * @param {(d: { capa: string|null, metrosPorPixel: number }) => void} [props.onDetalle] qué imagen se ve bajo la cámara
  */
-export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto }) {
+export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto, pendiente }) {
   const controles = useRef();
   const volando = useRef(false);
   const activo = sitios.find((s) => s.sitio.id === sitioId).sitio;
@@ -192,6 +221,7 @@ export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContac
       {sitios.map((s) => (
         <Marcador key={s.sitio.id} sitio={s.sitio} nombre={nombreActivo} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} />
       ))}
+      {pendiente && <MarcadorPendiente lat={pendiente.lat} lon={pendiente.lon} />}
       <Camara lat={activo.lat} lon={activo.lon} enfoque={enfoque} controles={controles} volando={volando} />
       <OrbitControls
         ref={controles}
