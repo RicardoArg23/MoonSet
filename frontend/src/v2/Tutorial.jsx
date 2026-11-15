@@ -10,6 +10,7 @@ const MARGEN_FOCO = 7;
 const SEPARACION = 14;
 const BORDE = 10;
 const PARTE_GRANDE = 0.5;
+const ANCHO_TELEFONO = 640; // por debajo, un control grande lleva el cartel al borde de abajo
 
 // El control que señala un paso: con varias opciones, el primero que está a la vista.
 function buscarObjetivo(paso) {
@@ -79,6 +80,7 @@ export default function Tutorial({ tutorial }) {
   const focoRef = useRef(null);
   const cartelRef = useRef(null);
   const sinObjetivoDesde = useRef(0);
+  const yaALaVista = useRef(false); // el control del paso ya se acercó a la pantalla (puede aparecer después de empezar el paso)
 
   // El foco rodea el control señalado y el cartel va donde haya lugar: a la derecha, a la izquierda, abajo o arriba.
   const ubicar = useCallback(() => {
@@ -100,6 +102,11 @@ export default function Tutorial({ tutorial }) {
       return;
     }
     sinObjetivoDesde.current = 0;
+    if (!yaALaVista.current) {
+      yaALaVista.current = true;
+      const fuera = caja.bottom > window.innerHeight || caja.top < 0;
+      if (fuera) objetivo.scrollIntoView({ block: "nearest" });
+    }
     const x = caja.left - MARGEN_FOCO;
     const y = caja.top - MARGEN_FOCO;
     const ancho = caja.width + 2 * MARGEN_FOCO;
@@ -117,13 +124,14 @@ export default function Tutorial({ tutorial }) {
     else if (y + alto + SEPARACION + ch <= H - BORDE) cy = y + alto + SEPARACION;
     if (paso.lugar === "izquierda") [cx, cy] = [BORDE + SEPARACION, (H - ch) / 2];
     // Un control que ocupa casi toda la pantalla (la Luna sin panel): el cartel va adentro, en su esquina.
-    else if (alto > H * PARTE_GRANDE) [cx, cy] = [x + 2 * SEPARACION, y + 2 * SEPARACION];
+    else if (alto > H * PARTE_GRANDE) [cx, cy] = W < ANCHO_TELEFONO ? [BORDE, H - ch - BORDE] : [x + 2 * SEPARACION, y + 2 * SEPARACION]; // en el teléfono, abajo: arriba taparía la Luna
     cartel.style.left = `${Math.max(BORDE, Math.min(cx, W - cw - BORDE))}px`;
     cartel.style.top = `${Math.max(BORDE, Math.min(cy, H - ch - BORDE))}px`;
   }, [paso, indice, sentido, siguiente, atras]);
 
   useLayoutEffect(() => {
     sinObjetivoDesde.current = 0;
+    yaALaVista.current = false;
     if (paso) buscarObjetivo(paso)?.scrollIntoView({ block: "nearest" });
     ubicar();
   }, [paso, ubicar]);

@@ -127,6 +127,16 @@ function Cabina({ perfil }) {
   const [panelPlegado, setPanelPlegado] = useState(false);
   const [dockPlegado, setDockPlegado] = useState(false);
   const angosto = useMedia(ANGOSTO);
+  // En el teléfono la lista de "Mis puntos" ocupa casi toda la Luna: un toque afuera la cierra y el siguiente ya elige el punto.
+  useEffect(() => {
+    if (!verPuntos || !angosto) return undefined;
+    const cerrarSiEsAfuera = (evento) => {
+      if (evento.target.closest?.(".puntos")) return;
+      setVerPuntos(false);
+    };
+    document.addEventListener("pointerdown", cerrarSiEsAfuera, true);
+    return () => document.removeEventListener("pointerdown", cerrarSiEsAfuera, true);
+  }, [verPuntos, angosto]);
   const tutorial = useTutorial(origen);
   const pasoTutorial = tutorial.paso;
   // Cada paso del tutorial deja a la vista el control que va a señalar.
@@ -141,7 +151,11 @@ function Cabina({ perfil }) {
       setPanelAbierto(true);
       setPanelPlegado(false);
     }
-    if (pasoTutorial.necesita === "dock") setDockPlegado(false);
+    if (pasoTutorial.necesita === "dock") {
+      setDockPlegado(false);
+      // Si se llegó acá sin sumar la línea de tiempo (el paso anterior se puede pasar con «Siguiente»), se enciende: el paso la señala.
+      if (!config.herramientas.lineaTiempo) cambiarConfig((c) => ({ ...c, herramientas: { ...c.herramientas, lineaTiempo: true } }));
+    }
   }, [pasoTutorial]);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
   const [estadoCoord, setEstadoCoord] = useState(""); // error de validación del formulario de "Mis puntos"
@@ -395,7 +409,7 @@ function Cabina({ perfil }) {
       const existente = guardados.find((s) => s.sitio.id === nuevo.sitio.id);
       setPrueba(existente ? null : nuevo); // reemplaza al punto de prueba anterior
       tutorial.cumplir("sitio");
-      if (!existente) setVerPuntos(true); // guardar o descartar se hace desde "Mis puntos"
+      if (!existente && !angosto) setVerPuntos(true); // guardar o descartar se hace desde "Mis puntos"; en el teléfono la lista taparía la Luna y queda el aviso en el botón
       setSitioId(nuevo.sitio.id);
       setHoraMision(0);
       setPendiente(null);
@@ -416,6 +430,7 @@ function Cabina({ perfil }) {
   }
   function puntoEnGlobo({ lat, lon }) {
     setCoord({ lat: lat.toFixed(2), lon: lon.toFixed(2) });
+    if (hayBackend && angosto) setVerPuntos(false); // tocar la Luna en el teléfono cierra la lista que la tapa
     if (hayBackend) probarPunto(lat, lon);
     else setVerPuntos(true);
   }
@@ -620,7 +635,7 @@ function Cabina({ perfil }) {
 
   return (
     <div className={`cabina en-${vista}${hayPanel ? "" : " sin-panel"}${config.herramientas.lineaTiempo ? "" : " sin-dock"}${cajonAbierto ? " con-cajon" : ""}${hayPanel && plegarPanel ? " panel-plegado" : ""}${plegarDock ? " dock-plegado" : ""}${plan.abierto ? " con-plan" : ""}${pasoTutorial?.id === "agregar" ? " tutorial-cajon" : ""}`}>
-      <div className="escena" aria-hidden={vista !== "globo"}>
+      <div className="escena" data-tutorial={angosto ? "luna" : undefined} aria-hidden={vista !== "globo"}>
         <Suspense fallback={null}>
           <Globo
             sitios={sitios}
@@ -844,7 +859,7 @@ function Cabina({ perfil }) {
       </aside>}
       {hayPanel && <Asa lado="panel" plegada={plegarPanel} etiqueta={t(plegarPanel ? "ajustes.plegar.abrirPanel" : "ajustes.plegar.panel")} alAlternar={() => setPanelPlegado((plegado) => !plegado)} />}
 
-      <main className="centro" data-tutorial="luna">
+      <main className="centro" data-tutorial={angosto ? undefined : "luna"}>
         {vista === "globo" && config.pistaGlobo && (
           <div className="pista-globo vidrio">
             <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
