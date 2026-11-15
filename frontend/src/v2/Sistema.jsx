@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { BATERIAS, CONSTANTE_SOLAR_KW_M2, PERFIL_PERSONALIZADO, PERFILES, potenciaNominalKW } from "./configEnergia";
+import { MARGEN_COMUNICACION_MAX_DEG } from "./calculo";
 import { useIdioma } from "./i18n";
 
 // Campo numérico con su unidad. Guarda el texto tal como se escribe ("0," o vacío) y solo avisa
 // cuando hay un número válido; si el valor cambia desde afuera (otro perfil), se actualiza.
-function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max, entero = false }) {
+function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max, entero = false, ayuda }) {
   const comoTexto = (v) => (v == null ? "" : String(v));
   const [texto, setTexto] = useState(comoTexto(valor));
   useEffect(() => {
@@ -21,8 +22,8 @@ function Campo({ etiqueta, unidad, valor, alCambiar, paso = "any", min = 0, max,
   }
 
   return (
-    <label className="campo">
-      <span>{etiqueta}</span>
+    <label className="campo" title={ayuda}>
+      <span>{etiqueta}{ayuda && <i className="ayuda" aria-hidden="true"> ⓘ</i>}</span>
       <span className="campo-entrada">
         <input
           type="number"
@@ -58,8 +59,9 @@ function Ficha({ tipo }) {
 }
 
 // Botón de la barra superior con el resumen del sistema y, desplegado, todas las entradas en capas:
-// perfil, datos a la vista y "Avanzado" (cerrado). Cualquier cambio pasa el perfil a "Personalizado".
-export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar }) {
+// perfil, datos a la vista y "Avanzado" (cerrado). Cualquier cambio pasa el perfil a "Personalizado",
+// salvo el margen para comunicación, que es de la antena y no del sistema de energía.
+export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar, margenCom, alCambiarMargen }) {
   const { t, f } = useIdioma();
   const { num } = f;
   const [abierto, setAbierto] = useState(false);
@@ -126,6 +128,7 @@ export default function Sistema({ sistema, perfilId, alElegirPerfil, alCambiar }
               <Campo etiqueta={t("sistema.tasaC")} unidad="C" paso="0.1" {...campo("tasaC")} />
               <p className="campo-dato"><span>{t("sistema.potenciaNominal")}</span><b>{num(nominalKW, nominalKW < 10 ? 2 : 0)} kW</b></p>
               <Campo etiqueta={t("sistema.calefaccion")} unidad="kW" paso="0.01" {...campo("calefaccionKW")} />
+              <Campo etiqueta={t("sistema.margenCom")} unidad="°" paso="0.5" max={MARGEN_COMUNICACION_MAX_DEG} ayuda={t("sistema.margenComAyuda")} valor={margenCom} alCambiar={alCambiarMargen} />
             </div>
             <p className="tenue nota-chica">{t("sistema.calefaccionNota")}</p>
           </details>

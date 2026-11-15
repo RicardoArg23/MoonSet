@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { cargarCoordenadas, cargarGeometria, cargarSitios, cargarVecindad, hayBackend } from "./datos";
-import { evaluarMision, tramos } from "./calculo";
+import { conMargenComunicacion, evaluarMision, tramos } from "./calculo";
 import { entradaSitio, evaluarEnergia, fechaViableEnergia, recomendar } from "./energia";
 import { PERFIL_INICIAL, PERFIL_PERSONALIZADO, PERFILES } from "./configEnergia";
 import { ProveedorIdioma, useIdioma } from "./i18n";
@@ -93,6 +93,7 @@ function Cabina({ perfil }) {
   const [duracionDias, setDuracionDias] = useState(14);
   const [perfilId, setPerfilId] = useState(PERFIL_INICIAL);
   const [sistema, setSistema] = useState(() => PERFILES.find((p) => p.id === PERFIL_INICIAL).valores); // paneles + batería
+  const [margenCom, setMargenCom] = useState(0); // margen mínimo de la Tierra sobre el relieve para comunicarse (°)
   const [horaMision, setHoraMision] = useState(0);
   const [fijados, setFijados] = useState([]); // [{ sitioId, dia, horaLlegada }]
   const [vecindades, setVecindades] = useState({}); // id -> grilla | null
@@ -152,7 +153,11 @@ function Cabina({ perfil }) {
     return () => { vigente = false; };
   }, [sitioId, vecindades]);
 
-  const sitios = useMemo(() => (base ? [...base, ...guardados, ...(prueba ? [prueba] : [])] : null), [base, guardados, prueba]);
+  // Los sitios con la señal según el margen para comunicación: todo lo que mira el contacto usa esta lista.
+  const sitios = useMemo(
+    () => (base ? [...base, ...guardados, ...(prueba ? [prueba] : [])].map((s) => conMargenComunicacion(s, margenCom)) : null),
+    [base, guardados, prueba, margenCom]
+  );
   const duracionH = duracionDias * 24;
   const sitio = sitios?.find((s) => s.sitio.id === sitioId) ?? sitios?.[0];
   const i0 = dia * 24 + horaLlegada;
@@ -184,8 +189,8 @@ function Cabina({ perfil }) {
   const hora = Math.min(horaMision, duracionH - 1);
   const iAhora = i0 + hora;
   const iGeo = Math.min(geometria.sol_lat.length - 1, iAhora);
-  const esPrueba = prueba !== null && sitio === prueba;
-  const esGuardado = guardados.includes(sitio);
+  const esPrueba = prueba !== null && sitio.sitio.id === prueba.sitio.id;
+  const esGuardado = guardados.some((s) => s.sitio.id === sitio.sitio.id);
   const diaViable = e.sobrevive ? null : fechaViableEnergia(sitio, sistema, dia, duracionH, horaLlegada);
   const minimoDiaViable = diaViable === null ? null : evaluarEnergia(sitio, sistema, diaViable * 24 + horaLlegada, duracionH, { serie: false }).minimoPct;
   // Entre los sitios que sí sirven, el que más contacto con la Tierra tiene (y a igual contacto, más luz).
@@ -363,7 +368,7 @@ function Cabina({ perfil }) {
             <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
           </div>
         )}
-        {funciones.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} />}
+        {funciones.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
         {funciones.puntos && <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
             {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}

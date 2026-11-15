@@ -89,7 +89,14 @@ function metaSistema(sistema, perfil, num) {
   ];
 }
 
-const CRITERIO = ["criterio", "luz = asoma el borde del disco solar sobre el relieve; contacto = el centro de la Tierra esta sobre el relieve"];
+// Criterio de luz y contacto, con el margen mínimo para comunicación que se usó.
+function metaCriterio(margenDeg, num) {
+  const contacto = margenDeg > 0 ? `el centro de la Tierra esta al menos ${num(margenDeg)} grados sobre el relieve` : "el centro de la Tierra esta sobre el relieve";
+  return [
+    ["margen_comunicacion_deg", num(margenDeg)],
+    ["criterio", `luz = asoma el borde del disco solar sobre el relieve; contacto = ${contacto}`],
+  ];
+}
 
 function texto(meta, cabeza, filas, fila) {
   const lineas = meta.map(([k, v]) => `# ${k}: ${String(v).replace(/[\r\n]+/g, " ")}`);
@@ -119,7 +126,7 @@ export function csvMision({ sitio, sistema, perfil, i0, duracionH, idioma = "en"
     ...metaSistema(sistema, perfil, num),
     ["sobrevive", siNo(r.sobrevive)],
     ["bateria_minima_pct", num(r.minimoPct, 2)],
-    CRITERIO,
+    ...metaCriterio(sitio.margenComunicacionDeg ?? 0, num),
   ];
 
   const filas = [];
@@ -159,7 +166,7 @@ export function csvComparacion({ escenarios, sistema, perfil, duracionH, idioma 
     ["duracion_pedida_h", duracionH],
     ["coordenada_aproximada", aproximados.length ? [...new Set(aproximados)].join(" ") : "ninguna"],
     ...metaSistema(sistema, perfil, num),
-    CRITERIO,
+    ...metaCriterio(escenarios[0]?.sitio.margenComunicacionDeg ?? 0, num),
   ];
 
   const filas = escenarios.map(({ sitio, i0 }, k) => {

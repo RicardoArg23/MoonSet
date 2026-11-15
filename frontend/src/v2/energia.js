@@ -17,7 +17,7 @@
 // - Hay consumo "de noche" (mínima + calefacción) en toda hora sin luz, aunque sea una sombra corta.
 // - La potencia nominal es capacidad total x tasa C. Superarla es solo un aviso: no hace fallar la
 //   misión. Se compara contra la potencia que entrega la batería en cada hora.
-import { alturaHorizonte, fraccionDisco, RADIO_SOL_DEG } from "./calculo.js";
+import { alturaHorizonte, fraccionDisco, hayContacto, RADIO_SOL_DEG } from "./calculo.js";
 import { CONSTANTE_SOLAR_KW_M2, parametrosBateria, potenciaNominalKW } from "./configEnergia.js";
 
 const HORAS_POR_MES = 730;
@@ -279,10 +279,15 @@ export function evaluarVecindadEnergia(sitio, vecindad, sistema, i0, duracionH) 
   return vecindad.horizontes.map((hz, k) => {
     const entrada = entradaHorizonte(sitio, hz, i0, i0 + duracionH, sistema.orientacion);
     const r = simular(sistema, entrada, 0, entrada.luz.length, { serie: false });
+    const fin = Math.min(sitio.muestras, i0 + duracionH);
     let conLuz = 0;
+    let conSenal = 0;
     for (let i = 0; i < entrada.luz.length; i++) conLuz += entrada.luz[i];
+    // Contacto en el punto: la Tierra del sitio central contra el relieve de ese punto, con el mismo margen.
+    for (let i = i0; i < fin; i++) conSenal += hayContacto(sitio.tierra_el[i] - alturaHorizonte(hz, sitio.tierra_az[i]), sitio.margenComunicacionDeg ?? 0);
     return {
       luzPct: (100 * conLuz) / entrada.luz.length,
+      contactoPct: (100 * conSenal) / Math.max(1, fin - i0),
       viable: r.sobrevive,
       minimoPct: r.minimoPct,
       nocheH: r.nocheMaxH,
