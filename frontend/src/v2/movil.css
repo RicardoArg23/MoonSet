@@ -83,3 +83,10 @@
   .plan-opcion { padding: 10px 12px; }
   .plan-cuando .plan-etiqueta:first-child { flex: none; }
 }
+
+/* Franja "Riesgos de la misión · Próximamente": en el teléfono el alto no aprieta y no hay mouse, así que los
+   tres chips van a la vista, en una segunda línea. */
+@media (max-width: 640px) {
+  .riesgos-chips, .riesgos.arriba .riesgos-chips { position: static; opacity: 1; pointer-events: auto; padding: 6px 0 0; }
+  .riesgos-chip { box-shadow: none; background: transparent; height: 30px; }
+}

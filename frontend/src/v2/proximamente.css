@@ -1,0 +1,56 @@
+/* "Próximamente": franja del panel, nota de calefacción y modal. Usa las variables de estilos.css.
+   Nada de acá muestra valores: son avisos de modelos en desarrollo. */
+
+.prox-candado { flex: none; width: 12px; height: 12px; }
+
+/* ---------- franja "Riesgos de la misión" del panel: una sola línea, sin márgenes extra ---------- */
+.riesgos { position: relative; flex: 0 0 auto; margin-top: 6px; }
+.riesgos-titulo { width: 100%; height: 26px; padding: 0 10px; display: flex; align-items: center; gap: 7px; border: 1px dashed var(--borde-fuerte); border-radius: 999px; font-size: 12px; color: var(--texto-2); text-align: left; white-space: nowrap; overflow: hidden; }
+.riesgos-titulo b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+.riesgos-etiqueta { flex: none; margin-left: auto; font-size: 11px; color: var(--tenue); }
+.riesgos-etiqueta::before { content: "· "; }
+/* Los chips no suman alto al panel: aparecen flotando debajo de la franja al pasar el mouse o al llegar con Tab. */
+.riesgos-chips { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; padding-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; opacity: 0; pointer-events: none; transition: opacity 0.15s var(--salida); }
+/* Sin lugar debajo (Proximamente.jsx lo mide), se abren hacia arriba para no tapar los botones del pie del panel. */
+.riesgos.arriba .riesgos-chips { top: auto; bottom: 100%; padding-top: 0; padding-bottom: 4px; }
+.riesgos:focus-within .riesgos-chips { opacity: 1; pointer-events: auto; }
+@media (hover: hover) {
+  .riesgos:hover .riesgos-chips { opacity: 1; pointer-events: auto; }
+}
+.riesgos-chip { height: 26px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--borde-fuerte); border-radius: 999px; background: #1d1a17; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5); font-size: 12px; color: var(--texto-2); white-space: nowrap; }
+.riesgos-chip:hover:not(:disabled) { color: var(--texto); }
+
+/* ---------- línea chica junto al campo de calefacción (Sistema.jsx) ---------- */
+.prox-calefaccion { grid-column: 1 / -1; justify-self: start; min-height: 0; font-size: 12px; line-height: 1.3; color: var(--tenue); }
+.prox-calefaccion:hover { color: var(--texto); }
+
+/* ---------- entrada del cajón ---------- */
+.cj-proximamente { margin-top: 6px; border-top: 1px solid var(--borde); border-radius: 0 0 14px 14px; }
+
+/* ---------- modal ---------- */
+.prox-fondo { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px 14px; background: rgba(0, 0, 0, 0.62); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.prox-modal { width: min(720px, 100%); max-height: min(86vh, 860px); overflow: hidden auto; padding: 22px 24px; border-radius: 24px; background: #1b1815; border: 1px solid var(--borde-fuerte); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06); scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+.prox-modal:focus { outline: none; }
+.prox-cabeza { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.prox-cabeza h2 { margin: 0; font-size: 24px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
+.prox-cabeza p { margin-top: 4px; font-size: 14px; color: var(--texto-2); }
+.prox-cabeza .equis { width: 38px; height: 38px; }
+.prox-modelos { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.prox-tarjeta { padding: 14px 16px; border-radius: 16px; background: var(--relleno); border: 1px solid var(--borde); display: flex; flex-direction: column; gap: 6px; scroll-margin: 12px; }
+.prox-tarjeta:focus { outline: none; }
+.prox-tarjeta.resaltada { border-color: var(--acento); background: rgba(255, 184, 74, 0.08); }
+.prox-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--tenue); }
+.prox-estado { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border: 1px dashed var(--borde-fuerte); border-radius: 999px; color: var(--texto-2); }
+.prox-tarjeta h3 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.prox-pregunta { font-size: 15px; color: var(--texto); }
+.prox-parte { font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
+.prox-parte b { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase; color: var(--tenue); }
+.prox-formula { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 12.5px; color: var(--tenue); }
+.prox-formula code { padding: 3px 9px; border-radius: 8px; background: rgba(0, 0, 0, 0.35); font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 13px; color: var(--texto); }
+.prox-nota { margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--acento); border-radius: 12px; background: rgba(255, 184, 74, 0.1); font-size: 13.5px; line-height: 1.45; color: #ffd9a0; }
+
+@media (max-width: 640px) {
+  .prox-fondo { padding: 0; place-items: end stretch; }
+  .prox-modal { width: 100%; max-height: 92vh; padding: 18px 16px 24px; border-radius: 24px 24px 0 0; }
+  .prox-cabeza h2 { font-size: 21px; }
+}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BATERIAS, CONSTANTE_SOLAR_KW_M2, PERFIL_PERSONALIZADO, PERFILES, potenciaNominalKW } from "./configEnergia";
 import { MARGEN_COMUNICACION_MAX_DEG } from "./calculo";
 import { useIdioma } from "./i18n";
+import { NotaCalefaccion } from "./Proximamente.jsx";
 
 // Campo numérico con su unidad. Guarda el texto tal como se escribe ("0," o vacío) y solo avisa
 // cuando hay un número válido; si el valor cambia desde afuera (otro perfil), se actualiza.
@@ -108,6 +109,7 @@ export function CamposSistema({ sistema, alCambiar, margenCom, alCambiarMargen }
           <Campo etiqueta={t("sistema.tasaC")} unidad="C" paso="0.1" {...campo("tasaC")} />
           <p className="campo-dato"><span>{t("sistema.potenciaNominal")}</span><b>{num(nominalKW, nominalKW < 10 ? 2 : 0)} kW</b></p>
           <Campo etiqueta={t("sistema.calefaccion")} unidad="kW" paso="0.01" {...campo("calefaccionKW")} />
+          <NotaCalefaccion />
           {alCambiarMargen && <Campo etiqueta={t("sistema.margenCom")} unidad="°" paso="0.5" max={MARGEN_COMUNICACION_MAX_DEG} ayuda={t("sistema.margenComAyuda")} valor={margenCom} alCambiar={alCambiarMargen} />}
         </div>
         <p className="tenue nota-chica">{t("sistema.calefaccionNota")}</p>

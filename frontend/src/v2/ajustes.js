@@ -4,7 +4,9 @@
 
 export const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"];
 /** Bloques del panel de respuesta que se pueden ocultar y reordenar. */
-export const BLOQUES = ["medidor", "opciones", "cifras", "detalle", "sello", "enlaces"];
+// "riesgos" es la franja "Riesgos de la misión · Próximamente" (Proximamente.jsx): no calcula nada todavía. Va al final
+// para que sus chips, que aparecen flotando al pasar el mouse, no tapen el sello ni los enlaces de NASA.
+export const BLOQUES = ["medidor", "opciones", "cifras", "detalle", "sello", "enlaces", "riesgos"];
 /** Botones del pie del panel: se ocultan, pero siempre van al final. */
 export const ACCIONES = ["fijar", "exportar"];
 export const CIFRAS = ["luz", "contacto", "energia", "noche", "autonomia", "minimo"];
