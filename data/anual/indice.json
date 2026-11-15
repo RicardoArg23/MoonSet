@@ -151,12 +151,12 @@
   {
    "id": "malapert-massif",
    "nombre": "Macizo Malapert (región Artemis III)",
-   "lat": -86.0,
-   "lon": 2.9,
+   "lat": -85.9876,
+   "lon": 2.0528,
    "categoria": "artemis",
    "anio": null,
    "aproximado": true,
-   "fuente": "Ubicación aproximada para pruebas",
+   "fuente": "cumbre en el DEM LOLA 80 m dentro de la zona LROC MALAPERTLOD",
    "horizonte_fuente": "dem_lola_80s_80m",
    "archivo": "malapert-massif.json"
   }

@@ -13,6 +13,6 @@
     {"id": "connecting-ridge", "nombre": "Connecting Ridge — cerca de Shackleton", "lat": -89.45, "lon": 222.69, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"},
     {"id": "borde-shackleton", "nombre": "Borde de Shackleton", "lat": -89.78, "lon": 204.27, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar"},
     {"id": "borde-de-gerlache", "nombre": "Borde de de Gerlache", "lat": -88.71, "lon": 291.90, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Punto elevado elegido sobre el DEM de LOLA, verificar"},
-    {"id": "malapert-massif", "nombre": "Macizo Malapert (región Artemis III)", "lat": -86.0, "lon": 2.9, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "Ubicación aproximada para pruebas"}
+    {"id": "malapert-massif", "nombre": "Macizo Malapert (región Artemis III)", "lat": -85.9876, "lon": 2.0528, "categoria": "artemis", "anio": null, "aproximado": true, "fuente": "cumbre en el DEM LOLA 80 m dentro de la zona LROC MALAPERTLOD"}
   ]
 }
