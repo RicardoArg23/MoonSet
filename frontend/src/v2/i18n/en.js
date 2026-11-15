@@ -32,8 +32,45 @@ export default {
     errorAyuda: "Run backend/scripts/precalcular_anual.py and restart the frontend server.",
     cargando: "Loading ephemerides and terrain…",
     idioma: "Language",
-    creditos: "LOLA 80 m terrain (south of 80° S) · polar stereographic map · JPL DE421 ephemerides · LROC WAC and NAC imagery via NASA Moon Trek · ",
-    versionAnterior: "previous version",
+    abrirMenu: "Open MoonSet menu",
+    cerrarMenu: "Close menu",
+    menu: "MoonSet menu",
+    creditos: "LOLA 80 m terrain (south of 80° S) · polar stereographic map · JPL DE421 ephemerides · LROC WAC and NAC imagery via NASA Moon Trek",
+  },
+
+  menu: {
+    ajustes: "Customize interface",
+    vistas: "Views",
+    herramientas: "Tools",
+    parametros: "Mission and battery parameters",
+    puntos: "My points",
+    lineaTiempo: "Timeline",
+    inicio: "Back to start",
+  },
+
+  // Start screen (src/v2/inicio)
+  inicio: {
+    titular: "Choose where and when to land on the Moon.",
+    bajada: "MoonSet shows you when the Sun and the Earth set anywhere on the Moon, so you know how much light you will have for power and when you can call home.",
+    pregunta: "How do you want to enter?",
+    explorarT: "Explore the Moon",
+    explorarD: "For the curious. The essentials, no jargon.",
+    planificarT: "Plan a mission",
+    planificarD: "For technical and science teams. Every view, number and source.",
+    irSol: "Go to the Sun",
+    irTierra: "Go to the Earth",
+    polo: "South pole",
+    sol: "Sun",
+    tierra: "Earth",
+    lSol: "Sun on the horizon",
+    lTierra: "Earth on the horizon",
+    lSitios: "Landing sites",
+    aria: "The Moon seen from space, with the Sun and the Earth in the distance. Drag, use the wheel or the arrow keys to turn the view.",
+    ocultar: "Hide the interface",
+    mostrar: "Show the interface",
+    creditos1: "NASA Space Apps Challenge 2026 · Lunar Landing Site Navigator",
+    creditos2: "Moon: LROC WAC (NASA/GSFC/ASU) · Earth: Blue Marble (NASA)",
+    creditos3: "Sun position is illustrative · Sun and Earth are not to scale · the light on the Moon is fixed",
   },
 
   vistas: {
@@ -184,6 +221,7 @@ export default {
   },
 
   globo: {
+    pistaExplorar: "Drag to rotate. Tap a marked site to see how much light and contact with Earth it has.",
     pistaBackend: "Drag to rotate. Tap the Moon to try a point.",
     pistaSinBackend: "Drag to rotate. Yellow points work on the chosen date; grey ones don't.",
     aLaTierra: "to Earth",

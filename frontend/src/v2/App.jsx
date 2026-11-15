@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { cargarCoordenadas, cargarGeometria, cargarSitios, cargarVecindad, hayBackend } from "./datos";
 import { conMargenComunicacion, evaluarMision, tramos } from "./calculo";
 import { entradaSitio, evaluarEnergia, fechaViableEnergia, recomendar } from "./energia";
@@ -15,12 +15,24 @@ import EnlacesNasa from "./EnlacesNasa";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
+const Inicio = lazy(() => import("./inicio/Inicio"));
 const DIA_MS = 86_400_000;
 const HORA_MS = 3_600_000;
 const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
 const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"]; // sus nombres están en i18n: vistas.<id>
 const dos = (n) => String(n).padStart(2, "0");
+// Qué piezas de la cabina arranca viendo cada perfil de la pantalla de inicio. Es solo el punto de partida:
+// el menú lateral (botón MoonSet) permite prender o apagar cada una después.
+const FUNCIONES_POR_PERFIL = {
+  explorar: { globo: true, mapa: false, horizonte: true, alrededores: false, comparar: false, parametros: false, puntos: false, lineaTiempo: false },
+  planificar: { globo: true, mapa: true, horizonte: true, alrededores: true, comparar: true, parametros: true, puntos: true, lineaTiempo: true },
+};
+// El perfil elegido va en el hash (#explorar, #planificar): recargar conserva la cabina y "atrás" vuelve al inicio.
+const perfilDelHash = () => {
+  const perfil = window.location.hash.slice(1);
+  return perfil in FUNCIONES_POR_PERFIL ? perfil : null;
+};
 
 function Cinta({ serie, desde, hasta, color }) {
   return (
@@ -47,14 +59,26 @@ function BarraCarga({ minimoPct, reservaPct, sobrevive }) {
 const kwhArriba = (x) => (x < 10 ? Math.ceil(x * 10) / 10 : Math.ceil(x));
 
 export default function App() {
+  const [perfil, setPerfil] = useState(perfilDelHash);
+  useEffect(() => {
+    const alCambiarHash = () => setPerfil(perfilDelHash());
+    window.addEventListener("hashchange", alCambiarHash);
+    return () => window.removeEventListener("hashchange", alCambiarHash);
+  }, []);
   return (
     <ProveedorIdioma>
-      <Cabina />
+      {perfil ? (
+        <Cabina key={perfil} perfil={perfil} />
+      ) : (
+        <Suspense fallback={null}>
+          <Inicio alEntrar={(elegido) => { window.location.hash = elegido; }} />
+        </Suspense>
+      )}
     </ProveedorIdioma>
   );
 }
 
-function Cabina() {
+function Cabina({ perfil }) {
   const { idioma, setIdioma, idiomas, t, f } = useIdioma();
   const { num, coordenadas, fechaCorta, fechaLarga, nombreCorto, duracion } = f;
   const [base, setBase] = useState(null); // sitios de la lista curada
@@ -74,10 +98,17 @@ function Cabina() {
   const [fijados, setFijados] = useState([]); // [{ sitioId, dia, horaLlegada }]
   const [vecindades, setVecindades] = useState({}); // id -> grilla | null
   const [verPuntos, setVerPuntos] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  // En el perfil explorar la cabina arranca solo con la Luna: el panel de respuesta se despliega al elegir un sitio.
+  const [panelAbierto, setPanelAbierto] = useState(perfil !== "explorar");
+  const [funciones, setFunciones] = useState(FUNCIONES_POR_PERFIL[perfil]);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
   const [estadoCoord, setEstadoCoord] = useState(""); // "", "cargando" o un mensaje de error
   const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
+  const marcaRef = useRef(null);
+  const menuRef = useRef(null);
+  const cerrarMenuRef = useRef(null);
 
   useEffect(() => {
     Promise.all([cargarSitios(), cargarGeometria()])
@@ -87,6 +118,30 @@ function Cabina() {
       })
       .catch((e) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!menuAbierto) return undefined;
+    cerrarMenuRef.current?.focus();
+    const alTeclado = (evento) => {
+      if (evento.key === "Escape") {
+        setMenuAbierto(false);
+        marcaRef.current?.focus();
+      } else if (evento.key === "Tab") {
+        const controles = menuRef.current?.querySelectorAll("button:not(:disabled), input:not(:disabled)") ?? [];
+        const primero = controles[0];
+        const ultimo = controles[controles.length - 1];
+        if (evento.shiftKey && document.activeElement === primero) {
+          evento.preventDefault();
+          ultimo?.focus();
+        } else if (!evento.shiftKey && document.activeElement === ultimo) {
+          evento.preventDefault();
+          primero?.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", alTeclado);
+    return () => window.removeEventListener("keydown", alTeclado);
+  }, [menuAbierto]);
 
   // La grilla de alrededores se pide una vez por sitio, cuando se lo elige.
   useEffect(() => {
@@ -171,12 +226,23 @@ function Cabina() {
     setSistema((s) => ({ ...s, ...cambios }));
     setPerfilId(PERFIL_PERSONALIZADO);
   }
+  // Tocar la Luna para probar un punto: con "Mis puntos" activo, o en el perfil explorar si hay backend que lo calcule.
+  const tocarLuna = funciones.puntos || (perfil === "explorar" && hayBackend);
   const deCerca = detalle.metrosPorPixel < 1000; // el globo está acercado: el botón ofrece volver a la Luna entera
+
+  function cambiarFuncion(clave, activa) {
+    const siguientes = { ...funciones, [clave]: activa };
+    setFunciones(siguientes);
+    if (VISTAS.includes(clave) && !activa && vista === clave) {
+      setVista(VISTAS.find((v) => siguientes[v]) ?? "globo");
+    }
+  }
 
   function elegirSitio(id) {
     // Salir de un punto de prueba lo descarta: no se acumulan puntos que nadie pidió guardar.
     if (prueba && id !== prueba.sitio.id) setPrueba(null);
     setSitioId(id);
+    setPanelAbierto(true);
     setHoraMision(0);
     setEnfoque({ modo: "lejos" }); // al cambiar de sitio se vuelve a ver la Luna entera
   }
@@ -197,6 +263,7 @@ function Cabina() {
       const existente = guardados.find((s) => s.sitio.id === nuevo.sitio.id);
       setPrueba(existente ? null : nuevo); // reemplaza al punto de prueba anterior
       setSitioId(nuevo.sitio.id);
+      setPanelAbierto(true);
       setHoraMision(0);
       setEstadoCoord("");
     } catch (e) {
@@ -263,7 +330,7 @@ function Cabina() {
   const mejorFijado = fijadosVista.length > 1 ? fijadosVista.reduce((a, b) => (b.en.minimoPct > a.en.minimoPct ? b : a)) : null;
 
   return (
-    <div className={`cabina en-${vista}`}>
+    <div className={`cabina en-${vista}${panelAbierto ? "" : " sin-panel"}${funciones.lineaTiempo ? "" : " sin-dock"}`}>
       <div className="escena" aria-hidden={vista !== "globo"}>
         <Suspense fallback={null}>
           <Globo
@@ -278,26 +345,31 @@ function Cabina() {
             enfoque={enfoque}
             onDetalle={setDetalle}
             onElegir={elegirSitio}
-            onPunto={puntoEnGlobo}
+            onPunto={tocarLuna ? puntoEnGlobo : null}
           />
         </Suspense>
       </div>
       <div className="resplandor" aria-hidden="true" />
 
       <header className="barra">
-        <div className="marca vidrio"><i aria-hidden="true" />MoonSet</div>
-        <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
-          {VISTAS.map((v) => (
-            <button key={v} type="button" aria-pressed={vista === v} onClick={() => setVista(v)}>
-              {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
-            </button>
-          ))}
-        </nav>
-        <div className="parametros vidrio">
-          <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
-        </div>
-        <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />
-        <div className="puntos">
+        <button
+          ref={marcaRef}
+          type="button"
+          className="marca vidrio"
+          aria-label={t("app.abrirMenu")}
+          aria-expanded={menuAbierto}
+          aria-controls="menu-lateral"
+          onClick={() => setMenuAbierto((abierto) => !abierto)}
+        >
+          <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
+        </button>
+        {funciones.parametros && (
+          <div className="parametros vidrio">
+            <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
+          </div>
+        )}
+        {funciones.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
+        {funciones.puntos && <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
             {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}
           </button>
@@ -329,15 +401,86 @@ function Cabina() {
               {estadoCoord && estadoCoord !== "cargando" && <p className="error" role="alert">{estadoCoord}</p>}
             </div>
           )}
-        </div>
-        <div className="idioma vidrio" role="group" aria-label={t("app.idioma")}>
-          {idiomas.map((i) => (
-            <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)}>{i.toUpperCase()}</button>
-          ))}
-        </div>
+        </div>}
+        {/* Las vistas van siempre al final, a la derecha: sumar herramientas no las corre de lugar. */}
+        {VISTAS.some((v) => funciones[v]) && (
+          <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
+            {VISTAS.filter((v) => funciones[v]).map((v) => (
+              <button key={v} type="button" aria-pressed={vista === v} onClick={() => setVista(v)}>
+                {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
+              </button>
+            ))}
+          </nav>
+        )}
       </header>
 
-      <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
+      {menuAbierto && (
+        <div className="menu-capa">
+          <button
+            type="button"
+            className="menu-fondo"
+            aria-label={t("app.cerrarMenu")}
+            onClick={() => {
+              setMenuAbierto(false);
+              marcaRef.current?.focus();
+            }}
+          />
+          <aside ref={menuRef} id="menu-lateral" className="menu-lateral vidrio" role="dialog" aria-modal="true" aria-label={t("app.menu")}>
+            <button
+              ref={cerrarMenuRef}
+              type="button"
+              className="menu-cerrar"
+              aria-label={t("app.cerrarMenu")}
+              onClick={() => {
+                setMenuAbierto(false);
+                marcaRef.current?.focus();
+              }}
+            >
+              ×
+            </button>
+            <div className="menu-contenido">
+              <div className="menu-cabeza">
+                <a className="menu-inicio" href="#"><span aria-hidden="true">←</span>{t("menu.inicio")}</a>
+                <div className="idioma" role="group" aria-label={t("app.idioma")}>
+                  {idiomas.map((i) => (
+                    <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)}>{i.toUpperCase()}</button>
+                  ))}
+                </div>
+              </div>
+              <h2>{t("menu.ajustes")}</h2>
+              <section className="menu-grupo" aria-labelledby="menu-vistas">
+                <h3 id="menu-vistas">{t("menu.vistas")}</h3>
+                {VISTAS.map((v) => (
+                  <label className="menu-opcion" key={v}>
+                    <span>{t(`vistas.${v}`)}</span>
+                    <input
+                      type="checkbox"
+                      checked={funciones[v]}
+                      disabled={funciones[v] && VISTAS.filter((opcion) => funciones[opcion]).length === 1}
+                      onChange={(e) => cambiarFuncion(v, e.target.checked)}
+                    />
+                  </label>
+                ))}
+              </section>
+              <section className="menu-grupo" aria-labelledby="menu-herramientas">
+                <h3 id="menu-herramientas">{t("menu.herramientas")}</h3>
+                {["parametros", "puntos", "lineaTiempo"].map((clave) => (
+                  <label className="menu-opcion" key={clave}>
+                    <span>{t(`menu.${clave}`)}</span>
+                    <input
+                      type="checkbox"
+                      checked={funciones[clave]}
+                      onChange={(e) => cambiarFuncion(clave, e.target.checked)}
+                    />
+                  </label>
+                ))}
+              </section>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {panelAbierto && <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
         <div className="panel-sitio">
           <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
             {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
@@ -383,7 +526,7 @@ function Cabina() {
         </details>
 
         <div className="panel-opciones">
-          {esPrueba ? (
+          {funciones.puntos && esPrueba ? (
             <>
               <p className="rotulo">{t("panel.pruebaRotulo")}</p>
               <p className="nota">{t("panel.pruebaNota")}</p>
@@ -419,17 +562,23 @@ function Cabina() {
 
         <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} />
 
-        <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
-          {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
-        </button>
-        <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>
-        {esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
-      </aside>
+        {/* Fijar y exportar comparten fila para que el panel no necesite scroll. Exportar es una herramienta de
+            planificación: el perfil explorar no la muestra. */}
+        <div className="panel-pie">
+          {funciones.comparar && (
+            <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
+              {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
+            </button>
+          )}
+          {perfil !== "explorar" && <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>}
+        </div>
+        {funciones.puntos && esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
+      </aside>}
 
       <main className="centro">
         {vista === "globo" && (
           <div className="pista-globo vidrio">
-            <p>{hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
+            <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
             <div className="pista-acciones">
               <button type="button" onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}>
                 {deCerca ? t("globo.alejar") : t("globo.acercar")}
@@ -448,7 +597,7 @@ function Cabina() {
               sol={{ lat: geometria.sol_lat[iGeo], lon: geometria.sol_lon[iGeo] }}
               tierra={{ lat: geometria.tierra_lat[iGeo], lon: geometria.tierra_lon[iGeo] }}
               onElegir={elegirSitio}
-              onPunto={puntoEnGlobo}
+              onPunto={tocarLuna ? puntoEnGlobo : null}
               vecindad={vecindad}
               i0={i0}
               duracionH={duracionH}
@@ -508,7 +657,7 @@ function Cabina() {
                       onClick={() => {
                         elegirSitio(f.sitioId);
                         cambiarLlegada(f.dia, f.horaLlegada);
-                        setVista("globo");
+                        setVista(VISTAS.find((v) => funciones[v]) ?? "globo");
                       }}
                     >
                       {t("comparar.ver")}
@@ -526,7 +675,7 @@ function Cabina() {
         )}
       </main>
 
-      <Dock
+      {funciones.lineaTiempo && <Dock
         sitio={sitio}
         dia={dia}
         horaLlegada={horaLlegada}
@@ -538,9 +687,9 @@ function Cabina() {
         sobrevive={e.sobrevive}
         horaMision={hora}
         setHoraMision={setHoraMision}
-      />
+      />}
 
-      <p className="creditos">{t("app.creditos")}<a href="?clasico">{t("app.versionAnterior")}</a></p>
+      <p className="creditos">{t("app.creditos")}</p>
     </div>
   );
 }

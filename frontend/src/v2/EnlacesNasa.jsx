@@ -2,7 +2,7 @@ import { useState } from "react";
 import { enlacesNasa } from "./enlaces";
 import { useIdioma } from "./i18n";
 
-// Grupo "Ver en herramientas de NASA": cada botón abre la herramienta en una pestaña nueva, centrada
+// Grupo plegable "Ver en herramientas de NASA" (cerrado al entrar, para que el panel no necesite scroll): cada botón abre la herramienta en una pestaña nueva, centrada
 // en el sitio. Si falta un deep link confiable (por ahora, la vista polar), se ofrece copiar las
 // coordenadas para el buscador de QuickMap.
 export default function EnlacesNasa({ lat, lon, inicioMs, finMs }) {
@@ -23,8 +23,8 @@ export default function EnlacesNasa({ lat, lon, inicioMs, finMs }) {
   }
 
   return (
-    <div className="nasa">
-      <p className="rotulo">{t("nasa.titulo")}</p>
+    <details className="nasa">
+      <summary>{t("nasa.titulo")}</summary>
       <div className="nasa-botones">
         <span className="nasa-horizons">
           <a className="boton" href={e.horizons[cuerpo]} target="_blank" rel="noopener noreferrer" title={t("nasa.horizonsAyuda")}>{t("nasa.horizons")}</a>
@@ -44,6 +44,6 @@ export default function EnlacesNasa({ lat, lon, inicioMs, finMs }) {
           <button type="button" onClick={copiar}>{copiado ? t("nasa.copiado") : t("nasa.copiar")}</button>
         </p>
       )}
-    </div>
+    </details>
   );
 }

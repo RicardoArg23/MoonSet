@@ -1,0 +1,96 @@
+/* Pantalla de inicio. Una sola pantalla sin scroll: el espacio (Luna, Sol, Tierra, estrellas) es el fondo;
+   la Luna sangra abajo a la izquierda y el texto con las dos entradas va a la derecha.
+   Usa las variables de estilos.css (estética "Atmósfera"). Todas las clases llevan el prefijo ini-. */
+.ini {
+  --ini-tenue: rgba(246, 241, 233, 0.68);
+  --ini-apagado: rgba(246, 241, 233, 0.42);
+  --ini-vidrio: rgba(16, 14, 12, 0.72);
+  --ini-tinta-ambar: #1c1204;
+  --ini-margen: 32px;
+  --ini-margen-der: 48px;
+  position: fixed; inset: 0; overflow: hidden; isolation: isolate; color: var(--texto);
+}
+.ini button:active:not(:disabled) { transform: none; }
+
+.ini-espacio { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: -1; touch-action: none; cursor: grab; outline: none; animation: ini-asoma 1.6s var(--salida) both; }
+.ini-espacio.arrastrando { cursor: grabbing; }
+.ini-espacio:focus-visible { box-shadow: inset 0 0 0 2px var(--acento); }
+
+/* Rótulos pegados a los cuerpos: los mueve espacio.js por transform */
+.ini-rotulo { position: fixed; left: 0; top: 0; pointer-events: none; display: flex; align-items: center; gap: 10px; opacity: 0;
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; will-change: transform, opacity; }
+.ini-rotulo i { width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--acento); box-shadow: 0 0 0 5px rgba(255, 184, 74, 0.22); }
+.ini-rotulo span { margin-top: -5px; text-shadow: 0 1px 6px #000, 0 0 2px #000; }
+.ini-astro span { margin: 0; color: var(--ini-tenue); }
+
+/* Barra superior */
+.ini-barra { position: absolute; inset: 0 0 auto 0; display: flex; align-items: center; justify-content: space-between; padding: 26px 32px 26px var(--ini-margen); z-index: 2; pointer-events: none; }
+.ini-barra > * { pointer-events: auto; }
+.ini-logo { height: 46px; width: auto; display: block; }
+.ini-barra-der { display: flex; align-items: center; gap: 8px; }
+.ini-idioma { display: flex; padding: 3px; border: 1px solid var(--borde); border-radius: 999px; background: var(--ini-vidrio); backdrop-filter: blur(12px); }
+.ini-idioma button { border: 0; padding: 6px 13px; font-size: 13px; letter-spacing: 0.06em; color: var(--ini-tenue); }
+.ini-idioma button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.13); color: var(--texto); }
+.ini-ojo { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; border-color: var(--borde); background: var(--ini-vidrio); backdrop-filter: blur(12px); color: var(--ini-tenue); }
+.ini-ojo:hover { color: var(--texto); }
+.ini-ojo svg { width: 18px; height: 18px; }
+.ini button:focus-visible { outline: 2px solid var(--acento); outline-offset: 3px; }
+
+/* Invitación */
+.ini-invitacion { position: absolute; left: 52vw; right: 0; top: 50%; transform: translateY(-52%); z-index: 1; padding-right: var(--ini-margen-der);
+  display: flex; flex-direction: column; gap: 22px; max-width: 46rem; }
+.ini-invitacion h1 { font-weight: 500; font-size: clamp(2.3rem, 4.5vw, 4.6rem); line-height: 1.02; letter-spacing: -0.035em; text-wrap: balance; cursor: default; }
+.ini-palabra { display: inline-block; white-space: pre; }
+.ini-letra { display: inline-block; --p: 0; will-change: transform; transform: translateY(calc(var(--p) * -0.1em));
+  color: color-mix(in oklab, var(--acento) calc(var(--p) * 100%), var(--texto)); }
+.ini-bajada { max-width: 34rem; font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.55; font-weight: 300; color: var(--ini-tenue); text-wrap: pretty; }
+
+.ini-entradas { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; max-width: 30rem; }
+.ini-pregunta { margin-bottom: 2px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ini-apagado); }
+.ini-entrada { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 18px; text-align: left;
+  padding: 17px 20px 17px 24px; border-radius: 22px; border: 1px solid var(--borde); background: var(--ini-vidrio); backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); transition: transform 0.2s var(--salida), border-color 0.2s var(--salida); }
+.ini-entrada b { display: block; font-weight: 500; font-size: 1.16rem; letter-spacing: -0.01em; }
+.ini-entrada small { display: block; margin-top: 3px; font-size: 0.9rem; font-weight: 300; color: var(--ini-tenue); line-height: 1.35; }
+.ini-entrada svg { width: 22px; height: 22px; transition: transform 0.25s var(--salida); }
+.ini .ini-entrada:hover { border-color: rgba(255, 255, 255, 0.34); transform: translateX(4px); }
+.ini-entrada:hover svg { transform: translateX(4px); }
+.ini .ini-entrada:active { transform: translateX(4px) scale(0.985); }
+.ini .ini-primaria, .ini .ini-primaria:hover { background: var(--acento); border-color: var(--acento); color: var(--ini-tinta-ambar); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+.ini-primaria small { color: rgba(28, 18, 4, 0.74); font-weight: 400; }
+
+/* Pie: atajos al Sol y la Tierra, leyenda de las trazas */
+.ini-pie { position: absolute; left: var(--ini-margen); bottom: 22px; z-index: 2; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; pointer-events: none; }
+.ini-leyenda { display: flex; gap: 18px; margin: 0; padding: 0; list-style: none; font-size: 12px; text-shadow: 0 1px 6px #000, 0 0 2px #000; }
+.ini-leyenda li { display: flex; align-items: center; gap: 8px; opacity: 0; will-change: opacity; }
+.ini-leyenda i { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--acento); }
+.ini-leyenda .ini-l-tierra i { background: var(--tierra); }
+.ini-leyenda .ini-l-sitios i { width: 7px; height: 7px; border-radius: 50%; background: var(--texto); }
+.ini-mandos { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ini-ir { display: flex; align-items: center; gap: 9px; padding: 8px 14px; font-size: 12px; border-color: var(--borde); background: var(--ini-vidrio); backdrop-filter: blur(12px); pointer-events: auto; }
+.ini .ini-ir:active { transform: scale(0.97); }
+.ini-ir i { width: 8px; height: 8px; border-radius: 50%; background: var(--acento); }
+.ini-ir.ini-l-tierra i { background: var(--tierra); }
+.ini-creditos { position: absolute; right: var(--ini-margen-der); bottom: 22px; font-size: 11.5px; z-index: 2; color: var(--ini-apagado); text-align: right; line-height: 1.5; pointer-events: none; }
+
+/* Ocultar la interfaz: queda solo el espacio */
+.ini-ocultable { transition: opacity 0.35s var(--salida), visibility 0s linear 0s; }
+.ini-limpia .ini-ocultable { opacity: 0; visibility: hidden; transition: opacity 0.35s var(--salida), visibility 0s linear 0.35s; }
+
+.ini-sube { animation: ini-sube 0.8s var(--salida) both; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+@keyframes ini-sube { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes ini-asoma { from { opacity: 0; } to { opacity: 1; } }
+
+/* Pantallas angostas: se apila y vuelve el scroll (mismo corte que ANCHO_ANGOSTO en espacio.js) */
+@media (max-width: 860px) {
+  .ini { --ini-margen: 16px; --ini-margen-der: 16px; position: relative; inset: auto; min-height: 100vh; overflow: visible; display: flex; flex-direction: column; padding-bottom: 60vw; }
+  .ini-barra { position: relative; padding: 18px var(--ini-margen-der) 0 var(--ini-margen); }
+  .ini-logo { height: 36px; }
+  .ini-invitacion { position: relative; left: 0; top: 0; transform: none; max-width: none; gap: 16px; padding: 18px var(--ini-margen-der) 0 var(--ini-margen); }
+  .ini-pie { position: fixed; bottom: 14px; }
+  .ini-leyenda, .ini-creditos { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ini-sube, .ini-espacio { animation: none; }
+  .ini-entrada, .ini-entrada svg, .ini-ocultable, .ini-limpia .ini-ocultable { transition: none; }
+}
