@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ACCIONES, CIFRAS, HERRAMIENTAS, PERFILES_BASE, PERSONALIZADO, VISTAS, buscarAjustes, conBloqueMovido, conCifra, conVista } from "./ajustes";
 import { MARGEN_COMUNICACION_MAX_DEG } from "./calculo";
+import { useProximamente } from "./Proximamente.jsx";
 import { useIdioma } from "./i18n";
 import { ANGOSTO, CON_PUNTERO, useMedia } from "./useMedia";
 import "./cajon.css";
@@ -34,6 +35,7 @@ const I = {
 export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPerfil, alRestablecer, alCerrar, duracionDias, alCambiarDuracion, margenCom, alCambiarMargen }) {
   const { idioma, setIdioma, idiomas, t, f } = useIdioma();
   const angosto = useMedia(ANGOSTO);
+  const abrirProximamente = useProximamente();
   const conPuntero = useMedia(CON_PUNTERO) && !angosto;
   const [ruta, setRuta] = useState([]); // [] | [sección] | [sección, detalle]
   const [consulta, setConsulta] = useState("");
@@ -132,6 +134,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
   const buscables = (items) => items.filter((it) => it.tipo !== "rotulo" && it.tipo !== "nota");
   const indice = [
     { texto: t("app.idioma"), contexto: t("ajustes.titulo"), ruta: [], clave: "idioma", claves: "language español english" },
+    ...(abrirProximamente ? [{ texto: t("proximamente.cajon"), contexto: t("proximamente.cajonDetalle"), ruta: [], clave: "proximamente", claves: t("proximamente.cajonClaves") }] : []),
     ...secciones.flatMap((s) => [
       { texto: s.titulo, ruta: [s.id], clave: null },
       ...buscables(s.items).flatMap((it) => [
@@ -296,6 +299,13 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
           <Icono d={I.derecha} grosor={2} />
         </button>
       ));
+  // Al final de la lista: abre el modal "Próximamente". El cajón se cierra primero, así el foco vuelve al engranaje.
+  const filaProximamente = abrirProximamente && !consulta && (
+    <button type="button" className={`cj-seccion cj-proximamente${destello("proximamente")}`} data-clave="proximamente" onClick={() => { alCerrar(); abrirProximamente(null); }}>
+      <span><b>{t("proximamente.cajon")}</b><small>{t("proximamente.cajonDetalle")}</small></span>
+      <Icono d={I.derecha} grosor={2} />
+    </button>
+  );
 
   // En pantalla angosta no hay lugar al costado: el cajón muestra una sola pantalla, con botón para volver.
   const enAngosto = angosto && seccion;
@@ -330,7 +340,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
           )}
         </div>
         <div className="cj-cuerpo" onScroll={posicionar}>
-          {enAngosto ? lista((detalle ?? seccion).items, rutaValida.slice(0, 1)) : cuerpoRaiz}
+          {enAngosto ? lista((detalle ?? seccion).items, rutaValida.slice(0, 1)) : <>{cuerpoRaiz}{filaProximamente}</>}
         </div>
       </aside>
 

@@ -110,6 +110,24 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
   `?clasico`) y el menú lateral.
 - Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
 
+## Próximamente (rama `proximamente`)
+
+Pedido del mentor: mostrar los modelos que sumaríamos con más tiempo (térmico, radiación, micrometeoritos) como
+placeholders honestos. **No calculan nada** y no muestran números, semáforos ni gráficos de ejemplo.
+
+- **Modal** (`frontend/src/v2/Proximamente.jsx`, estilos en `proximamente.css`): tres tarjetas y la nota del terreno.
+  En Explorar, la pregunta simple y un párrafo; en Planificar, el detalle (hoy, próximamente, datos, resultado y la
+  fórmula en texto plano). Accesible: `role="dialog"`, foco atrapado, Esc y clic afuera cierran, y el foco vuelve a quien
+  lo abrió. Puede abrirse en un modelo, que queda resaltado.
+- **Desde dónde se abre**: la franja "Riesgos de la misión · Próximamente" del panel (bloque `riesgos` de `ajustes.js`,
+  ocultable y reordenable desde el cajón), la línea chica bajo el campo de calefacción en el sistema de energía, y la
+  entrada "Próximamente" al final del cajón. Todos usan `useProximamente()`, un contexto que pone la cabina.
+- **La franja ocupa una sola línea.** Los tres chips con candado no entran en esa línea con el panel de 400 px, así que
+  aparecen flotando debajo al pasar el mouse o llegar con Tab; en teléfonos van a la vista en una segunda línea.
+- **Textos y reglas** en `proximamente.js` (sin React) e i18n (`proximamente.*`). `tests/proximamente.test.js` comprueba
+  que estén los tres modelos en es/en y que ningún texto lleve números de resultado, palabras de semáforo ni
+  «certificado». No se tocó `calculo.js`, `energia.js`, `configEnergia.js`, `planificar.js` ni el backend.
+
 ## Más sitios (rama `mas-sitios`)
 
 - El catálogo pasa de 13 a **25 sitios**: IM-2 Athena, Blue Ghost M1, IM-3, JAXA SLIM, Hakuto-R M1 y M2, Chang'e 3, 5 y 6,

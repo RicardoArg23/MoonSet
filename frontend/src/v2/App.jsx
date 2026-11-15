@@ -21,6 +21,7 @@ import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import Planificador, { EtiquetaImpacto, Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
 import { DURACION_DEFECTO, HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
 import { explicar } from "./explicar";
+import Proximamente, { FranjaRiesgos, ProveedorProximamente } from "./Proximamente.jsx";
 import "./estilos.css";
 import "./movil.css"; // al final: pisa solo en teléfono
 
@@ -154,6 +155,15 @@ function Cabina({ perfil }) {
   const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
   const ajustesRef = useRef(null);
+  // Modal "Próximamente": { modelo, desde } mientras está abierto. `desde` es quien lo abrió, para devolverle el foco.
+  const [proximamente, setProximamente] = useState(null);
+  const abrirProximamente = (modelo = null) => setProximamente({ modelo, desde: document.activeElement });
+  function cerrarProximamente() {
+    const desde = proximamente?.desde;
+    setProximamente(null);
+    // Si el botón que lo abrió ya no está (la fila del cajón, que se cierra), el foco va al engranaje.
+    (desde?.isConnected ? desde : ajustesRef.current)?.focus?.();
+  }
   // Modo planificación (Planificador.jsx, estado en planificar.js). Tiene sus propias respuestas y su propio sistema
   // de energía: no toca el sitio, la fecha ni el perfil de la app hasta "Ver sitio"; la duración sí es compartida con la barra.
   const [plan, setPlan] = useState(estadoInicialPlan);
@@ -619,6 +629,7 @@ function Cabina({ perfil }) {
   };
 
   return (
+    <ProveedorProximamente value={abrirProximamente}>
     <div className={`cabina en-${vista}${hayPanel ? "" : " sin-panel"}${config.herramientas.lineaTiempo ? "" : " sin-dock"}${cajonAbierto ? " con-cajon" : ""}${hayPanel && plegarPanel ? " panel-plegado" : ""}${plegarDock ? " dock-plegado" : ""}${plan.abierto ? " con-plan" : ""}${pasoTutorial?.id === "agregar" ? " tutorial-cajon" : ""}`}>
       <div className="escena" aria-hidden={vista !== "globo"}>
         <Suspense fallback={null}>
@@ -790,6 +801,8 @@ function Cabina({ perfil }) {
             ))}
           </dl>
         )}
+
+        {config.bloques.riesgos && <FranjaRiesgos style={ordenDe("riesgos")} />}
 
         {config.bloques.detalle && <details className="panel-detalle" style={ordenDe("detalle")}>
           <summary>{t("energia.detalle")}</summary>
@@ -1010,8 +1023,10 @@ function Cabina({ perfil }) {
       )}
 
       <Tutorial tutorial={tutorial} />
+      {proximamente && <Proximamente inicial={proximamente.modelo} perfilVista={origen} alCerrar={cerrarProximamente} />}
 
       <p className="creditos">{t("app.creditos")}</p>
     </div>
+    </ProveedorProximamente>
   );
 }
