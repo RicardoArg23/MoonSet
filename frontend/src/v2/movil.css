@@ -1,0 +1,85 @@
+/* Teléfono (≤ 640 px): barra compacta en tres filas, línea de tiempo fija abajo y planificador como hoja.
+   Va después de los demás estilos y solo dentro de esta consulta: el escritorio no cambia. */
+@media (max-width: 640px) {
+  .cabina { padding: 10px 10px 24px; gap: 10px; }
+  .escena { height: clamp(230px, 34svh, 330px); }
+  .con-ayuda::after { display: none; } /* sin cursor no hay tooltip al pasar */
+
+  /* Fila 1: marca, astronauta, "Mis puntos", ayuda y ajustes. Fila 2: duración y sistema. Fila 3: vistas. */
+  .barra { position: relative; gap: 8px; align-items: center; }
+  .barra .marca { order: 1; height: 40px; padding: 0 12px 0 8px; }
+  .marca img { height: 28px; }
+  .astronauta { order: 2; width: 40px; height: 40px; }
+  .astronauta svg { width: 20px; height: 20px; }
+  .puntos { order: 3; position: static; margin-left: auto; }
+  .ayuda-boton { order: 4; width: 36px; height: 40px; }
+  .ajustes { order: 5; width: 36px; height: 40px; }
+  .parametros { order: 6; height: 40px; min-height: 40px; padding: 0 12px; gap: 6px; flex: none; border-radius: 999px; font-size: 13px; }
+  .parametros label { gap: 6px; }
+  .parametros input { width: 46px; height: 28px; }
+  .sistema { order: 7; position: static; }
+  .sistema > button { width: 100%; height: 40px; padding: 0 12px; font-size: 13px; justify-content: flex-start; min-width: 0; }
+  .sistema-texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .puntos > button { height: 40px; padding: 0 14px; font-size: 13px; white-space: nowrap; }
+  .barra > .vistas { order: 8; flex: 1 1 100%; margin-left: 0; padding: 3px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .barra > .vistas::-webkit-scrollbar { display: none; }
+  .vistas button { min-height: 36px; padding: 0 14px; font-size: 13px; flex: 1 0 auto; scroll-snap-align: start; }
+  /* Los desplegables se abren bajo toda la barra, a todo el ancho, y no pegados a un botón. */
+  .puntos-lista, .sistema-panel { position: absolute; left: 0; right: 0; top: calc(100% + 8px); width: auto; max-width: none; max-height: 70svh; z-index: 30; }
+
+  /* Sin panel ni línea de tiempo (explorar): la cabina ocupa la ventana y la Luna se estira, sin huecos debajo. */
+  .cabina.sin-panel { min-height: 100svh; }
+  .cabina.sin-panel .escena { flex: 1 1 auto; height: auto; min-height: 260px; max-height: 120vw; margin-block: auto; } /* tope: más alta, la Luna se saldría de los costados */
+  .cabina.sin-panel .escena > * { position: absolute !important; inset: 0; } /* el estilo en línea del lienzo manda: de ahí el !important */ /* el lienzo toma el alto que reparte flex */
+  /* De la pista del globo queda solo la lupa. */
+  .pista-globo { width: auto; margin-left: auto; padding: 4px; border-radius: 999px; }
+  .pista-globo p { display: none; }
+  /* El sistema de energía es siempre un botón con el ícono. */
+  .sistema { flex: none; }
+  .sistema > button { width: 40px; padding: 0; justify-content: center; }
+  .sistema-texto { display: none; }
+
+  /* Línea de tiempo: compacta y pegada bajo la Luna, antes de la respuesta, así fecha y veredicto quedan juntos. */
+  .centro { order: 3; }
+  .dock { order: 4; padding: 12px 14px 10px; gap: 6px 12px; border-radius: 22px;
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "fecha reloj" "lineas lineas"; align-items: center; }
+  .dock-fecha { grid-area: fecha; display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; min-width: 0; }
+  .dock-fecha .rotulo { display: none; }
+  .fecha-grande { font-size: 24px; }
+  .hora { margin-top: 0; gap: 4px; font-size: 12.5px; }
+  .hora span { width: 76px; }
+  .hora button { width: 28px; height: 28px; }
+  .dock-reloj { grid-area: reloj; gap: 10px; }
+  .reproducir { width: 42px; height: 42px; }
+  .reloj { font-size: 16px; min-width: 0; }
+  .dock-reloj .rotulo { font-size: 11.5px; }
+  .dock-lineas { grid-area: lineas; min-width: 0; }
+  .pista.anio { height: 22px; }
+  .pista.mision { margin-top: 6px; }
+  .meses { font-size: 10px; }
+  .leyenda { display: none; }
+  .leyenda .cuenta { display: none; }
+  .creditos { order: 6; }
+
+  /* Primera visita: la invitación va abajo, así no tapa la barra. */
+  .tt-invitacion { top: auto; bottom: 12px; grid-template-columns: minmax(0, 1fr) auto auto; padding: 12px 8px 12px 16px; gap: 8px; }
+  .tt-invitacion p { font-size: 15px; }
+
+  /* Panel del sitio, apilado debajo de la Luna. */
+  .panel { order: 5; padding: 18px 16px; }
+  .panel-veredicto h1 { font-size: 34px; }
+
+  /* Planificador: hoja desde abajo con asa, pestañas fijas arriba y un cuerpo que se desplaza. */
+  .cabina.con-plan { padding-bottom: 70svh; }
+  .panel.con-plan { order: 5; max-height: 74svh; padding: 0 16px calc(22px + env(safe-area-inset-bottom)); border-radius: 22px 22px 0 0; overscroll-behavior: contain;
+    border-bottom: 0; background: rgba(16, 14, 12, 0.96); box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.6); scrollbar-width: none; }
+  .panel.con-plan::-webkit-scrollbar { display: none; }
+  .panel.con-plan::before { content: ""; position: sticky; top: 0; z-index: 3; display: block; flex: none; width: 38px; height: 4px; margin: 8px auto 0; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
+  .panel.con-plan .plan-pestanas { position: sticky; top: 12px; z-index: 2; margin: 0 -16px 12px; padding: 8px 16px 10px; background: rgba(16, 14, 12, 0.96); border-bottom: 1px solid var(--borde); }
+  .plan { gap: 14px; }
+  .plan h2 { font-size: 20px; }
+  .plan-paso legend { font-size: 14.5px; }
+  .plan-opcion { padding: 10px 12px; }
+  .plan-cuando .plan-etiqueta:first-child { flex: none; }
+}

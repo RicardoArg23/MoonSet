@@ -89,6 +89,18 @@
   .ini-invitacion { position: relative; left: 0; top: 0; transform: none; max-width: none; gap: 16px; padding: 18px var(--ini-margen-der) 0 var(--ini-margen); }
   .ini-pie { position: fixed; bottom: 14px; }
   .ini-leyenda, .ini-creditos { display: none; }
+  /* Botones y textos más compactos: dejan ver más Luna. */
+  .ini-invitacion h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
+  .ini-bajada { font-size: 0.94rem; line-height: 1.45; }
+  .ini-entradas { gap: 8px; margin-top: 2px; }
+  .ini-pregunta { font-size: 11px; margin-bottom: 0; }
+  .ini-entrada { padding: 11px 14px 11px 18px; column-gap: 12px; border-radius: 18px; }
+  .ini-entrada b { font-size: 1rem; }
+  .ini-entrada small { margin-top: 1px; font-size: 0.8rem; line-height: 1.3; }
+  .ini-entrada svg { width: 18px; height: 18px; }
+  .ini-idioma button { padding: 4px 11px; font-size: 12px; }
+  .ini-ojo { width: 32px; height: 32px; }
+  .ini-ir { padding: 6px 12px; gap: 7px; font-size: 11.5px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ini-sube, .ini-espacio { animation: none; }
