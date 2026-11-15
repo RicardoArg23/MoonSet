@@ -91,12 +91,13 @@ test("las reglas del test anterior atrapan lo que no puede aparecer", () => {
   for (const bueno of ["Blindaje (material y espesor)", "trabajo", "allow", "altura"]) assert.ok(!SEMAFORO.test(bueno), bueno);
 });
 
-test("la franja de riesgos es un bloque más del panel: visible por defecto en los dos perfiles, después de las cifras", () => {
-  assert.equal(BLOQUES[BLOQUES.indexOf("cifras") + 1], "riesgos");
+test("la franja de riesgos es un bloque más del panel: visible por defecto en los dos perfiles, al final del panel", () => {
+  assert.equal(BLOQUES.at(-1), "riesgos"); // después de los enlaces de NASA y de cualquier otro bloque
+  assert.deepEqual(BLOQUES.slice(-3), ["sello", "enlaces", "riesgos"]);
   for (const perfil of PERFILES) {
     const config = configDePerfil(perfil);
     assert.equal(config.bloques.riesgos, true);
-    assert.ok(config.orden.includes("riesgos"));
+    assert.equal(config.orden.at(-1), "riesgos");
   }
   for (const idioma of IDIOMAS_APP) assert.notEqual(crearTraductor(idioma)("ajustes.bloques.riesgos"), "ajustes.bloques.riesgos");
 });

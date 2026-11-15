@@ -122,6 +122,9 @@ placeholders honestos. **No calculan nada** y no muestran números, semáforos n
 - **Desde dónde se abre**: la franja "Riesgos de la misión · Próximamente" del panel (bloque `riesgos` de `ajustes.js`,
   ocultable y reordenable desde el cajón), la línea chica bajo el campo de calefacción en el sistema de energía, y la
   entrada "Próximamente" al final del cajón. Todos usan `useProximamente()`, un contexto que pone la cabina.
+- **La franja va al final del panel** (último de `BLOQUES`), después de los enlaces de NASA: así los chips no tapan el
+  sello ni los enlaces. Al acercarse, la franja mide el espacio libre debajo; si los chips taparían «Fijar para comparar»
+  o «Exportar», o se saldrían del panel, se abren hacia arriba (`.riesgos.arriba`).
 - **La franja ocupa una sola línea.** Los tres chips con candado no entran en esa línea con el panel de 400 px, así que
   aparecen flotando debajo al pasar el mouse o llegar con Tab; en teléfonos van a la vista en una segunda línea.
 - **Textos y reglas** en `proximamente.js` (sin React) e i18n (`proximamente.*`). `tests/proximamente.test.js` comprueba
