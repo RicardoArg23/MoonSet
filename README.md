@@ -2,62 +2,150 @@
 
 **Know when the Sun and Earth set, anywhere on the Moon.**
 
-Compare lunar landing sites and dates at a glance: see when the Sun and Earth rise and set over the
-real terrain, for power and direct-to-Earth communication planning.
+MoonSet es una herramienta web para elegir dónde y cuándo alunizar. Para cualquier punto de la Luna y cualquier
+día de 2027 calcula cuándo hay Sol sobre el relieve real (energía para los paneles) y cuándo se ve la Tierra
+(comunicación directa), y simula la batería de la misión para decir si sobrevive la noche lunar.
 
-Project for the **NASA Space Apps Challenge 2026** — challenge: *Lunar Landing Site Navigator*.
+Proyecto para el **NASA Space Apps Challenge 2026**, desafío *Lunar Landing Site Navigator*.
 
-## Qué hace
+- **App publicada:** https://moon-set.vercel.app
+- **Video:** <!-- VIDEO: reemplazar por el enlace del video --> _enlace pendiente_
 
-Para cualquier punto de la Luna y cualquier fecha, MoonSet calcula dónde están el Sol y la Tierra
-en el cielo, los compara con el relieve del horizonte y responde:
+## Qué podés hacer
 
-- ¿hay **luz** para los paneles solares? ¿cuánto falta para que el Sol se ponga?
-- ¿se ve la **Tierra** para comunicarse sin satélite relé? ¿cuánto falta para que se esconda?
-- ¿qué sitio conviene, y qué pasa si la misión se atrasa?
+Al entrar elegís un perfil: **Explorar** (lo esencial, en lenguaje simple) o **Planificar** (todas las vistas y
+cifras). La interfaz está en español e inglés, y un tutorial guiado presenta cada parte la primera vez.
 
-Tiene dos modos: **Explorador** (simple, para el público y docentes) y **Planificador**
-(números exactos, para equipos de misión).
+- **Explorar la Luna.** Un globo 3D con 13 sitios (Apollo, Artemis, CLPS, Chang'e 4, Chandrayaan-3) y un mapa del
+  polo sur, coloreados según si la misión es viable en la fecha elegida. Al tocar un sitio, el panel dice si la
+  misión es viable o inviable, cuánta luz y cuánto contacto con la Tierra tiene, y por qué. Con el backend se puede probar cualquier
+  punto propio.
+- **Planificar con el astronauta.** Cuatro preguntas (qué llevás, dónde, cuándo ± cuántos días, cuánto dura) y un
+  ranking de sitios con la mejor llegada de cada uno, explicaciones con números y preguntas rápidas ("¿y si llego
+  una semana después?", "¿cuánta batería necesito?"). Funciona con reglas sobre los mismos cálculos de la app, sin IA.
+- **Horizonte.** El panorama de 360° desde el sitio, con el relieve, el Sol y la Tierra en la hora elegida.
+- **Alrededores.** La misma misión a pocos cientos de metros, en una grilla de 11 × 11 puntos alrededor de los
+  sitios polares.
+- **Comparar.** Hasta 4 escenarios (sitio y fecha) lado a lado.
+- **Línea de tiempo.** El año con las fechas que sirven y, dentro de la misión, la luz, el contacto y la batería hora
+  por hora.
+- **Exportar CSV.** La misión hora por hora o la comparación de escenarios (formato en
+  [Leer los CSV exportados](#leer-los-csv-exportados)).
+- **Herramientas de NASA.** Abre NASA Moon Trek y LROC QuickMap centrados en el sitio, y las tablas de JPL Horizons
+  del Sol y la Tierra para las horas de la misión.
 
-"Exportar misión (CSV)", en el panel del sitio, descarga la misión elegida con una fila por hora (Sol, Tierra, luz,
-contacto, energía y batería, fechas en UTC) y los datos del sistema arriba. "Exportar comparación (CSV)", en la vista
-Comparar, descarga una fila por escenario fijado. Con la interfaz en castellano el separador es ";" y la coma decimal
-(Excel en castellano lo abre con doble clic); en inglés, "," y punto decimal. Los nombres de columna no cambian. Se arma
-en `frontend/src/v2/exportar.js`.
+<!-- CAPTURAS: agregar los archivos en docs/capturas/ con estos nombres. -->
+![Globo con un sitio elegido y el panel de respuesta](docs/capturas/globo.png)
+![Planificador del astronauta con el ranking de sitios](docs/capturas/planificador.png)
+![Vista Horizonte: relieve, Sol y Tierra](docs/capturas/horizonte.png)
+![Comparar escenarios lado a lado](docs/capturas/comparar.png)
 
-Las líneas del principio que empiezan con `#` son metadatos (sitio, coordenadas, perfil, batería, criterio de luz y
-contacto…), no datos: después viene el encabezado y una fila por hora o por escenario. Para leerlo en Python, se
-saltean con `comment="#"`, y `encoding="utf-8-sig"` quita la marca BOM del principio (la que pone el
-archivo para que Excel lea bien los acentos):
+## Cómo funciona
 
-```python
-import pandas
+1. **Sol y Tierra en el cielo.** Con skyfield, las efemérides JPL DE421 y la orientación real de la Luna (marco
+   `MOON_ME`, que incluye la libración), se calcula la elevación y el azimut del Sol y la Tierra desde cada sitio,
+   hora por hora durante 2027.
+2. **Relieve del horizonte.** Se trazan rayos sobre el DEM de LOLA de 80 m (hasta 250 km, a 2 m del suelo) y se
+   obtiene la altura del horizonte en cada una de las 360 direcciones. Fuera del DEM se usa la esfera lisa.
+3. **Luz y contacto.** Hay luz si asoma el borde del disco solar sobre el relieve; hay contacto si el centro de la
+   Tierra está sobre el relieve (con un margen mínimo opcional para la antena).
+4. **Energía.** Se simula la batería hora por hora: paneles, consumo de día y de noche, calefacción, eficiencia,
+   autodescarga y reserva. La misión sobrevive si la batería nunca baja de la reserva.
+5. **Dónde corre.** Los 13 sitios están precalculados en JSON (`data/anual/`) y las métricas se calculan en el
+   navegador: cambiar la fecha, la duración o la batería es instantáneo y no hace falta servidor. El backend
+   (FastAPI) solo se usa para coordenadas propias (`GET /anual?lat=&lon=`).
 
-pandas.read_csv(archivo, sep=";", decimal=",", comment="#", encoding="utf-8-sig")  # interfaz en castellano
-pandas.read_csv(archivo, sep=",", comment="#", encoding="utf-8-sig")               # interfaz en inglés
+```
+data/sitios.json ─► backend/scripts (skyfield + DE421, DEM LOLA) ─► data/anual/*.json ─► frontend (React + Vite)
+                    backend FastAPI: GET /anual?lat=&lon= ──────────────────────────────► puntos propios
 ```
 
-Desde el panel del sitio, "Ver en herramientas de NASA" abre NASA Moon Trek y LROC QuickMap centrados en el sitio
-(en vista polar sur al sur de 80° S, con la misma proyección que el mapa 2D) y, en el perfil planificar, las tablas de
-JPL Horizons del Sol y de la Tierra (cada hora de la misión, con los mismos parámetros que
-`backend/scripts/validar_horizons.py`). Los enlaces se arman en `frontend/src/v2/enlaces.js`. El panel muestra además
-el sello "Validado contra JPL Horizons", que abre [docs/VALIDACION.md](docs/VALIDACION.md).
+- `backend/`: cálculo y API. Ver [backend/README.md](backend/README.md).
+- `frontend/`: interfaz. Ver [frontend/README.md](frontend/README.md).
+- `data/`: lista curada de sitios y resultados precalculados.
+- `docs/`: [estado del proyecto](docs/ESTADO.md) y [validación](docs/VALIDACION.md).
 
-## Arquitectura
+## Validación
 
-```
-data/sitios.json ──► backend (Python + FastAPI) ──► JSON ──► frontend (React + Vite)
-DE421 (JPL)      ──►   efemérides + horizonte                  vista 360°, estado,
-DEM LOLA         ──►   + métricas                              línea de tiempo, comparación
-```
+Las posiciones del Sol y la Tierra se compararon con **JPL Horizons** (efemérides DE441, marco lunar `MEAN_ME`) en
+los 13 sitios, en 5 instantes repartidos en 2027. El error máximo es de **0,00006° en azimut y 0,00001° en
+elevación**, frente a un umbral de 0,05°; ningún caso lo supera. La tabla completa está en
+[docs/VALIDACION.md](docs/VALIDACION.md) y se regenera con `backend/scripts/validar_horizons.py`. En la app, el sello
+"Validado contra JPL Horizons" abre una página propia con el resumen y las tablas en es/en
+([moon-set.vercel.app/validacion.html](https://moon-set.vercel.app/validacion.html)), que
+`frontend/scripts/generar-validacion.mjs` arma desde `data/validacion/horizons.json` en cada build.
 
-- `backend/` — cálculo y API. Ver [backend/README.md](backend/README.md).
-- `frontend/` — interfaz. Ver [frontend/README.md](frontend/README.md).
-- `data/` — lista curada de sitios y resultados precalculados.
-- `docs/` — [estado del proyecto](docs/ESTADO.md): qué hay, qué falta, cómo funciona.
-- `prototipos/` — primeras pruebas (script de un sitio y página HTML con globo 3D).
+Las métricas derivadas (porcentaje de luz, noche más larga, contacto) todavía no se cruzaron con fuentes
+publicadas. La lógica tiene tests automáticos: `pytest` en `backend/` y `npm test` en `frontend/` (energía,
+planificador, explicaciones, exportación, enlaces).
 
-## Inicio rápido
+## Limitaciones
+
+- **Relieve real solo al sur de 80° S.** El DEM de LOLA de 80 m cubre de 80° S al polo: 5 de los 13 sitios. Los otros
+  8 (los 6 Apollo, Chang'e 4 y Chandrayaan-3), y cualquier punto más al norte, usan la esfera lisa, y el panel lo
+  indica ("sin relieve"). Cerca de 80° S el relieve solo cubre hacia el polo.
+- **Solo 2027.** Los datos y las fechas de llegada son de ese año.
+- **Coordenadas aproximadas.** Chang'e 4, Chandrayaan-3, IM-1, Connecting Ridge, Macizo Malapert y los bordes de
+  Shackleton y de Gerlache están marcados para verificar contra una fuente oficial; la app lo avisa.
+- **Perfiles de batería de ejemplo.** Módulo chico, rover y base usan valores de ejemplo, no de misiones reales.
+  Se pueden ajustar todos los campos.
+- **Alrededores** solo para los 4 sitios al sur de 85° S, con la posición del Sol del sitio central.
+- **Imágenes del globo.** El mosaico es una foto promedio: sus sombras no son las de la fecha elegida.
+- **Puntos propios** solo con el backend encendido; sin él la app funciona con los 13 sitios precalculados.
+
+## Recursos usados
+
+### Datos e imágenes
+
+| Recurso | Para qué | Fuente |
+|---|---|---|
+| LOLA LDEM_80S_80M, DEM del polo sur a 80 m/píxel | Horizonte con relieve, mapa 2D del polo | NASA LRO / LOLA, PDS ([imbrium.mit.edu](https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/)) |
+| Efemérides planetarias DE421 (`de421.bsp`) | Posición del Sol y la Tierra | NASA JPL |
+| Kernels SPICE de la Luna (`moon_080317.tf`, `moon_pa_de421_1900-2050.bpc`, `pck00008.tpc`) | Orientación de la Luna y libración | NASA JPL / NAIF |
+| JPL Horizons (API) | Validación y enlaces desde el panel | [NASA JPL SSD](https://ssd.jpl.nasa.gov/horizons/) |
+| Mosaico global LROC WAC (`LRO_WAC_Mosaic_Global_303ppd_v02`) | Globo 3D y textura local | NASA / GSFC / Arizona State University, vía [NASA Moon Trek](https://trek.nasa.gov/moon/) |
+| Mosaico LROC NAC del polo sur (`LRO_NAC_AvgMosaic_SPole855_1mp`) | Detalle del globo cerca del polo | NASA / GSFC / Arizona State University, vía NASA Moon Trek |
+| NASA Moon Trek | Teselas del globo y enlaces al sitio | NASA Solar System Treks |
+| LROC QuickMap | Enlaces al sitio | [LROC, Arizona State University](https://quickmap.lroc.im-ldi.com/) |
+| Blue Marble Next Generation | La Tierra en la pantalla de inicio | NASA Earth Observatory |
+| Coordenadas de los sitios | `data/sitios.json` | NASA (módulos lunares Apollo), CNSA (Chang'e 4), ISRO (Chandrayaan-3), Intuitive Machines / NASA CLPS (IM-1), zona LROC MALAPERTLOD |
+
+Opcional, no usado en la versión publicada: el mosaico LOLA de 5 m/píxel del polo
+([pgda.gsfc.nasa.gov/products/81](https://pgda.gsfc.nasa.gov/products/81)), que el backend lee si está.
+No se usaron datos de la Agencia Espacial Canadiense (CSA).
+
+### Librerías
+
+| Librería | Para qué | Licencia |
+|---|---|---|
+| [Skyfield](https://rhodesmill.org/skyfield/) (con jplephem y sgp4) | Efemérides | MIT |
+| [FastAPI](https://fastapi.tiangolo.com/) y Starlette | API | MIT / BSD-3-Clause |
+| [Uvicorn](https://www.uvicorn.org/) | Servidor | BSD-3-Clause |
+| [Pydantic](https://docs.pydantic.dev/) | Validación de pedidos | MIT |
+| [NumPy](https://numpy.org/) | Cálculo numérico | BSD-3-Clause |
+| [SciPy](https://scipy.org/) | Interpolación sobre el DEM | BSD-3-Clause |
+| [rasterio](https://rasterio.readthedocs.io/) y [pyproj](https://pyproj4.github.io/pyproj/) | Lectura del DEM de 5 m (opcional) | BSD-3-Clause / MIT |
+| [Pillow](https://python-pillow.org/) | Scripts que generan las texturas y el mapa | MIT-CMU |
+| [pytest](https://pytest.org/) y [HTTPX](https://www.python-httpx.org/) | Tests del backend | MIT / BSD-3-Clause |
+| [React](https://react.dev/) y React DOM | Interfaz | MIT |
+| [three.js](https://threejs.org/) | Globo 3D y pantalla de inicio | MIT |
+| [React Three Fiber](https://github.com/pmndrs/react-three-fiber) y [Drei](https://github.com/pmndrs/drei) | three.js con React | MIT |
+| [Vite](https://vite.dev/) y @vitejs/plugin-react | Desarrollo y build | MIT |
+| Outfit, Saira Semi Condensed, IBM Plex Sans e IBM Plex Mono, vía Google Fonts | Tipografías | SIL Open Font License 1.1 |
+
+Versiones exactas en `backend/requirements.txt` y `frontend/package.json`. Publicación: Vercel (frontend) y Google
+Cloud Run (backend, https://moonset-api-253573052051.southamerica-east1.run.app).
+
+### Inteligencia artificial
+
+Durante el desarrollo usamos **Claude** (Anthropic): en el chat, para investigar el desafío, planificar la
+arquitectura, prototipar ideas (como el planificador del astronauta) y redactar documentación; y **Claude Code**, para
+escribir y revisar código, tests y documentación. El equipo definió qué construir, tomó las decisiones de diseño y
+revisó cada cambio. La app no usa IA en tiempo de ejecución: el asistente del astronauta funciona con reglas sobre los
+cálculos de la propia app.
+<!-- Agregar acá cualquier otra herramienta de IA que se haya usado (texto, imágenes, video). -->
+
+## Correr en local
 
 Requisitos: Python 3.11+ y Node 18+.
 
@@ -120,6 +208,35 @@ Con el DEM descargado, `python scripts/generar_mapa_polo.py` reemplaza el fondo 
 de la textura LROC, en baja resolución) por el relieve sombreado de LOLA a 80 m. Después hay que commitear
 `data/mapa/polo_sur.jpg` y `data/mapa/polo_sur.json`.
 
+### Leer los CSV exportados
+
+"Exportar misión (CSV)", en el panel del sitio, descarga la misión elegida con una fila por hora (Sol, Tierra, luz,
+contacto, energía y batería, fechas en UTC) y los datos del sistema arriba. "Exportar comparación (CSV)", en la vista
+Comparar, descarga una fila por escenario fijado. Con la interfaz en castellano el separador es ";" y la coma decimal
+(Excel en castellano lo abre con doble clic); en inglés, "," y punto decimal. Los nombres de columna no cambian. Se arma
+en `frontend/src/v2/exportar.js`.
+
+Las líneas del principio que empiezan con `#` son metadatos (sitio, coordenadas, perfil, batería, criterio de luz y
+contacto…), no datos: después viene el encabezado y una fila por hora o por escenario. Para leerlo en Python, se
+saltean con `comment="#"`, y `encoding="utf-8-sig"` quita la marca BOM del principio (la que pone el
+archivo para que Excel lea bien los acentos):
+
+```python
+import pandas
+
+pandas.read_csv(archivo, sep=";", decimal=",", comment="#", encoding="utf-8-sig")  # interfaz en castellano
+pandas.read_csv(archivo, sep=",", comment="#", encoding="utf-8-sig")               # interfaz en inglés
+```
+
+## Equipo
+
+- Ricardo Argüello
+- ...
+
+## Licencia
+
+MIT
+
 ## Deploy
 
 El frontend es estático y el backend es opcional: sin backend la página funciona con los 13 sitios
@@ -129,11 +246,13 @@ precalculados; con backend se suman los puntos propios (`GET /anual`).
 
 - Proyecto con **Root Directory** `frontend`, framework **Vite** (build `npm run build`, salida `dist`).
 - Variable de entorno **`VITE_API_URL`** con la URL del backend, sin barra final
-  (por ejemplo `https://moonset-api-xxxxx.southamerica-east1.run.app`). Se lee en el build: después de
+  (la publicada usa `https://moonset-api-253573052051.southamerica-east1.run.app`). Se lee en el build: después de
   cambiarla hay que volver a desplegar. Vacía o sin definir, la app queda en modo estático.
 - Publicado en https://moon-set.vercel.app.
 
 ### Backend en Google Cloud Run
+
+Publicado en https://moonset-api-253573052051.southamerica-east1.run.app (1 GiB, siempre encendido con `--min-instances 1`).
 
 `backend/Dockerfile` (Python 3.12 slim) instala las dependencias y, en el build, baja los kernels de JPL y el DEM
 LOLA 80 m con `scripts/descargar_datos.py`: quedan dentro de la imagen y el contenedor no descarga nada al
@@ -169,25 +288,6 @@ Un **Web Service** de tipo Docker con el mismo `Dockerfile` (Root Directory `bac
 `MOONSET_CORS=https://moon-set.vercel.app` y Health Check Path `/salud`. Render pasa el puerto en `$PORT`.
 El plan gratis duerme el servicio tras unos minutos sin pedidos: para evitarlo, un monitor externo (por ejemplo
 UptimeRobot o cron-job.org) que llame a `https://<servicio>.onrender.com/salud` cada 10 minutos.
-**Ojo con la memoria:** el backend usa unos 500 MB con el DEM cargado; si el plan tiene 512 MB queda al límite y
-puede reiniciarse por memoria. Revisá el límite del plan antes de elegirlo.
-
-## Datos
-
-- Efemérides: NASA/JPL DE421 y orientación lunar `moon_pa_de421_1900-2050` (vía skyfield).
-- Relieve: LOLA (Lunar Reconnaissance Orbiter), DEM del polo sur a 80 m/píxel (80°S–90°S) y,
-  opcional, mosaico a 5 m/píxel — https://pgda.gsfc.nasa.gov/products/81
-- Textura del globo: mosaico LROC 4k (`frontend/public/texturas/`).
-- Algunas coordenadas de `data/sitios.json` son aproximadas y los números aún no se validaron
-  contra valores publicados.
-
-Los archivos pesados (`data/raw/`, kernels) no se guardan en el repo.
-
-## Equipo
-
-- Ricardo Argüello
-- ...
-
-## Licencia
-
-MIT
+**Ojo con la memoria:** con 512 MB el backend se queda sin memoria por el DEM (unos 230 MB solo el DEM, unos
+500 MB en total). Hace falta un plan de al menos 1 GB. Con menos, se puede arrancar sin el DEM (`MOONSET_DEM_80S=/no-existe`), pero los
+puntos propios al sur de 80° S se calculan sin relieve.
