@@ -107,7 +107,6 @@ form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de a
 .burbuja { max-width: 92%; padding: 9px 13px; border-radius: 16px; font-size: 13px; line-height: 1.4; }
 .burbuja.pregunta { align-self: flex-end; background: rgba(111, 174, 240, 0.28); border-bottom-right-radius: 4px; }
 .burbuja.respuesta { align-self: flex-start; background: var(--relleno); border: 1px solid var(--borde); border-bottom-left-radius: 4px; }
-.burbuja small { display: block; margin-top: 6px; font-size: 11px; color: var(--tenue); }
 @media (prefers-reduced-motion: no-preference) {
   .plan-mensaje { animation: plan-entra 0.25s var(--salida) both; }
 }

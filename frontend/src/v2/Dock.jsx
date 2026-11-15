@@ -117,9 +117,9 @@ export default function Dock({ esperando = false, previa = null, sitio, dia, hor
           <input type="range" min="0" max={duracionH - 1} value={Math.min(hora, duracionH - 1)} onChange={(e) => setHoraMision(Number(e.target.value))} aria-label={t("dock.momentoAria")} />
         </div>
         {enPrevia ? (
-          <p className="leyenda"><span><i className="ventana-muestra" />{t("dock.leyendaVentana")}</span><span><i className="aro-muestra" />{t("dock.leyendaMejor")}</span><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+          <p className="leyenda"><span><i className="ventana-muestra" />{t("dock.leyendaVentana")}</span><span><i className="aro-muestra" />{t("dock.leyendaMejor")}</span><span><i style={{ background: "var(--acento)" }} /><b className="l-largo">{t("dock.leyendaLuz")}</b><b className="l-corto">{t("dock.leyendaLuzCorta")}</b></span><span><i style={{ background: "var(--tierra)" }} /><b className="l-largo">{t("dock.leyendaContacto")}</b><b className="l-corto">{t("dock.leyendaContactoCorta")}</b></span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
         ) : (
-          <p className="leyenda"><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span><i style={{ background: "var(--bien)" }} />{t("dock.leyendaBateria")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+          <p className="leyenda"><span><i style={{ background: "var(--acento)" }} /><b className="l-largo">{t("dock.leyendaLuz")}</b><b className="l-corto">{t("dock.leyendaLuzCorta")}</b></span><span><i style={{ background: "var(--tierra)" }} /><b className="l-largo">{t("dock.leyendaContacto")}</b><b className="l-corto">{t("dock.leyendaContactoCorta")}</b></span><span><i style={{ background: sobrevive ? "var(--bien)" : "var(--mal)" }} />{t("dock.leyendaBateria")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
         )}
       </div>
 

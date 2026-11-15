@@ -91,6 +91,7 @@ export default function Tutorial({ tutorial }) {
       // El control no está (un panel oculto desde Personalizar, una vista apagada): pasado un momento, el paso se saltea.
       sinObjetivoDesde.current ||= Date.now();
       foco.style.opacity = "0";
+      cartel.style.opacity = "0"; // sin su control a la vista no se muestra el cartel: o aparece o el paso se saltea
       if (Date.now() - sinObjetivoDesde.current > ESPERA_OBJETIVO_MS) {
         sinObjetivoDesde.current = 0;
         if (sentido < 0 && indice > 0) atras();
@@ -103,6 +104,7 @@ export default function Tutorial({ tutorial }) {
     const y = caja.top - MARGEN_FOCO;
     const ancho = caja.width + 2 * MARGEN_FOCO;
     const alto = caja.height + 2 * MARGEN_FOCO;
+    cartel.style.opacity = "1";
     Object.assign(foco.style, { opacity: "1", left: `${x}px`, top: `${y}px`, width: `${ancho}px`, height: `${alto}px` });
     const cw = cartel.offsetWidth;
     const ch = cartel.offsetHeight;

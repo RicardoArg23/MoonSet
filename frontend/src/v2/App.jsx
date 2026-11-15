@@ -28,6 +28,7 @@ const Inicio = lazy(() => import("./inicio/Inicio"));
 const DIA_MS = 86_400_000;
 const HORA_MS = 3_600_000;
 const MAX_FIJADOS = 4;
+const ESPERA_RECALCULO_MS = 350; // el ranking se recalcula tras este tiempo sin cambios de duración
 const SITIO_INICIAL = "connecting-ridge";
 const CLAVE_ASTRONAUTA = "moonset.astronautaVisto"; // el botón del astronauta ya hizo su pulso de bienvenida
 const ESPERA_BARRA_MS = 300; // si el ranking tarda más que esto, se muestra la barra de carga
@@ -153,12 +154,24 @@ function Cabina({ perfil }) {
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
   const ajustesRef = useRef(null);
   // Modo planificación (Planificador.jsx, estado en planificar.js). Tiene sus propias respuestas y su propio sistema
-  // de energía: no toca el sitio, la fecha, la duración ni el perfil de la app hasta "Ver en la app".
+  // de energía: no toca el sitio, la fecha ni el perfil de la app hasta "Ver sitio"; la duración sí es compartida con la barra.
   const [plan, setPlan] = useState(estadoInicialPlan);
   const cambiarPlan = (cambios) => setPlan((p) => ({ ...p, ...cambios }));
   const [buscando, setBuscando] = useState(false);
   const [progresoPlan, setProgresoPlan] = useState(null); // barra del ranking: { n, estado }
   const busquedas = useRef(0);
+  // La duración es una sola: la de la barra. El planificador la usa y la cambia desde su deslizador, y un ranking que
+  // ya estaba a la vista se recalcula solo cuando cambia (sin esto quedaría mostrando misiones de otra duración).
+  const buscarRef = useRef(null);
+  const duracionDelRanking = plan.ranking?.duracionDias;
+  useEffect(() => {
+    setPlan((p) => (p.duracionDias === duracionDias ? p : { ...p, duracionDias }));
+  }, [duracionDias]);
+  useEffect(() => {
+    if (duracionDelRanking === undefined || duracionDelRanking === duracionDias || !base) return undefined;
+    const id = setTimeout(() => buscarRef.current?.(true), ESPERA_RECALCULO_MS);
+    return () => clearTimeout(id);
+  }, [duracionDias, duracionDelRanking, base]);
   const plegadoAntes = useRef(false); // cómo estaba el panel antes de abrir el modo, para dejarlo igual al cerrar
   const [avisoComparar, setAvisoComparar] = useState(null); // { n, previo } tras "Comparar los 3 mejores"
   const [pulso] = useState(primeraVisita);
@@ -477,9 +490,10 @@ function Cabina({ perfil }) {
     setAvisoComparar(null);
   }
   // Arma el ranking sitio por sitio, cediendo el hilo entre uno y otro: si tarda, la barra de carga puede avanzar.
-  async function buscarSitios() {
+  // `conservar`: es un recálculo por un cambio de duración; la tarjeta abierta se mantiene si sigue en el ranking.
+  async function buscarSitios(conservar = false) {
     const opcion = perfilElegido(plan);
-    const opciones = { region: plan.region, dia: plan.dia, tolerancia: plan.tolerancia, duracionH: plan.duracionDias * 24 };
+    const opciones = { region: plan.region, dia: plan.dia, tolerancia: plan.tolerancia, duracionH: duracionDias * 24 };
     const precalculados = new Set(base.map((s) => s.sitio.id)); // los puntos propios no entran
     const candidatos = sitiosDeRegion(sitios.filter((s) => precalculados.has(s.sitio.id)), plan.region);
     const n = ++busquedas.current;
@@ -498,19 +512,19 @@ function Cabina({ perfil }) {
       if (busquedas.current !== n) return; // se pidió otra búsqueda: esta ya no cuenta
     }
     const ordenadas = ordenarRanking(filas);
-    setPlan((p) => ({ ...p, paso: "ranking", ranking: { ...opciones, filas: ordenadas, sistema: opcion.valores, perfilId: opcion.id, duracionDias: plan.duracionDias }, abierta: ordenadas[0]?.id ?? null, sobre: null, hilo: [] }));
+    setPlan((p) => ({ ...p, paso: "ranking", ranking: { ...opciones, filas: ordenadas, sistema: opcion.valores, perfilId: opcion.id, duracionDias }, abierta: conservar && ordenadas.some((fila) => fila.id === p.abierta) ? p.abierta : ordenadas[0]?.id ?? null, sobre: null, hilo: [] }));
     setBuscando(false);
     if (conBarra) {
       setProgresoPlan({ n, estado: "listo" });
       setTimeout(() => setProgresoPlan((p) => (p?.n === n ? null : p)), 700);
     }
   }
-  // "Ver en la app": recién acá el plan pasa a la app (sitio, llegada, duración y perfil) y se vuelve a la pestaña Sitio.
+  buscarRef.current = buscarSitios;
+  // "Ver sitio": recién acá el plan pasa a la app (sitio, llegada y perfil; la duración ya es una sola) y se vuelve a la pestaña Sitio.
   function verEnApp(fila) {
     const r = plan.ranking;
     elegirSitio(fila.id);
     cambiarLlegada(fila.dia, HORA_LLEGADA);
-    setDuracionDias(r.duracionDias);
     aplicarPerfil(perfilParaApp(r)); // también los valores ajustados en el planificador
     setPlan((p) => ({ ...p, pestana: "sitio", sobre: null }));
   }
@@ -518,13 +532,11 @@ function Cabina({ perfil }) {
     setPerfilId(id);
     setSistema(valores);
   }
-  // "Comparar los 3 mejores": Comparar usa una sola duración y un solo perfil, así que también se aplican los del
-  // plan. Si había escenarios fijados se avisa y se puede deshacer todo.
+  // "Comparar los 3 mejores": Comparar usa un solo perfil, así que también se aplica el del plan. Si había escenarios fijados se avisa y se puede deshacer todo.
   function compararMejores() {
     const r = plan.ranking;
-    const previo = { fijados, duracionDias, perfilId, sistema, vista };
+    const previo = { fijados, perfilId, sistema, vista };
     setFijados(r.filas.slice(0, MEJORES).map((fila) => ({ sitioId: fila.id, dia: fila.dia, horaLlegada: HORA_LLEGADA })));
-    setDuracionDias(r.duracionDias);
     aplicarPerfil(perfilParaApp(r));
     setVista("comparar");
     setAvisoComparar(fijados.length > 0 ? { n: fijados.length, previo } : null);
@@ -532,7 +544,6 @@ function Cabina({ perfil }) {
   function deshacerComparar() {
     const { previo } = avisoComparar;
     setFijados(previo.fijados);
-    setDuracionDias(previo.duracionDias);
     setPerfilId(previo.perfilId);
     setSistema(previo.sistema);
     setVista(previo.vista);
@@ -713,6 +724,8 @@ function Cabina({ perfil }) {
         {enPlan ? (
           <Planificador
             estado={plan}
+            duracionDias={duracionDias}
+            alCambiarDuracion={cambiarDuracion}
             alCambiar={cambiarPlan}
             alAjustar={(cambios) => setPlan((p) => ajustarSistema(p, cambios))}
             totalSitios={base.length}
@@ -830,8 +843,14 @@ function Cabina({ perfil }) {
           <div className="pista-globo vidrio">
             <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
             <div className="pista-acciones">
-              <button type="button" title={t("globo.detalle", { capa: CAPAS[detalle.capa].nombre, resolucion: f.longitud(detalle.metrosPorPixel) })} onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}>
-                {deCerca ? t("globo.alejar") : t("globo.acercar")}
+              <button
+                type="button"
+                className="redondo-chico con-ayuda a-derecha"
+                aria-label={deCerca ? t("globo.alejar") : t("globo.acercar")}
+                data-ayuda={`${deCerca ? t("globo.alejar") : t("globo.acercar")} · ${t("globo.detalle", { capa: CAPAS[detalle.capa].nombre, resolucion: f.longitud(detalle.metrosPorPixel) })}`}
+                onClick={() => setEnfoque({ modo: deCerca ? "lejos" : "cerca" })}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" /><path d={deCerca ? "M8 10.5h5M15 15l5 5" : "M8 10.5h5M10.5 8v5M15 15l5 5"} /></svg>
               </button>
             </div>
           </div>

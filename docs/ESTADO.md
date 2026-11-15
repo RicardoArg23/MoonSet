@@ -82,6 +82,10 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
 - **Paso 1 editable**: "Ajustar" despliega los mismos campos del sistema de energía (`CamposSistema`, en
   `Sistema.jsx`). Cambiar algo crea "Personalizado (planificador)", que vive solo en el planificador hasta "Ver en la
   app". Si la app ya tenía un perfil personalizado al abrir, aparece como opción.
+- **La duración es una sola** (decidido el 16/11): la de la barra. El deslizador del planificador la lee y la cambia, y si
+  ya había un ranking a la vista se recalcula solo 350 ms después del último cambio (`buscarSitios(true)` conserva la
+  tarjeta abierta). Antes el plan tenía su propia duración y el ranking quedaba desactualizado al tocar la barra. El resto
+  de las respuestas (perfil, región, fecha) siguen aisladas hasta «Ver sitio».
 - **Línea de tiempo en vista previa**: con un ranking a la vista, el dock muestra el sitio de la tarjeta (o la que
   tiene el mouse encima) con el perfil y la duración del plan, la ventana de tolerancia y la mejor llegada, con el
   rótulo "Vista previa". Llega por props (`Dock previa=…`): el estado de la app no cambia.
@@ -105,6 +109,14 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
 - El logo de la barra vuelve al inicio y el idioma está arriba del cajón. Se borró la interfaz anterior (`src/`,
   `?clasico`) y el menú lateral.
 - Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
+
+## Notebooks chicas (16/11)
+
+Medido con `.herramientas/pw/medidas.mjs` (líneas de la barra, desborde del panel y de la página, en es-AR): el panel de
+Planificar entra sin scroll en 1440×900, 1233×790, 1280×720, 1366×650 y 1920×960. Para eso, por alto: hasta ~1010 px
+el veredicto muestra solo su razón principal, hasta 800/740/680 px se compactan tipografía y bloques, y el alto mínimo de
+la cabina bajó de 680 a 600 px. Por ancho: hasta 1320 px la barra se compacta, hasta 1180 px el panel pasa a 350 px y la
+línea de tiempo usa leyendas cortas, y hasta 1060 px la barra va en dos líneas (herramientas arriba, vistas abajo).
 
 ## Tutorial guiado (15/11)
 

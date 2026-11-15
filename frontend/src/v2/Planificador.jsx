@@ -86,7 +86,7 @@ export function Explicaciones({ frases }) {
  * @param {number} props.t0 ms del 1 de enero de 2027 (inicio de los datos)
  * @param {Record<string, object|null|undefined>} props.vecindades grillas de alrededores ya pedidas
  */
-export default function Planificador({ estado, alCambiar, alAjustar, totalSitios, t0, buscando, alBuscar, alVer, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
+export default function Planificador({ estado, duracionDias, alCambiarDuracion, alCambiar, alAjustar, totalSitios, t0, buscando, alBuscar, alVer, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
   const { t, f } = useIdioma();
   const { num, fechaLarga, nombreCorto } = f;
   const preguntas = useRef(null);
@@ -194,12 +194,12 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
               min={DURACION_MIN}
               max={DURACION_MAX}
               step="1"
-              value={estado.duracionDias}
+              value={duracionDias}
               aria-label={t("plan.duracionAria")}
-              aria-valuetext={dias(estado.duracionDias)}
-              onChange={(evento) => alCambiar({ duracionDias: limitarDuracion(evento.target.value) })}
+              aria-valuetext={dias(duracionDias)}
+              onChange={(evento) => alCambiarDuracion(limitarDuracion(evento.target.value))}
             />
-            <output aria-hidden="true">{dias(estado.duracionDias)}</output>
+            <output aria-hidden="true">{dias(duracionDias)}</output>
             <span className="plan-marcas" aria-hidden="true"><span>{DURACION_MIN}</span><span>{DURACION_MAX}</span></span>
           </div>
         </fieldset>
@@ -354,7 +354,7 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
           {estado.hilo.slice(-MENSAJES_VISIBLES).map((mensaje, k, visibles) => (
             <div key={estado.hilo.length - visibles.length + k} className="plan-mensaje" ref={k === visibles.length - 1 ? ultimo : null}>
               <p className="burbuja pregunta">{t(`plan.p.${mensaje.id}`)}</p>
-              <p className="burbuja respuesta">{respuesta(mensaje)}<small>{t("plan.calculadoCon", { funciones: mensaje.datos.funciones })}</small></p>
+              <p className="burbuja respuesta">{respuesta(mensaje)}</p>
             </div>
           ))}
         </div>
