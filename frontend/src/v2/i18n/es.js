@@ -130,6 +130,8 @@ export default {
     tasaC: "Tasa C de la batería",
     potenciaNominal: "Potencia nominal (capacidad × C)",
     calefaccion: "Calefacción nocturna",
+    margenCom: "Margen mínimo para comunicación",
+    margenComAyuda: "Las antenas necesitan la Tierra unos grados por encima del horizonte por reflexiones en el terreno y el error del propio relieve. Hay contacto si el centro de la Tierra supera el relieve por al menos este margen. Con 0, alcanza con que asome.",
     calefaccionNota: "La noche polar está a más de 150 °C bajo cero y las baterías operan desde −20 °C: sin calefacción no aguantan la noche.",
     ficha: {
       densidad: "Densidad energética",
@@ -231,6 +233,8 @@ export default {
     tierraRotulo: "Tierra, {el}°",
     oculto: " (oculto)",
     oculta: " (oculta)",
+    bajoMargen: " (bajo el margen de {m}°)",
+    lineaMargen: "margen para comunicación, {m}°",
     solBajo: "Sol, {el}° bajo el horizonte",
     tierraBajo: "Tierra, {el}° bajo el horizonte",
     norte: "Norte",
@@ -249,7 +253,7 @@ export default {
     yaMejor: "El punto elegido ya es el mejor de los alrededores para esta misión.",
     frase: "Moviéndote {distancia} hacia {rumbo}, la batería mínima pasa de {bateria0} % a {bateria1} % y la luz de {luz0} % a {luz1} %.",
     mapaAria: "Mapa de {n} por {n} puntos alrededor del sitio. {viables} de {total} sirven para esta misión.",
-    celda: "{distancia} m del sitio · luz {luz} % · batería mínima {bateria} % · noche más larga {noche} h · terreno {altura} m",
+    celda: "{distancia} m del sitio · luz {luz} % · contacto {contacto} % · batería mínima {bateria} % · noche más larga {noche} h · terreno {altura} m",
     noSirveSufijo: " · no sirve",
     explicacion: "Cada cuadro es un punto a {paso} m del siguiente; el mapa cubre {lado} km de lado, con el norte arriba.",
     cuenta: "<b>{viables} de {total}</b> puntos sirven para esta misión.",
@@ -262,7 +266,7 @@ export default {
 
   mapa: {
     aria: "Mapa del polo sur lunar. Arrastrá para mover, rueda para acercar, tocá un punto para evaluarlo.",
-    celda: "luz {luz} % · batería mínima {bateria} % · noche más larga {noche} h · terreno {altura} m",
+    celda: "luz {luz} % · contacto {contacto} % · batería mínima {bateria} % · noche más larga {noche} h · terreno {altura} m",
     noSirveSufijo: " · no sirve",
     sol: "Sol",
     tierra: "Tierra",

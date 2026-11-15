@@ -4,9 +4,12 @@
 //
 // Mismo criterio que backend/app/metricas.py:
 // - hay luz si asoma al menos el borde del disco solar sobre el relieve;
-// - hay señal si el centro de la Tierra está sobre el relieve.
+// - hay señal si el centro de la Tierra está sobre el relieve; con un margen mínimo para comunicación
+//   (conMargenComunicacion), si además está al menos ese margen por encima.
 
 export const RADIO_SOL_DEG = 0.267;
+export const RADIO_TIERRA_DEG = 0.95; // tamaño aparente de la Tierra vista desde la Luna: ~1,9° de diámetro
+export const MARGEN_COMUNICACION_MAX_DEG = 10;
 const HORA_MS = 3_600_000;
 
 export function alturaHorizonte(grados, az) {
@@ -28,9 +31,36 @@ export function prepararSitio(crudo) {
     margenSol[i] = crudo.sol_el[i] - alturaHorizonte(hz, crudo.sol_az[i]);
     margenTierra[i] = crudo.tierra_el[i] - alturaHorizonte(hz, crudo.tierra_az[i]);
     luz[i] = margenSol[i] > -RADIO_SOL_DEG ? 1 : 0;
-    senal[i] = margenTierra[i] > 0 ? 1 : 0;
+    senal[i] = hayContacto(margenTierra[i], 0);
   }
   return { ...crudo, t0: Date.parse(crudo.inicio), luz, senal, margenSol, margenTierra, _porDia: new Map() };
+}
+
+// Contacto con la Tierra: su centro sobre el relieve y, además, al menos `minimoDeg` grados por encima.
+// Con minimoDeg = 0 es exactamente el criterio de siempre (margen > 0).
+export function hayContacto(margenTierra, minimoDeg) {
+  return margenTierra > 0 && margenTierra >= minimoDeg ? 1 : 0;
+}
+
+// El sitio visto con un margen mínimo para comunicación: misma geometría, otra serie de señal.
+// No hace falta el backend porque el margen sobre el relieve ya está guardado hora por hora.
+// Con margen 0 devuelve el mismo objeto. Las copias se memorizan por sitio y margen, y comparten
+// las memorias de energía (que no dependen de la señal); la de porDia es propia porque sí depende.
+const copiasConMargen = new WeakMap();
+export function conMargenComunicacion(sitio, margenDeg) {
+  if (!margenDeg) return sitio;
+  let porMargen = copiasConMargen.get(sitio);
+  if (!porMargen) copiasConMargen.set(sitio, (porMargen = new Map()));
+  let copia = porMargen.get(margenDeg);
+  if (copia) return copia;
+  sitio._entradaEnergia ??= {};
+  sitio._sobrevivePorDia ??= new Map();
+  const senal = new Uint8Array(sitio.muestras);
+  for (let i = 0; i < sitio.muestras; i++) senal[i] = hayContacto(sitio.margenTierra[i], margenDeg);
+  copia = { ...sitio, senal, margenComunicacionDeg: margenDeg, _porDia: new Map() };
+  if (porMargen.size > 20) porMargen.clear(); // cada valor que se escribe en el campo crea una copia
+  porMargen.set(margenDeg, copia);
+  return copia;
 }
 
 export function indiceDeFecha(sitio, ms) {

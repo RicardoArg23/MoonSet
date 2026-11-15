@@ -140,6 +140,8 @@ export default {
     tasaC: "Battery C-rate",
     potenciaNominal: "Rated power (capacity × C)",
     calefaccion: "Night heating",
+    margenCom: "Minimum margin for communication",
+    margenComAyuda: "Antennas need Earth a few degrees above the horizon because of reflections off the terrain and the error in the terrain model itself. There is contact if the centre of Earth clears the terrain by at least this margin. With 0, it only has to show.",
     calefaccionNota: "The polar night is colder than −150 °C and batteries operate from −20 °C: without heating they won't last the night.",
     ficha: {
       densidad: "Energy density",
@@ -241,6 +243,8 @@ export default {
     tierraRotulo: "Earth, {el}°",
     oculto: " (hidden)",
     oculta: " (hidden)",
+    bajoMargen: " (below the {m}° margin)",
+    lineaMargen: "communication margin, {m}°",
     solBajo: "Sun, {el}° below the horizon",
     tierraBajo: "Earth, {el}° below the horizon",
     norte: "North",
@@ -259,7 +263,7 @@ export default {
     yaMejor: "The chosen point is already the best in its surroundings for this mission.",
     frase: "Moving {distancia} {rumbo}, the lowest charge goes from {bateria0}% to {bateria1}% and sunlight from {luz0}% to {luz1}%.",
     mapaAria: "Map of {n} by {n} points around the site. {viables} of {total} work for this mission.",
-    celda: "{distancia} m from the site · sunlight {luz}% · lowest charge {bateria}% · longest night {noche} h · terrain {altura} m",
+    celda: "{distancia} m from the site · sunlight {luz}% · contact {contacto}% · lowest charge {bateria}% · longest night {noche} h · terrain {altura} m",
     noSirveSufijo: " · doesn't work",
     explicacion: "Each square is a point {paso} m from the next; the map is {lado} km on a side, north up.",
     cuenta: "<b>{viables} of {total}</b> points work for this mission.",
@@ -272,7 +276,7 @@ export default {
 
   mapa: {
     aria: "Map of the lunar south pole. Drag to move, scroll to zoom, tap a point to evaluate it.",
-    celda: "sunlight {luz}% · lowest charge {bateria}% · longest night {noche} h · terrain {altura} m",
+    celda: "sunlight {luz}% · contact {contacto}% · lowest charge {bateria}% · longest night {noche} h · terrain {altura} m",
     noSirveSufijo: " · doesn't work",
     sol: "Sun",
     tierra: "Earth",

@@ -41,7 +41,7 @@ export default function Vecindad({ sitio, vecindad, i0, duracionH, sistema }) {
             key={k}
             className={`${c.viable ? "si" : "no"}${k === medio * n + medio ? " elegido" : ""}${k === mejor && k !== medio * n + medio ? " mejor" : ""}`}
             style={c.viable ? { background: `rgba(255,184,74,${(0.3 + (0.7 * c.luzPct) / 100).toFixed(2)})` } : undefined}
-            title={t("alrededores.celda", { distancia: num(Math.hypot((k % n) - medio, Math.floor(k / n) - medio) * paso), luz: num(c.luzPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("alrededores.noSirveSufijo"))}
+            title={t("alrededores.celda", { distancia: num(Math.hypot((k % n) - medio, Math.floor(k / n) - medio) * paso), luz: num(c.luzPct), contacto: num(c.contactoPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("alrededores.noSirveSufijo"))}
           />
         ))}
       </div>

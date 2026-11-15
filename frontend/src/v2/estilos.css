@@ -148,6 +148,8 @@ a { color: var(--texto-2); }
 .cielo .sol-disco { fill: #ffe6b3; }
 .cielo .tierra-disco { fill: var(--tierra); stroke: #060605; stroke-width: 2; }
 .cielo .relieve { fill: #2a2622; stroke: #7d756a; stroke-width: 1; }
+.cielo .linea-margen { fill: none; stroke: var(--tierra); stroke-width: 1.5; stroke-dasharray: 2 5; opacity: 0.9; }
+.cielo .margen-rotulo { fill: var(--tierra); }
 .exactos { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--texto-2); }
 .exactos b { display: inline-block; width: 52px; color: var(--texto); font-weight: 500; }
 .exactos .porque { color: var(--tenue); margin-top: 4px; min-height: 2.9em; max-width: 90ch; }

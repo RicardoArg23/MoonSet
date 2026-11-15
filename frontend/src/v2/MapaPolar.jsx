@@ -259,7 +259,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
                 stroke={c.viable ? "rgba(255,184,74,0.9)" : "rgba(255,156,138,0.55)"}
                 strokeWidth={px(1)}
               >
-                <title>{t("mapa.celda", { luz: num(c.luzPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("mapa.noSirveSufijo"))}</title>
+                <title>{t("mapa.celda", { luz: num(c.luzPct), contacto: num(c.contactoPct), bateria: num(c.minimoPct), noche: c.nocheH, altura: num(c.alturaM) }) + (c.viable ? "" : t("mapa.noSirveSufijo"))}</title>
               </circle>
             ))}
           </g>
