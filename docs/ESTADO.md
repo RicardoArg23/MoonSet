@@ -59,6 +59,29 @@ data/sitios.json ─► backend/scripts/precalcular_*.py ─► data/anual/*.jso
    Como luz y señal no se guardan, cambiar duración o batería no necesita recalcular nada.
 4. Las coordenadas propias pasan por `/anual`, que genera el mismo formato al vuelo.
 
+## Asistente "Planificá tu misión" (15/11, rama `asistente-mision`)
+
+Asistente de decisión con reglas, sin IA ni red: responde "¿dónde y cuándo conviene mi misión?" con las funciones
+que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capacidadMinima`, `panelesMinimos`,
+`evaluarVecindadEnergia`, `horasHastaCambio`). Ningún número está escrito a mano.
+
+- **Botón del astronauta**, a la derecha del logo: abre el modo planificación en el panel izquierdo (en pantalla
+  angosta, como hoja desde abajo). Arriba del panel aparecen las pestañas **Sitio | Planificar**.
+- **Planificar no cambia la app** (sitio, fecha, duración, perfil) hasta tocar "Ver en la app". La X cierra el modo
+  sin perder las respuestas.
+- **Cuatro preguntas** (qué llevás, dónde, cuándo ± tolerancia, cuánto dura) y un **ranking** de los sitios
+  precalculados de la región, con la mejor llegada de cada uno dentro de la tolerancia. Llegadas a las 00:00 UTC.
+- **Explicaciones** (`frontend/src/v2/explicar.js`): hasta tres frases por veredicto, cada una con su número real.
+  También se ven en el panel del sitio, debajo del veredicto. Las horas de noche que cubre la batería son hasta
+  tocar la reserva: capacidad usable × (1 − reserva) × √eficiencia / consumo de noche.
+- **Preguntas rápidas** con estilo de chat; cada respuesta dice con qué función se calculó.
+- **La Luna sigue a la vista**: globo y mapa marcan en verde los sitios que sobreviven y en rojo los que no; pasar
+  por una tarjeta gira el globo hasta ese sitio.
+- "Comparar los 3 mejores" los fija en Comparar con la duración y el perfil del plan; si había escenarios fijados
+  avisa cuántos reemplazó y ofrece "Deshacer".
+- Código: `planificar.js` (ranking y preguntas, sin React), `explicar.js`, `Planificador.jsx`, `planificador.css`.
+  Tests: `tests/planificar.test.js` y `tests/explicar.test.js`. Prototipo de referencia: `prototipos/planifica-tu-mision.html`.
+
 ## Cajón de personalización y perfiles (15/11)
 
 - **Cajón** (`frontend/src/v2/Cajon.jsx`, estilos en `cajon.css`): se abre con el engranaje de la barra o la tecla P,
