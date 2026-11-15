@@ -19,7 +19,7 @@ import Asa from "./Asa";
 import Tutorial, { useTutorial } from "./Tutorial.jsx"; // con extensión: en Windows "Tutorial" y "tutorial" son el mismo nombre
 import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import Planificador, { Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
-import { HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
+import { DURACION_DEFECTO, HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
 import { explicar } from "./explicar";
 import "./estilos.css";
 import "./movil.css"; // al final: pisa solo en teléfono
@@ -173,6 +173,7 @@ function Cabina({ perfil }) {
     const id = setTimeout(() => buscarRef.current?.(true), ESPERA_RECALCULO_MS);
     return () => clearTimeout(id);
   }, [duracionDias, duracionDelRanking, base]);
+  const hayAlgoQueLimpiar = plan.ranking !== null || plan.sistemaPlan !== null || plan.hilo.length > 0 || plan.region !== "polo" || plan.tolerancia !== estadoInicialPlan().tolerancia || duracionDias !== DURACION_DEFECTO;
   const plegadoAntes = useRef(false); // cómo estaba el panel antes de abrir el modo, para dejarlo igual al cerrar
   const [avisoComparar, setAvisoComparar] = useState(null); // { n, previo } tras "Comparar los 3 mejores"
   const [pulso] = useState(primeraVisita);
@@ -490,6 +491,12 @@ function Cabina({ perfil }) {
     setPanelPlegado(plegadoAntes.current);
     setAvisoComparar(null);
   }
+  // Deja el planificador como recién abierto: sin ranking, sin preguntas hechas, sin valores ajustados y con la duración de origen.
+  function limpiarPlan() {
+    setPlan(alternarPlan(estadoInicialPlan(), { perfilId, sistema, dia }));
+    setDuracionDias(DURACION_DEFECTO);
+    setAvisoComparar(null);
+  }
   // Arma el ranking sitio por sitio, cediendo el hilo entre uno y otro: si tarda, la barra de carga puede avanzar.
   // `conservar`: es un recálculo por un cambio de duración; la tarjeta abierta se mantiene si sigue en el ranking.
   async function buscarSitios(conservar = false) {
@@ -528,6 +535,11 @@ function Cabina({ perfil }) {
     cambiarLlegada(fila.dia, HORA_LLEGADA);
     aplicarPerfil(perfilParaApp(r)); // también los valores ajustados en el planificador
     setPlan((p) => ({ ...p, pestana: "sitio", sobre: null }));
+  }
+  // Enlaces dentro de las respuestas del planificador: lleva al sitio en otra fecha y, si se pide, a otra vista.
+  function irA(fila, { dia = fila.dia, vista: destino } = {}) {
+    verEnApp({ ...fila, dia });
+    if (destino && config.vistas[destino]) setVista(destino);
   }
   function aplicarPerfil({ perfilId: id, sistema: valores }) {
     setPerfilId(id);
@@ -721,7 +733,7 @@ function Cabina({ perfil }) {
 
       {hayPanel && !plegarPanel && <aside className={`panel vidrio ${enPlan ? "en-plan" : pendiente ? "cargando" : e.sobrevive ? "si" : "no"}${plan.abierto ? " con-plan" : ""}`} aria-live={enPlan ? undefined : "polite"} aria-busy={(enPlan ? buscando : pendiente?.estado === "cargando") || undefined}>
         {enPlan ? <BarraProgreso key={`plan-${progresoPlan?.n}`} estado={progresoPlan?.estado ?? null} /> : <BarraProgreso key={progreso?.n} estado={progreso?.estado ?? null} />}
-        {plan.abierto && <PestanasPlan pestana={plan.pestana} alElegir={(pestana) => cambiarPlan({ pestana, sobre: null })} alCerrar={cerrarPlan} />}
+        {plan.abierto && <PestanasPlan pestana={plan.pestana} alElegir={(pestana) => cambiarPlan({ pestana, sobre: null })} alCerrar={cerrarPlan} alLimpiar={hayAlgoQueLimpiar ? limpiarPlan : null} />}
         {enPlan ? (
           <Planificador
             estado={plan}
@@ -734,6 +746,7 @@ function Cabina({ perfil }) {
             buscando={buscando}
             alBuscar={buscarSitios}
             alVer={verEnApp}
+            alIrA={irA}
             alComparar={config.vistas.comparar ? compararMejores : null}
             aviso={avisoComparar}
             alDeshacer={deshacerComparar}

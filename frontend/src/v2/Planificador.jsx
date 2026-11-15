@@ -50,7 +50,7 @@ function CampoEntero({ valor, min, max, limitar, alCambiar, ...resto }) {
 }
 
 /** Pestañas "Sitio | Planificar" y la X que cierra el modo. Van arriba del panel mientras el modo está abierto. */
-export function PestanasPlan({ pestana, alElegir, alCerrar }) {
+export function PestanasPlan({ pestana, alElegir, alCerrar, alLimpiar }) {
   const { t } = useIdioma();
   return (
     <div className="plan-pestanas">
@@ -58,6 +58,11 @@ export function PestanasPlan({ pestana, alElegir, alCerrar }) {
         <button type="button" aria-pressed={pestana === "sitio"} onClick={() => alElegir("sitio")}>{t("plan.pestanaSitio")}</button>
         <button type="button" aria-pressed={pestana === "planificar"} onClick={() => alElegir("planificar")}>{t("plan.pestanaPlanificar")}</button>
       </div>
+      {alLimpiar && (
+        <button type="button" className="equis plan-limpiar" aria-label={t("plan.limpiar")} title={t("plan.limpiar")} onClick={alLimpiar}>
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 4v4.5h4.5" /></svg>
+        </button>
+      )}
       <button type="button" className="equis" aria-label={t("plan.cerrar")} onClick={alCerrar}>
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" /></svg>
       </button>
@@ -86,7 +91,7 @@ export function Explicaciones({ frases }) {
  * @param {number} props.t0 ms del 1 de enero de 2027 (inicio de los datos)
  * @param {Record<string, object|null|undefined>} props.vecindades grillas de alrededores ya pedidas
  */
-export default function Planificador({ estado, duracionDias, alCambiarDuracion, alCambiar, alAjustar, totalSitios, t0, buscando, alBuscar, alVer, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
+export default function Planificador({ estado, duracionDias, alCambiarDuracion, alCambiar, alAjustar, totalSitios, t0, buscando, alBuscar, alVer, alIrA, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
   const { t, f } = useIdioma();
   const { num, fechaLarga, nombreCorto } = f;
   const preguntas = useRef(null);
@@ -95,6 +100,10 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
   useEffect(() => {
     if (mensajes > 0) ultimo.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [mensajes]);
+  // Al abrir los parámetros bajo la respuesta de batería, el editor queda a la vista.
+  useEffect(() => {
+    if (estado.ajustando && estado.hilo.at(-1)?.id === "bateria") ultimo.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [estado.ajustando]);
 
   const fecha = (dia) => fechaLarga(t0 + dia * DIA_MS);
   const isoDe = (dia) => new Date(t0 + dia * DIA_MS).toISOString().slice(0, 10);
@@ -205,6 +214,7 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
   }
 
   const r = estado.ranking;
+  const valoresPlan = perfilElegido(estado).valores; // lo que se está editando; r.sistema es con lo que se calculó el ranking
   const sirven = r.filas.filter((fila) => fila.sobrevive).length;
   const abierta = r.filas.find((fila) => fila.id === estado.abierta) ?? r.filas[0];
   const nMejores = Math.min(MEJORES, r.filas.length);
@@ -260,6 +270,24 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
     });
   }
 
+  // A dónde lleva el dato de la respuesta, si lleva a algún lado: { fragmento del texto, qué hacer }. Es un enlace sutil dentro de la frase.
+  function destino({ id, dia, datos: d }) {
+    const ir = (opciones) => () => alIrA(abierta, opciones);
+    if (id === "semana" && !d.fuera) return { fragmento: fecha(d.dia), alClic: ir({ dia: d.dia }) };
+    if (id === "primera" && d.dia !== null) return { fragmento: fecha(d.dia), ultimo: true, alClic: ir({ dia: d.dia }) };
+    if (id === "puestas") return { fragmento: fecha(dia), alClic: ir({ dia, vista: "horizonte" }) };
+    if (id === "cerca" && !d.esElSitio) return { fragmento: f.longitud(d.mejor.distanciaM), alClic: ir({ dia, vista: "alrededores" }) };
+    return null;
+  }
+  // La respuesta con su dato enlazado; si el fragmento no aparece en el texto, queda el texto solo.
+  function respuestaConEnlace(mensaje) {
+    const texto = respuesta(mensaje);
+    const d = destino(mensaje);
+    const i = d ? (d.ultimo ? texto.lastIndexOf(d.fragmento) : texto.indexOf(d.fragmento)) : -1;
+    if (i < 0) return texto;
+    return <>{texto.slice(0, i)}<button type="button" className="plan-enlace" onClick={d.alClic}>{d.fragmento}</button>{texto.slice(i + d.fragmento.length)}</>;
+  }
+
   return (
     <div className="plan" data-tutorial="plan">
       <div className="plan-respuestas">
@@ -312,7 +340,7 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
                     {t("plan.llegada")} <b>{fecha(fila.dia)}</b>{" "}
                     <span className="tenue">({fila.desvio === 0 ? t("plan.laElegida") : t("plan.desvio", { signo: fila.desvio > 0 ? "+" : "−", n: Math.abs(fila.desvio) })})</span>
                   </p>
-                  {!fila.sobrevive && <p className="plan-desde">{veredicto}</p>}
+                  {!fila.sobrevive && <p className="plan-desde">{fila.primera === null ? veredicto : <button type="button" className="plan-enlace" onClick={() => alIrA(fila, { dia: fila.primera })}>{veredicto}</button>}</p>}
                   <dl className="plan-cifras">
                     <div><dd>{num(fila.m.luzPct)} %</dd><dt>{t("plan.luz")}</dt></div>
                     <div><dd>{num(fila.m.senalPct)} %</dd><dt>{t("plan.contacto")}</dt></div>
@@ -348,7 +376,32 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
           {estado.hilo.slice(-MENSAJES_VISIBLES).map((mensaje, k, visibles) => (
             <div key={estado.hilo.length - visibles.length + k} className="plan-mensaje" ref={k === visibles.length - 1 ? ultimo : null}>
               <p className="burbuja pregunta">{t(`plan.p.${mensaje.id}`)}</p>
-              <p className="burbuja respuesta">{respuesta(mensaje)}</p>
+              <p className="burbuja respuesta">{respuestaConEnlace(mensaje.id === "bateria" && k === visibles.length - 1 ? { ...mensaje, datos: preguntaBateria(abierta.sitio, valoresPlan, mensaje.dia, r.duracionH) } : mensaje)}</p>
+              {mensaje.id === "bateria" && k === visibles.length - 1 && (() => {
+                const d = preguntaBateria(abierta.sitio, valoresPlan, mensaje.dia, r.duracionH);
+                // Si no alcanza se sube al mínimo; si sobra, se puede bajar justo a lo necesario. Solo se ofrece si cambia algo.
+                const necesaria = d.capacidadMinimaKWh > 0 ? kwhArriba(d.capacidadMinimaKWh) : null;
+                const falta = necesaria !== null && necesaria !== d.capacidadKWh;
+                return (
+                  <div className="plan-parametros">
+                    <div className="plan-parametros-acciones">
+                      {falta && <button type="button" className="plan-enlace" onClick={() => alAjustar({ capacidadKWh: necesaria })}>{t("plan.usarCapacidad", { kwh: num(necesaria, necesaria % 1 ? 1 : 0) })}</button>}
+                      <button type="button" className="plan-enlace" aria-expanded={estado.ajustando} aria-controls="plan-campos-bateria" onClick={() => alCambiar({ ajustando: !estado.ajustando })}>{t("plan.cambiarParametros")}</button>
+                    </div>
+                    {estado.ajustando && (
+                      <div className="plan-campos" id="plan-campos-bateria">
+                        <CamposSistema sistema={valoresPlan} alCambiar={alAjustar} />
+                      </div>
+                    )}
+                    {valoresPlan !== r.sistema && (
+                      <div className="plan-recalcular">
+                        <p className="tenue plan-nota">{t("plan.ranking_desactualizado")}</p>
+                        <button type="button" className="primario" onClick={() => alBuscar(true)}>{t("plan.recalcular")}</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>

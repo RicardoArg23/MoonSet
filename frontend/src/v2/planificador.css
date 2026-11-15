@@ -17,6 +17,7 @@
 .plan-pestanas .segmentos button { min-height: 34px; padding: 0 16px; }
 .plan-pestanas .equis { width: 34px; height: 34px; border-color: transparent; color: var(--tenue); }
 .plan-pestanas .equis:hover { color: var(--texto); }
+.plan-pestanas .plan-limpiar { margin-left: auto; margin-right: -4px; }
 
 /* ---------- explicaciones (también en el panel del sitio) ---------- */
 .porque { flex: 0 0 auto; list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
@@ -98,6 +99,17 @@ form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de a
 .plan-cuerpo .porque { margin: 0; padding-top: 10px; border-top: 1px solid var(--borde); }
 .plan-acciones { display: flex; gap: 8px; }
 .plan-acciones button { flex: 1; min-height: 40px; font-size: 14px; }
+
+/* Dato enlazado dentro de una frase: se lee como texto, con un subrayado punteado que avisa que lleva a un lugar. */
+.plan-enlace { display: inline; min-height: 0; padding: 0; border: 0; border-radius: 2px; background: none; font: inherit; color: inherit; cursor: pointer;
+  text-decoration: underline dotted var(--acento); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.plan-enlace::after { content: " ›"; color: var(--acento); }
+.plan-parametros { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-left: 4px; font-size: 13px; color: var(--texto-2); }
+.plan-parametros .plan-campos, .plan-recalcular { align-self: stretch; }
+.plan-parametros-acciones { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.plan-recalcular { display: flex; flex-direction: column; gap: 6px; }
+.plan-enlace:hover { color: var(--acento); }
+.plan-enlace:active:not(:disabled) { transform: none; }
 
 /* ---------- preguntas rápidas, con estilo de chat ---------- */
 .plan-chat { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--borde); scroll-margin-top: 8px; }
