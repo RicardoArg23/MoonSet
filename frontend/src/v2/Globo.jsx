@@ -92,10 +92,20 @@ function HaciaLaTierra({ sitio, lat, lon, rotulo }) {
   );
 }
 
-function Marcador({ sitio, nombre, activo, viable, onElegir }) {
+// Colores del ranking del modo planificación: los mismos verde y rojo del veredicto (--bien y --mal).
+const COLOR_SOBREVIVE = "#7bdca2";
+const COLOR_NO_SOBREVIVE = "#ff9c8a";
+const COLOR_FUERA_DEL_PLAN = "#5d6470";
+// Hacia dónde mira la cámara con la región "Polo sur": casi sobre el polo, con la cara visible arriba.
+// No exactamente −90°: con la cámara sobre el eje, los controles de órbita no tienen un "arriba" definido.
+const VISTA_POLO_SUR = { lat: -86, lon: 0 };
+
+// `enPlan`: undefined fuera del modo planificación; true/false si el sitio sobrevive en el ranking; null si no entró.
+function Marcador({ sitio, nombre, activo, viable, enPlan, onElegir }) {
   const grupo = useRef();
   const direccion = useMemo(() => latLonAVector(sitio.lat, sitio.lon), [sitio.lat, sitio.lon]);
-  const color = activo ? "#ffffff" : viable ? "#ffb84a" : "#8b93a3";
+  let color = activo ? "#ffffff" : viable ? "#ffb84a" : "#8b93a3";
+  if (enPlan !== undefined) color = enPlan === null ? COLOR_FUERA_DEL_PLAN : enPlan ? COLOR_SOBREVIVE : COLOR_NO_SOBREVIVE;
   // El marcador mantiene su tamaño en pantalla: se achica y baja a la superficie al acercarse.
   useFrame(({ camera }) => {
     const escala = THREE.MathUtils.clamp((camera.position.length() - 1) / 2.5, 0.0015, 1);
@@ -115,6 +125,13 @@ function Marcador({ sitio, nombre, activo, viable, onElegir }) {
         <sphereGeometry args={[activo ? 0.022 : 0.016, 16, 12]} />
         <meshBasicMaterial color={color} />
       </mesh>
+      {/* Sitio resaltado del ranking: un halo blanco alrededor, para que el verde o el rojo se sigan leyendo. */}
+      {activo && enPlan !== undefined && (
+        <mesh>
+          <sphereGeometry args={[0.034, 20, 14]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.32} depthWrite={false} />
+        </mesh>
+      )}
       {activo && (
         <Html className="globo-rotulo activo" position={[0, 0, 0]}>{nombre}</Html>
       )}
@@ -156,19 +173,20 @@ function MarcadorPendiente({ lat, lon }) {
 // Lleva la cámara frente al sitio elegido, lejos o cerca según `enfoque`. Solo anima mientras "vuela";
 // si el usuario toca los controles, manda el usuario. También ajusta los planos de recorte y la
 // sensibilidad de los controles a la altura, para que girar y acercar se sientan igual a toda escala.
-function Camara({ lat, lon, enfoque, controles, volando }) {
+function Camara({ lat, lon, enfoque, deFrente = false, controles, volando }) {
   const { camera } = useThree();
   const destino = useRef({ direccion: new THREE.Vector3(1, 0, 0), altura: ALTURA_LEJOS });
   const actual = useRef(new THREE.Vector3());
 
   useEffect(() => {
-    const cerca = enfoque.modo === "cerca";
+    const cerca = enfoque.modo === "cerca" && !deFrente;
     // De lejos, un poco hacia el ecuador respecto del sitio para que los polos no queden de canto.
-    latLonAVector(cerca ? lat : lat * 0.8, lon, destino.current.direccion);
+    // `deFrente` (vista del polo sur del modo planificación) mira justo a esa latitud, siempre de lejos.
+    latLonAVector(cerca || deFrente ? lat : lat * 0.8, lon, destino.current.direccion);
     const alturaCerca = lat < CAPAS.nac.latBorde - 0.5 ? ALTURA_CERCA_POLO : ALTURA_CERCA_GLOBAL;
     destino.current.altura = cerca ? alturaCerca : ALTURA_LEJOS;
     volando.current = true;
-  }, [lat, lon, enfoque, volando]);
+  }, [lat, lon, enfoque, deFrente, volando]);
 
   useFrame((_, dt) => {
     const distancia = camera.position.length();
@@ -206,23 +224,32 @@ function Camara({ lat, lon, enfoque, controles, volando }) {
  * @param {object} props
  * @param {{ modo: "lejos"|"cerca", n: number }} props.enfoque a qué altura llevar la cámara; `n` cambia para repetir el vuelo
  * @param {(d: { capa: string|null, metrosPorPixel: number }) => void} [props.onDetalle] qué imagen se ve bajo la cámara
+ * @param {{ estados: Map<string, boolean>, enPestana: boolean, resaltado: string|null, nombreResaltado: string, polo: boolean }|null} [props.plan]
+ *   modo planificación: `estados` dice qué sitios del ranking sobreviven (verde) y cuáles no (rojo). Con la pestaña
+ *   Planificar a la vista (`enPestana`) la cámara sigue al sitio `resaltado` o, si no hay y `polo`, mira al polo sur.
  */
-export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto, pendiente }) {
+export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto, pendiente, plan = null }) {
   const controles = useRef();
   const volando = useRef(false);
   const activo = sitios.find((s) => s.sitio.id === sitioId).sitio;
+  const soloPlan = plan?.enPestana ?? false; // en la pestaña Planificar no se marca el sitio de la app
+  const resaltado = soloPlan && plan.resaltado ? sitios.find((s) => s.sitio.id === plan.resaltado)?.sitio ?? null : null;
+  const alPolo = soloPlan && !resaltado && plan.polo;
+  const mira = soloPlan ? resaltado ?? (alPolo ? VISTA_POLO_SUR : activo) : activo;
+  const marcado = soloPlan ? resaltado?.id ?? null : sitioId;
+  const estadoPlan = (id) => (plan && plan.estados.size > 0 ? plan.estados.get(id) ?? null : undefined);
   return (
     <Canvas camera={{ position: [0.9, -4.3, 0.7], fov: 35, near: 0.05, far: 100 }} dpr={[1, 2]} gl={{ antialias: true }}>
       <color attach="background" args={["#000000"]} />
       <Luces lat={sol.lat} lon={sol.lon} />
       <Luna onPunto={onPunto} />
       <Teselas onDetalle={onDetalle} volando={volando} />
-      {hayContacto && <HaciaLaTierra sitio={activo} lat={tierra.lat} lon={tierra.lon} rotulo={rotuloTierra} />}
+      {hayContacto && !soloPlan && <HaciaLaTierra sitio={activo} lat={tierra.lat} lon={tierra.lon} rotulo={rotuloTierra} />}
       {sitios.map((s) => (
-        <Marcador key={s.sitio.id} sitio={s.sitio} nombre={nombreActivo} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} />
+        <Marcador key={s.sitio.id} sitio={s.sitio} nombre={soloPlan ? plan.nombreResaltado : nombreActivo} activo={s.sitio.id === marcado} viable={viables.has(s.sitio.id)} enPlan={estadoPlan(s.sitio.id)} onElegir={onElegir} />
       ))}
       {pendiente && <MarcadorPendiente lat={pendiente.lat} lon={pendiente.lon} />}
-      <Camara lat={activo.lat} lon={activo.lon} enfoque={enfoque} controles={controles} volando={volando} />
+      <Camara lat={mira.lat} lon={mira.lon} enfoque={enfoque} deFrente={alPolo} controles={controles} volando={volando} />
       <OrbitControls
         ref={controles}
         enablePan={false}

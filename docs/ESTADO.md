@@ -59,6 +59,37 @@ data/sitios.json ─► backend/scripts/precalcular_*.py ─► data/anual/*.jso
    Como luz y señal no se guardan, cambiar duración o batería no necesita recalcular nada.
 4. Las coordenadas propias pasan por `/anual`, que genera el mismo formato al vuelo.
 
+## Asistente "Planificá tu misión" (15/11, rama `asistente-mision`)
+
+Asistente de decisión con reglas, sin IA ni red: responde "¿dónde y cuándo conviene mi misión?" con las funciones
+que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capacidadMinima`, `panelesMinimos`,
+`evaluarVecindadEnergia`, `horasHastaCambio`). Ningún número está escrito a mano.
+
+- **Botón del astronauta**, a la derecha del logo: abre el modo planificación en el panel izquierdo (en pantalla
+  angosta, como hoja desde abajo). Arriba del panel aparecen las pestañas **Sitio | Planificar**.
+- **Planificar no cambia la app** (sitio, fecha, duración, perfil) hasta tocar "Ver en la app". La X cierra el modo
+  sin perder las respuestas.
+- **Cuatro preguntas** (qué llevás, dónde, cuándo ± tolerancia, cuánto dura) y un **ranking** de los sitios
+  precalculados de la región, con la mejor llegada de cada uno dentro de la tolerancia. Llegadas a las 00:00 UTC.
+- **Explicaciones** (`frontend/src/v2/explicar.js`): hasta tres frases por veredicto, cada una con su número real.
+  También se ven en el panel del sitio, debajo del veredicto. Las horas de noche que cubre la batería son hasta
+  tocar la reserva: capacidad usable × (1 − reserva) × √eficiencia / consumo de noche.
+- **Preguntas rápidas** con estilo de chat; cada respuesta dice con qué función se calculó.
+- **La Luna sigue a la vista**: globo y mapa marcan en verde los sitios que sobreviven y en rojo los que no; pasar
+  por una tarjeta gira el globo hasta ese sitio.
+- "Comparar los 3 mejores" los fija en Comparar con la duración y el perfil del plan; si había escenarios fijados
+  avisa cuántos reemplazó y ofrece "Deshacer".
+- **Paso 1 editable**: "Ajustar" despliega los mismos campos del sistema de energía (`CamposSistema`, en
+  `Sistema.jsx`). Cambiar algo crea "Personalizado (planificador)", que vive solo en el planificador hasta "Ver en la
+  app". Si la app ya tenía un perfil personalizado al abrir, aparece como opción.
+- **Línea de tiempo en vista previa**: con un ranking a la vista, el dock muestra el sitio de la tarjeta (o la que
+  tiene el mouse encima) con el perfil y la duración del plan, la ventana de tolerancia y la mejor llegada, con el
+  rótulo "Vista previa". Llega por props (`Dock previa=…`): el estado de la app no cambia.
+- **El astronauta alterna** abrir y cerrar; tolerancia libre de 0 a 30 días (por defecto 7) y duración con un
+  deslizador de 1 a 30 (por defecto 14). El estado del planificador está en funciones puras de `planificar.js`.
+- Código: `planificar.js` (ranking y preguntas, sin React), `explicar.js`, `Planificador.jsx`, `planificador.css`.
+  Tests: `tests/planificar.test.js` y `tests/explicar.test.js`. Prototipo de referencia: `prototipos/planifica-tu-mision.html`.
+
 ## Cajón de personalización y perfiles (15/11)
 
 - **Cajón** (`frontend/src/v2/Cajon.jsx`, estilos en `cajon.css`): se abre con el engranaje de la barra o la tecla P,
