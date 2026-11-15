@@ -32,15 +32,25 @@ function CurvaCarga({ soc, reservaPct, sobrevive }) {
   );
 }
 
-// Barra de tiempo fija: fecha y hora de llegada, el año del sitio y el avance dentro de la misión.
-export default function Dock({ esperando = false, sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, sistema, soc, sobrevive, horaMision, setHoraMision }) {
+/**
+ * Barra de tiempo fija: fecha y hora de llegada, el año del sitio y el avance dentro de la misión.
+ * Con `previa` (modo planificación) muestra otra misión sin tocar la app: sitio, día, sistema y duración llegan por
+ * props, los controles quedan quietos y se marcan la ventana de tolerancia y la fecha elegida.
+ * @param {{ nombre: string, desde: number, hasta: number, elegido: number } | null} [previa] días de la ventana (inclusive)
+ */
+export default function Dock({ esperando = false, previa = null, sitio, dia, horaLlegada, alCambiarLlegada, duracionDias, duracionH, sistema, soc, sobrevive, horaMision, setHoraMision }) {
   const { t, f: formato } = useIdioma();
   const [animando, setAnimando] = useState(false);
+  const enPrevia = previa !== null;
+  useEffect(() => {
+    if (enPrevia) setAnimando(false); // la vista previa no reproduce la misión de la app
+  }, [enPrevia]);
   useEffect(() => {
     if (!animando) return undefined;
     const id = setInterval(() => setHoraMision((h) => (h + 1) % duracionH), 70);
     return () => clearInterval(id);
   }, [animando, duracionH, setHoraMision]);
+  const hora = enPrevia ? 0 : horaMision;
 
   const { fondo, viables } = useMemo(() => {
     const p = porDia(sitio, duracionH, horaLlegada);
@@ -66,10 +76,14 @@ export default function Dock({ esperando = false, sitio, dia, horaLlegada, alCam
     alCambiarLlegada(Math.floor(total / 24), total % 24);
   }
 
+  const pct = (d) => `${((d / 365) * 100).toFixed(3)}%`;
+  const quieto = esperando || enPrevia; // en la vista previa no se puede mover nada: todavía no se aplicó
+
   return (
-    <section className={`dock vidrio${esperando ? " esperando" : ""}`} aria-label={t("dock.aria")} aria-hidden={esperando || undefined} inert={esperando ? "" : undefined}>
-      <div className="dock-fecha">
-        <p className="rotulo">{t("dock.llegada")}</p>
+    <section className={`dock vidrio${esperando ? " esperando" : ""}${enPrevia ? " previa" : ""}`} aria-label={enPrevia ? t("dock.previaAria", { sitio: previa.nombre }) : t("dock.aria")} aria-hidden={esperando || undefined}>
+      {enPrevia && <p className="dock-previa" role="status">{t("dock.previa", { sitio: previa.nombre })}</p>}
+      <div className="dock-fecha" inert={quieto ? "" : undefined}>
+        <p className="rotulo">{enPrevia ? t("dock.mejorLlegada") : t("dock.llegada")}</p>
         <p className="fecha-grande" aria-label={`${formato.fechaLarga(f.getTime())} 2027`}>
           {t("formato.ordenFecha").split("").map((parte, k) => (
             <Fragment key={parte}>{k > 0 && <i>·</i>}<span className={parte === "a" ? "fecha-anio" : undefined}>{partesFecha[parte]}</span></Fragment>
@@ -83,30 +97,40 @@ export default function Dock({ esperando = false, sitio, dia, horaLlegada, alCam
       </div>
 
       <div className="dock-lineas">
-        <div className="pista anio" data-tutorial="fecha">
+        <div className="pista anio" data-tutorial="fecha" inert={quieto ? "" : undefined}>
           <div className="pista-color" style={{ background: fondo }} aria-hidden="true" />
-          <div className="aro" style={{ left: `${((dia + 0.5) / 365) * 100}%` }} aria-hidden="true" />
+          {enPrevia && (
+            <>
+              <div className="ventana" style={{ left: pct(previa.desde), width: pct(previa.hasta - previa.desde + 1) }} aria-hidden="true" />
+              <div className="elegido" style={{ left: pct(previa.elegido + 0.5) }} aria-hidden="true" />
+            </>
+          )}
+          <div className="aro" style={{ left: pct(dia + 0.5) }} aria-hidden="true" />
           <input type="range" min="0" max="364" value={dia} onChange={(e) => alCambiarLlegada(Number(e.target.value), horaLlegada)} aria-label={t("dock.fechaAria")} />
         </div>
         <div className="meses" aria-hidden="true">{formato.meses.map((m, k) => <span key={k}>{m}</span>)}</div>
-        <div className="pista mision">
+        <div className="pista mision" inert={quieto ? "" : undefined}>
           <Cinta serie={sitio.luz} desde={i0} hasta={i0 + duracionH} color="var(--acento)" />
           <Cinta serie={sitio.senal} desde={i0} hasta={i0 + duracionH} color="var(--tierra)" />
           <CurvaCarga soc={soc} reservaPct={sistema.reservaPct} sobrevive={sobrevive} />
-          <div className="cabezal" style={{ left: `${(horaMision / (duracionH - 1)) * 100}%` }} aria-hidden="true" />
-          <input type="range" min="0" max={duracionH - 1} value={horaMision} onChange={(e) => setHoraMision(Number(e.target.value))} aria-label={t("dock.momentoAria")} />
+          {!enPrevia && <div className="cabezal" style={{ left: `${(hora / (duracionH - 1)) * 100}%` }} aria-hidden="true" />}
+          <input type="range" min="0" max={duracionH - 1} value={Math.min(hora, duracionH - 1)} onChange={(e) => setHoraMision(Number(e.target.value))} aria-label={t("dock.momentoAria")} />
         </div>
-        <p className="leyenda"><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span><i style={{ background: "var(--bien)" }} />{t("dock.leyendaBateria")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+        {enPrevia ? (
+          <p className="leyenda"><span><i className="ventana-muestra" />{t("dock.leyendaVentana")}</span><span><i className="aro-muestra" />{t("dock.leyendaMejor")}</span><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+        ) : (
+          <p className="leyenda"><span><i style={{ background: "var(--acento)" }} />{t("dock.leyendaLuz")}</span><span><i style={{ background: "var(--tierra)" }} />{t("dock.leyendaContacto")}</span><span><i style={{ background: "var(--bien)" }} />{t("dock.leyendaBateria")}</span><span className="cuenta">{t("dock.cuenta", { n: viables })}</span></p>
+        )}
       </div>
 
-      <div className="dock-reloj">
+      <div className="dock-reloj" inert={quieto ? "" : undefined}>
         <button type="button" className="reproducir" aria-label={animando ? t("dock.pausar") : t("dock.reproducir")} aria-pressed={animando} onClick={() => setAnimando((a) => !a)}>
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14">{animando ? <path d="M2 1h3.5v12H2zM8.5 1H12v12H8.5z" /> : <path d="M3 1l10 6-10 6z" />}</svg>
         </button>
         <div>
-          <p className="rotulo">{t("dock.tiempoMision")}</p>
-          <p className="reloj">T+ {dos(Math.floor(horaMision / 24))}d {dos(horaMision % 24)}h</p>
-          <p className="rotulo">{t("dock.deDias", { n: duracionDias })}</p>
+          <p className="rotulo">{enPrevia ? t(sobrevive ? "panel.sobrevive" : "panel.noSobrevive") : t("dock.tiempoMision")}</p>
+          <p className={`reloj${enPrevia ? (sobrevive ? " si" : " no") : ""}`}>{enPrevia ? t("plan.etiquetaDuracion", { n: duracionDias }) : `T+ ${dos(Math.floor(hora / 24))}d ${dos(hora % 24)}h`}</p>
+          <p className="rotulo">{enPrevia ? t("dock.previaNoAplicada") : t("dock.deDias", { n: duracionDias })}</p>
         </div>
       </div>
     </section>

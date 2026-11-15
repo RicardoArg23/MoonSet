@@ -1,0 +1,139 @@
+/* Asistente "Planificá tu misión": botón del astronauta, pestañas del panel, preguntas, ranking y chat.
+   Usa las variables y el vidrio de estilos.css. */
+
+/* ---------- botón de la barra ---------- */
+.astronauta { flex: none; width: 48px; height: 48px; padding: 0; display: grid; place-items: center; border-radius: 50%; color: var(--texto-2); }
+.astronauta svg { width: 22px; height: 22px; }
+.astronauta:hover:not(:disabled) { color: var(--texto); }
+.astronauta[aria-pressed="true"] { color: var(--acento); border-color: rgba(255, 184, 74, 0.55); background: rgba(255, 184, 74, 0.12); }
+/* Primera visita: un pulso suave, una sola vez. (Con prefers-reduced-motion no hay animación.) */
+@media (prefers-reduced-motion: no-preference) {
+  .astronauta.pulso::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; border: 2px solid var(--acento); opacity: 0; pointer-events: none; animation: astronauta-pulso 1.8s var(--salida) 0.9s 1 both; }
+}
+@keyframes astronauta-pulso { 0% { opacity: 0.85; transform: scale(1); } 100% { opacity: 0; transform: scale(1.9); } }
+
+/* ---------- pestañas del panel ---------- */
+.plan-pestanas { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -6px -8px 14px; }
+.plan-pestanas .segmentos button { min-height: 34px; padding: 0 16px; }
+.plan-pestanas .equis { width: 34px; height: 34px; border-color: transparent; color: var(--tenue); }
+.plan-pestanas .equis:hover { color: var(--texto); }
+
+/* ---------- explicaciones (también en el panel del sitio) ---------- */
+.porque { flex: 0 0 auto; list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+.porque li { display: grid; grid-template-columns: 14px minmax(0, 1fr); }
+.porque li::before { content: ""; width: 6px; height: 6px; margin-top: 0.45em; border-radius: 50%; background: var(--tenue); }
+.porque .tono-mal::before { background: var(--mal); }
+.porque .tono-bien::before { background: var(--bien); }
+.porque .tono-tierra::before { background: var(--tierra); }
+.porque .tono-sol::before, .porque .tono-justo::before { background: var(--acento); }
+
+/* ---------- cuerpo del modo planificación ---------- */
+.plan { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de alto */
+.plan h2 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
+.plan-titulo p, .plan-resumen p { font-size: 13px; margin-top: 4px; }
+.plan-paso { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-paso legend { padding: 0; margin-bottom: 6px; display: flex; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 500; }
+.plan-paso legend span { font-size: 12px; font-weight: 600; color: var(--acento); }
+.plan-fila { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-opcion { flex: 1 1 0; min-width: 0; padding: 8px 14px; border-radius: 14px; border-color: var(--borde); background: var(--relleno); text-align: left; display: flex; flex-direction: column; font-size: 14px; }
+/* Nombre y datos en una línea; si no entran, los datos bajan a la segunda. */
+.plan-opcion.ancha { flex: 1 1 auto; width: auto; min-height: 40px; padding: 6px 14px; flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 10px; }
+.plan-opcion.ancha small { white-space: nowrap; }
+.plan-perfil { display: flex; gap: 6px; min-width: 0; }
+.plan-ajustar { flex: none; min-height: 40px; padding: 0 14px; font-size: 13px; }
+.plan-ajustar[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
+.plan-campos { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--borde); font-size: 14px; }
+.plan-campos select { height: 36px; padding: 0 10px; background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color: var(--texto); color-scheme: dark; }
+.plan-opcion.chica { flex: 0 1 auto; min-height: 36px; justify-content: center; text-align: center; border-radius: 999px; font-size: 13px; }
+.plan-opcion b { font-weight: 500; }
+.plan-opcion small { font-size: 12px; color: var(--tenue); }
+.plan-opcion[aria-pressed="true"] { border-color: var(--acento); background: rgba(255, 184, 74, 0.12); }
+.plan-campo { height: 40px; padding: 0 12px; font-weight: 600; background: var(--relleno); border: 1px solid var(--borde); border-radius: 12px; color-scheme: dark; }
+.plan-campo.chico { width: 64px; text-align: center; }
+/* Paso 3: llegada y tolerancia en una fila; en angosto se apilan. */
+.plan-cuando { display: flex; align-items: flex-end; gap: 10px; }
+.plan-etiqueta { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; color: var(--tenue); }
+.plan-cuando .plan-etiqueta:first-child { flex: 1 1 auto; }
+.plan-cuando input[type="date"] { width: 100%; }
+.plan-tolerancia { display: inline-flex; align-items: center; gap: 6px; color: var(--texto-2); font-size: 14px; }
+.plan-tolerancia i { font-style: normal; color: var(--tenue); }
+@media (max-width: 420px) { .plan-cuando { flex-direction: column; align-items: stretch; } }
+/* Paso 4: deslizador de 1 a 30 días con el valor al lado y las marcas en los extremos. */
+.plan-deslizador { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 14px; }
+.plan-deslizador input[type="range"] { width: 100%; margin: 0; accent-color: var(--acento); }
+.plan-deslizador output { min-width: 4.6em; font-size: 15px; font-weight: 600; text-align: right; }
+.plan-marcas { grid-column: 1; display: flex; justify-content: space-between; font-size: 11px; color: var(--tenue); }
+.plan-buscar { min-height: 46px; font-size: 16px; }
+.plan-nota { font-size: 12px; }
+
+.plan-respuestas { display: flex; align-items: flex-start; gap: 8px; }
+.plan-respuestas ul { flex: 1; list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-respuestas li { padding: 4px 10px; border-radius: 999px; background: var(--relleno); font-size: 12px; color: var(--texto-2); white-space: nowrap; }
+.plan-respuestas button { flex: none; min-height: 28px; padding: 0 12px; font-size: 12px; }
+
+.plan-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-tarjeta { border: 1px solid var(--borde); border-radius: 16px; background: var(--relleno); }
+.plan-tarjeta.abierta { border-color: var(--borde-fuerte); }
+.plan-cabeza { width: 100%; min-height: 44px; padding: 6px 12px; border: 0; border-radius: 16px; display: flex; align-items: center; gap: 10px; text-align: left; font-size: 14px; }
+.plan-cabeza:active:not(:disabled) { transform: none; }
+.plan-cabeza b { flex: 1; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-cabeza abbr { color: var(--tenue); text-decoration: none; }
+.plan-tarjeta.abierta .plan-cabeza b { font-size: 17px; }
+.plan-puesto { flex: none; width: 1.4em; font-size: 12px; color: var(--tenue); }
+.plan-pill { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.plan-tarjeta.si .plan-pill { background: rgba(123, 220, 162, 0.15); color: var(--bien); }
+.plan-tarjeta.no .plan-pill { background: rgba(255, 156, 138, 0.16); color: var(--mal); }
+.plan-cuerpo { padding: 2px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.plan-llegada { font-size: 13px; color: var(--texto-2); }
+.plan-llegada b { color: var(--texto); font-weight: 500; }
+.plan-desde { font-size: 13px; color: var(--mal); margin-top: -6px; }
+.plan-cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.plan-cifras div { display: flex; flex-direction: column; }
+.plan-cifras dd { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; }
+.plan-cifras dt { font-size: 12px; color: var(--tenue); }
+.plan-cuerpo .porque { margin: 0; padding-top: 10px; border-top: 1px solid var(--borde); }
+.plan-acciones { display: flex; gap: 8px; }
+.plan-acciones button { flex: 1; min-height: 40px; font-size: 14px; }
+
+/* ---------- preguntas rápidas, con estilo de chat ---------- */
+.plan-chat { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--borde); scroll-margin-top: 8px; }
+.plan-sobre { font-size: 14px; font-weight: 500; }
+.plan-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-chips button { min-height: 34px; padding: 4px 12px; font-size: 13px; text-align: left; color: var(--tierra); border-color: rgba(111, 174, 240, 0.55); }
+.plan-chips button:disabled { cursor: not-allowed; }
+.plan-hilo { display: flex; flex-direction: column; gap: 10px; }
+.plan-mensaje { display: flex; flex-direction: column; gap: 6px; }
+.burbuja { max-width: 92%; padding: 9px 13px; border-radius: 16px; font-size: 13px; line-height: 1.4; }
+.burbuja.pregunta { align-self: flex-end; background: rgba(111, 174, 240, 0.28); border-bottom-right-radius: 4px; }
+.burbuja.respuesta { align-self: flex-start; background: var(--relleno); border: 1px solid var(--borde); border-bottom-left-radius: 4px; }
+.burbuja small { display: block; margin-top: 6px; font-size: 11px; color: var(--tenue); }
+@media (prefers-reduced-motion: no-preference) {
+  .plan-mensaje { animation: plan-entra 0.25s var(--salida) both; }
+}
+@keyframes plan-entra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.plan-comparar { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--borde); }
+.plan-comparar > button { min-height: 44px; font-size: 14px; }
+.plan-aviso { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #ffd9a0; background: rgba(255, 184, 74, 0.12); border-left: 3px solid var(--acento); }
+.plan-aviso .enlace { flex: none; color: var(--texto); font-weight: 600; }
+
+/* ---------- pantallas angostas: el panel en modo planificación es una hoja desde abajo ---------- */
+@media (max-width: 980px) {
+  .cabina.con-plan { padding-bottom: 66vh; }
+  .panel.con-plan { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-height: 62vh; overflow: hidden auto; border-radius: 24px 24px 0 0; padding: 18px 18px 24px; animation: plan-hoja 0.35s var(--salida) both; }
+  .plan-pestanas { margin: 0 0 12px; }
+}
+@keyframes plan-hoja { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- línea de tiempo en vista previa (Dock.jsx con `previa`) ---------- */
+.dock.previa { border: 1px dashed rgba(255, 184, 74, 0.6); }
+.dock-previa { position: absolute; top: -12px; left: 24px; z-index: 2; padding: 2px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #14110d; background: var(--acento); white-space: nowrap; max-width: calc(100% - 48px); overflow: hidden; text-overflow: ellipsis; }
+.dock.previa .ventana { position: absolute; top: -4px; bottom: -4px; min-width: 3px; border: 2px solid #fff; border-radius: 6px; background: rgba(255, 255, 255, 0.12); pointer-events: none; }
+.dock.previa .elegido { position: absolute; top: -8px; bottom: -8px; width: 2px; margin-left: -1px; background: var(--texto-2); pointer-events: none; }
+.dock.previa .aro { border-color: var(--acento); }
+.dock.previa .pista input[type="range"] { cursor: default; }
+.leyenda i.ventana-muestra { border: 2px solid #fff; background: rgba(255, 255, 255, 0.12); }
+.leyenda i.aro-muestra { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--acento); }
+.dock.previa .reloj.si { color: var(--bien); }
+.dock.previa .reloj.no { color: var(--mal); }

@@ -43,7 +43,8 @@ function radioDeLatitud(lat) {
   return 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
 }
 
-export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, propios, onQuitar, vecindad, i0, duracionH, sistema, hayBackend, pendiente }) {
+// `plan` (modo planificación, igual que en Globo.jsx): los sitios del ranking van en verde o rojo y el resaltado lleva el aro.
+export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, propios, onQuitar, vecindad, i0, duracionH, sistema, hayBackend, pendiente, plan = null }) {
   const { t, f } = useIdioma();
   const { num, nombreCorto } = f;
   const [meta, setMeta] = useState(undefined); // undefined = cargando, null = no hay imagen
@@ -89,6 +90,17 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
     if (Math.abs(x - vista.cx) > vista.w * 0.45 || Math.abs(y - vista.cy) > h * 0.45) setVista((v) => ({ ...v, cx: x, cy: y }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sitio.sitio.id]);
+
+  // Al resaltar una tarjeta del ranking, el mapa se centra en ese sitio si quedó fuera de la vista.
+  const resaltado = plan?.enPestana ? plan.resaltado : null;
+  useEffect(() => {
+    const s = resaltado && sitios.find((x) => x.sitio.id === resaltado);
+    if (!s || !vista || !tam.w || s.sitio.lat > latLimite) return;
+    const [x, y] = proyectar(s.sitio.lat, s.sitio.lon);
+    const h = (vista.w * tam.h) / tam.w;
+    if (Math.abs(x - vista.cx) > vista.w * 0.45 || Math.abs(y - vista.cy) > h * 0.45) setVista((v) => ({ ...v, cx: x, cy: y }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resaltado]);
 
   const polares = useMemo(() => sitios.filter((s) => s.sitio.lat <= latLimite), [sitios, latLimite]);
 
@@ -211,6 +223,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
   const [solX, solY] = [extension * 1.06 * Math.sin(sol.lon * RAD), -extension * 1.06 * Math.cos(sol.lon * RAD)];
   const [tieX, tieY] = [extension * 1.06 * Math.sin(tierra.lon * RAD), -extension * 1.06 * Math.cos(tierra.lon * RAD)];
   const fondoDem = meta?.fuente?.startsWith("dem");
+  const conPlan = Boolean(plan && plan.estados.size > 0); // hay un ranking que mostrar
 
   return (
     <div className="mapa" ref={caja}>
@@ -287,8 +300,10 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
         <g className="mapa-sitios">
           {polares.map((s) => {
             const [x, y] = proyectar(s.sitio.lat, s.sitio.lon);
-            const elegido = s.sitio.id === sitio.sitio.id;
-            const sirve = viables.has(s.sitio.id);
+            const elegido = plan?.enPestana ? s.sitio.id === plan.resaltado : s.sitio.id === sitio.sitio.id;
+            const enPlan = conPlan ? plan.estados.get(s.sitio.id) ?? null : undefined; // null: no entró al ranking
+            const sirve = enPlan ?? viables.has(s.sitio.id);
+            const relleno = enPlan === undefined ? (sirve ? "var(--acento)" : "#8f8a82") : enPlan === null ? "#5d6470" : enPlan ? "var(--bien)" : "var(--mal)";
             return (
               <g
                 key={s.sitio.id}
@@ -300,7 +315,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onElegir(s.sitio.id)}
               >
                 {elegido && <circle cx={x} cy={y} r={px(13)} fill="none" stroke="#fff" strokeWidth={px(2)} />}
-                <circle cx={x} cy={y} r={px(elegido ? 8 : 6.5)} fill={sirve ? "var(--acento)" : "#8f8a82"} stroke="#000" strokeWidth={px(1.5)} />
+                <circle cx={x} cy={y} r={px(elegido ? 8 : 6.5)} fill={relleno} stroke="#000" strokeWidth={px(1.5)} />
                 {conEtiqueta.has(s.sitio.id) && (
                   <text x={x + px(16)} y={y + px(4)} fontSize={px(elegido ? 13 : 12)} fontWeight={elegido ? 600 : 400}>
                     {nombreCorto(s.sitio)}
@@ -345,8 +360,8 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
           </p>
         )}
         <p className="tenue mapa-datos">
-          <span className="mapa-leyenda"><i style={{ background: "var(--acento)" }} />{t("mapa.leyendaSirve")}</span>
-          <span className="mapa-leyenda"><i style={{ background: "#8f8a82" }} />{t("mapa.leyendaNoSirve")}</span>
+          <span className="mapa-leyenda"><i style={{ background: conPlan ? "var(--bien)" : "var(--acento)" }} />{conPlan ? t("panel.sobrevive") : t("mapa.leyendaSirve")}</span>
+          <span className="mapa-leyenda"><i style={{ background: conPlan ? "var(--mal)" : "#8f8a82" }} />{conPlan ? t("panel.noSobrevive") : t("mapa.leyendaNoSirve")}</span>
           <span>{cursor ? f.coordenadas(cursor) : " "}</span>
         </p>
         <p className="tenue mapa-fuente">
