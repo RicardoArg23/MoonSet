@@ -26,6 +26,7 @@ const HORA_MS = 3_600_000;
 const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
 const dos = (n) => String(n).padStart(2, "0");
+const EQUIS = <svg aria-hidden="true" width="11" height="11" viewBox="0 0 14 14"><path d="M2 2l10 10M12 2L2 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
 // El perfil elegido va en el hash (#explorar, #planificar): recargar conserva la cabina y "atrás" vuelve al inicio.
 const perfilDelHash = () => {
   const perfil = window.location.hash.slice(1);
@@ -447,26 +448,23 @@ function Cabina({ perfil }) {
             <div className="puntos-lista vidrio">
               <div className="puntos-cabeza">
                 <b>{t("puntos.titulo")}</b>
-                <button type="button" disabled={guardados.length === 0} onClick={quitarTodos}>{t("puntos.quitarTodos")}</button>
+                {guardados.length > 0 && <button type="button" onClick={quitarTodos}>{t("puntos.quitarTodos")}</button>}
               </div>
+              {/* Una fila por punto: el de prueba va primero, con su botón para guardarlo. */}
               {prueba && (
-                <div className="punto-prueba">
-                  <p className="rotulo">{t("panel.pruebaRotulo")}</p>
+                <div className="punto-fila prueba" title={t("puntos.sinGuardar")}>
                   <button type="button" className="enlace" onClick={() => elegirSitio(prueba.sitio.id)}>{coordenadas(prueba.sitio)}</button>
-                  <p className="tenue">{t("panel.pruebaNota")}</p>
-                  <div className="dupla">
-                    <button type="button" className="primario" onClick={guardarPrueba}>{t("panel.guardar")}</button>
-                    <button type="button" onClick={descartarPrueba}>{t("panel.descartar")}</button>
-                  </div>
+                  <button type="button" className="primario" onClick={guardarPrueba}>{t("puntos.guardar")}</button>
+                  <button type="button" className="punto-quitar" aria-label={t("panel.descartar")} title={t("panel.descartar")} onClick={descartarPrueba}>{EQUIS}</button>
                 </div>
               )}
-              {guardados.length === 0 && !prueba && <p className="tenue">{t("puntos.vacio")}</p>}
               {guardados.map((s) => (
                 <div className="punto-fila" key={s.sitio.id}>
                   <button type="button" className="enlace" onClick={() => elegirSitio(s.sitio.id)}>{coordenadas(s.sitio)}</button>
-                  <button type="button" onClick={() => quitarPunto(s.sitio.id)}>{t("puntos.quitar")}</button>
+                  <button type="button" className="punto-quitar" aria-label={t("puntos.quitar")} title={t("puntos.quitar")} onClick={() => quitarPunto(s.sitio.id)}>{EQUIS}</button>
                 </div>
               ))}
+              {guardados.length === 0 && !prueba && <p className="tenue puntos-nota">{t("puntos.vacio")}</p>}
               <form
                 className="puntos-form"
                 onSubmit={(e) => {
@@ -478,7 +476,8 @@ function Cabina({ perfil }) {
                 <label>{t("puntos.longitud")}<input type="number" step="any" min="-180" max="360" value={coord.lon} onChange={(e) => setCoord({ ...coord, lon: e.target.value })} /></label>
                 <button type="submit" className="primario" disabled={!hayBackend || pendiente?.estado === "cargando"}>{pendiente?.estado === "cargando" ? t("puntos.calculando") : t("puntos.probar")}</button>
               </form>
-              {!hayBackend && <p className="tenue">{t("puntos.sinBackend")}</p>}
+              {(guardados.length > 0 || prueba) && <p className="tenue puntos-nota">{t("puntos.clicDerecho")}</p>}
+              {!hayBackend && <p className="tenue puntos-nota">{t("puntos.sinBackend")}</p>}
               {estadoCoord && <p className="error" role="alert">{estadoCoord}</p>}
             </div>
           )}
