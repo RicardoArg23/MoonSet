@@ -92,7 +92,9 @@ function HaciaLaTierra({ sitio, lat, lon, rotulo }) {
   );
 }
 
-function Marcador({ sitio, nombre, activo, viable, onElegir }) {
+const RADIO_SENSIBLE = 0.04; // el punto dibujado mide 0,016 a 0,022
+
+function Marcador({ sitio, nombre, activo, viable, onElegir, onQuitar }) {
   const grupo = useRef();
   const direccion = useMemo(() => latLonAVector(sitio.lat, sitio.lon), [sitio.lat, sitio.lon]);
   const color = activo ? "#ffffff" : viable ? "#ffb84a" : "#8b93a3";
@@ -103,17 +105,29 @@ function Marcador({ sitio, nombre, activo, viable, onElegir }) {
     grupo.current.position.copy(direccion).multiplyScalar(1.0006 + 0.0034 * escala);
   });
   return (
-    <group ref={grupo}>
-      <mesh
-        onClick={(e) => {
-          e.stopPropagation();
-          onElegir(sitio.id);
-        }}
-        onPointerOver={() => { document.body.style.cursor = "pointer"; }}
-        onPointerOut={() => { document.body.style.cursor = ""; }}
-      >
+    <group
+      ref={grupo}
+      onClick={(e) => {
+        e.stopPropagation();
+        onElegir(sitio.id);
+      }}
+      // Clic derecho sobre un punto propio: se quita. El menú del navegador ya lo cancela el <Canvas>.
+      onContextMenu={onQuitar ? (e) => {
+        e.stopPropagation();
+        document.body.style.cursor = "";
+        onQuitar(sitio.id);
+      } : undefined}
+      onPointerOver={() => { document.body.style.cursor = "pointer"; }}
+      onPointerOut={() => { document.body.style.cursor = ""; }}
+    >
+      <mesh>
         <sphereGeometry args={[activo ? 0.022 : 0.016, 16, 12]} />
         <meshBasicMaterial color={color} />
+      </mesh>
+      {/* Área sensible más grande que el punto dibujado: acertarle con el mouse no exige puntería. */}
+      <mesh>
+        <sphereGeometry args={[RADIO_SENSIBLE, 12, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       {activo && (
         <Html className="globo-rotulo activo" position={[0, 0, 0]}>{nombre}</Html>
@@ -207,19 +221,19 @@ function Camara({ lat, lon, enfoque, controles, volando }) {
  * @param {{ modo: "lejos"|"cerca", n: number }} props.enfoque a qué altura llevar la cámara; `n` cambia para repetir el vuelo
  * @param {(d: { capa: string|null, metrosPorPixel: number }) => void} [props.onDetalle] qué imagen se ve bajo la cámara
  */
-export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto, pendiente }) {
+export default function Globo({ sitios, sitioId, viables, sol, tierra, hayContacto, nombreActivo, rotuloTierra, enfoque, onDetalle, onElegir, onPunto, propios, onQuitar, pendiente }) {
   const controles = useRef();
   const volando = useRef(false);
   const activo = sitios.find((s) => s.sitio.id === sitioId).sitio;
   return (
-    <Canvas camera={{ position: [0.9, -4.3, 0.7], fov: 35, near: 0.05, far: 100 }} dpr={[1, 2]} gl={{ antialias: true }}>
+    <Canvas onContextMenu={(e) => e.preventDefault()} camera={{ position: [0.9, -4.3, 0.7], fov: 35, near: 0.05, far: 100 }} dpr={[1, 2]} gl={{ antialias: true }}>
       <color attach="background" args={["#000000"]} />
       <Luces lat={sol.lat} lon={sol.lon} />
       <Luna onPunto={onPunto} />
       <Teselas onDetalle={onDetalle} volando={volando} />
       {hayContacto && <HaciaLaTierra sitio={activo} lat={tierra.lat} lon={tierra.lon} rotulo={rotuloTierra} />}
       {sitios.map((s) => (
-        <Marcador key={s.sitio.id} sitio={s.sitio} nombre={nombreActivo} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} />
+        <Marcador key={s.sitio.id} sitio={s.sitio} nombre={nombreActivo} activo={s.sitio.id === sitioId} viable={viables.has(s.sitio.id)} onElegir={onElegir} onQuitar={propios?.has(s.sitio.id) ? onQuitar : null} />
       ))}
       {pendiente && <MarcadorPendiente lat={pendiente.lat} lon={pendiente.lon} />}
       <Camara lat={activo.lat} lon={activo.lon} enfoque={enfoque} controles={controles} volando={volando} />

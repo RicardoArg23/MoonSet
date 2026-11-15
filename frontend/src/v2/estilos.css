@@ -47,6 +47,7 @@ a { color: var(--texto-2); }
 .con-ayuda { position: relative; }
 .con-ayuda::after { content: attr(data-ayuda); position: absolute; left: 0; top: calc(100% + 6px); z-index: 50; width: max-content; max-width: 240px; padding: 7px 10px; border-radius: 10px; background: #1d1a17; border: 1px solid var(--borde-fuerte); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); color: var(--texto-2); font-size: 12px; font-weight: 400; letter-spacing: 0; line-height: 1.3; text-align: left; white-space: normal; opacity: 0; transform: translateY(-3px); pointer-events: none; transition: opacity 0.15s var(--salida), transform 0.15s var(--salida); }
 .con-ayuda.a-derecha::after { left: auto; right: 0; }
+.con-ayuda:not([data-ayuda])::after { display: none; } /* sin texto no hay globo vacío */
 .con-ayuda:hover::after, .con-ayuda:focus-visible::after { opacity: 1; transform: none; }
 .vidrio { background: var(--vidrio); border: 1px solid var(--borde); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 
@@ -89,6 +90,10 @@ a { color: var(--texto-2); }
 .punto-fila { padding-top: 10px; border-top: 1px solid var(--borde); }
 .puntos-lista button { min-height: 34px; padding: 0 12px; font-size: 13px; }
 .puntos-lista .enlace { padding: 0; min-height: 34px; font-size: 14px; }
+.punto-aviso { display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--acento); vertical-align: middle; }
+.punto-prueba { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; background: var(--relleno); font-size: 13px; }
+.punto-prueba .enlace { justify-self: start; min-height: 0; font-size: 15px; }
+.punto-prueba .dupla button { min-height: 38px; font-size: 14px; }
 .puntos-form { display: flex; align-items: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid var(--borde); }
 .puntos-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tenue); min-width: 0; }
 .puntos-form input { width: 100%; height: 38px; padding: 0 10px; background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color-scheme: dark; }

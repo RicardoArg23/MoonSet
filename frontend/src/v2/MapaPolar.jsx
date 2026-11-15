@@ -43,7 +43,7 @@ function radioDeLatitud(lat) {
   return 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
 }
 
-export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, vecindad, i0, duracionH, sistema, hayBackend, pendiente }) {
+export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegir, onPunto, propios, onQuitar, vecindad, i0, duracionH, sistema, hayBackend, pendiente }) {
   const { t, f } = useIdioma();
   const { num, nombreCorto } = f;
   const [meta, setMeta] = useState(undefined); // undefined = cargando, null = no hay imagen
@@ -164,7 +164,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
   function soltar(e) {
     const a = arrastre.current;
     arrastre.current = null;
-    if (!a || a.movio) return;
+    if (!a || a.movio || e.button === 2) return; // el clic derecho no elige ni prueba: quita (alMenu)
     if (a.marcador) {
       onElegir(a.marcador.dataset.sitio);
       return;
@@ -172,6 +172,14 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
     const [mx, my] = aMundo(e);
     const p = invertir(mx, my);
     if (p.lat <= latLimite) onPunto?.(p);
+  }
+
+  // Clic derecho sobre un punto propio: se quita sin pasar por el menú del navegador.
+  function alMenu(e) {
+    const id = e.target.closest("[data-sitio]")?.dataset.sitio;
+    if (!id || !propios?.has(id)) return;
+    e.preventDefault();
+    onQuitar?.(id);
   }
 
   function verTodo() {
@@ -211,6 +219,7 @@ export default function MapaPolar({ sitios, sitio, viables, sol, tierra, onElegi
         viewBox={`${x0} ${y0} ${vista.w} ${altoVista}`}
         role="application"
         aria-label={t("mapa.aria")}
+        onContextMenu={alMenu}
         onPointerDown={bajar}
         onPointerMove={mover}
         onPointerUp={soltar}

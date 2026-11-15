@@ -307,6 +307,7 @@ function Cabina({ perfil }) {
       pedido.current = null;
       const existente = guardados.find((s) => s.sitio.id === nuevo.sitio.id);
       setPrueba(existente ? null : nuevo); // reemplaza al punto de prueba anterior
+      if (!existente) setVerPuntos(true); // guardar o descartar se hace desde "Mis puntos"
       setSitioId(nuevo.sitio.id);
       setHoraMision(0);
       setPendiente(null);
@@ -339,6 +340,11 @@ function Cabina({ perfil }) {
     setPrueba(null);
     setSitioId(SITIO_INICIAL);
     setHoraMision(0);
+  }
+  // Clic derecho sobre un punto propio en el globo o el mapa: lo quita, esté guardado o sea el de prueba.
+  function quitarPropio(id) {
+    if (prueba?.sitio.id === id) descartarPrueba();
+    else quitarPunto(id);
   }
   function quitarPunto(id) {
     setGuardados((x) => x.filter((s) => s.sitio.id !== id));
@@ -384,6 +390,7 @@ function Cabina({ perfil }) {
   // El de más margen: el que termina con más batería en su peor momento.
   const mejorFijado = fijadosVista.length > 1 ? fijadosVista.reduce((a, b) => (b.en.minimoPct > a.en.minimoPct ? b : a)) : null;
 
+  const propios = new Set([...guardados, ...(prueba ? [prueba] : [])].map((s) => s.sitio.id));
   const hayPanel = panelAbierto && config.panel;
   // En pantalla angosta todo se apila y no hay asas: nada queda plegado.
   const plegarPanel = panelPlegado && !angosto;
@@ -415,6 +422,8 @@ function Cabina({ perfil }) {
             onDetalle={setDetalle}
             onElegir={elegirSitio}
             onPunto={tocarLuna ? puntoEnGlobo : null}
+            propios={propios}
+            onQuitar={quitarPropio}
             pendiente={pendiente?.estado === "cargando" ? pendiente : null}
           />
         </Suspense>
@@ -425,15 +434,14 @@ function Cabina({ perfil }) {
         <a className="marca vidrio con-ayuda" href="#" aria-label={t("ajustes.inicio")} data-ayuda={t("ajustes.inicio")}>
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
         </a>
-        {config.herramientas.parametros && (
-          <div className="parametros vidrio">
-            <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
-          </div>
-        )}
+        {/* La duración se ve siempre, en cualquier perfil: sin ella "sobrevive" no dice a qué. */}
+        <div className="parametros vidrio">
+          <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
+        </div>
         {config.herramientas.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
         {config.herramientas.puntos && <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
-            {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}
+            {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}{prueba && <i className="punto-aviso" aria-hidden="true" />}
           </button>
           {verPuntos && (
             <div className="puntos-lista vidrio">
@@ -441,7 +449,18 @@ function Cabina({ perfil }) {
                 <b>{t("puntos.titulo")}</b>
                 <button type="button" disabled={guardados.length === 0} onClick={quitarTodos}>{t("puntos.quitarTodos")}</button>
               </div>
-              {guardados.length === 0 && <p className="tenue">{t("puntos.vacio")}</p>}
+              {prueba && (
+                <div className="punto-prueba">
+                  <p className="rotulo">{t("panel.pruebaRotulo")}</p>
+                  <button type="button" className="enlace" onClick={() => elegirSitio(prueba.sitio.id)}>{coordenadas(prueba.sitio)}</button>
+                  <p className="tenue">{t("panel.pruebaNota")}</p>
+                  <div className="dupla">
+                    <button type="button" className="primario" onClick={guardarPrueba}>{t("panel.guardar")}</button>
+                    <button type="button" onClick={descartarPrueba}>{t("panel.descartar")}</button>
+                  </div>
+                </div>
+              )}
+              {guardados.length === 0 && !prueba && <p className="tenue">{t("puntos.vacio")}</p>}
               {guardados.map((s) => (
                 <div className="punto-fila" key={s.sitio.id}>
                   <button type="button" className="enlace" onClick={() => elegirSitio(s.sitio.id)}>{coordenadas(s.sitio)}</button>
@@ -542,16 +561,7 @@ function Cabina({ perfil }) {
         </details>}
 
         {config.bloques.opciones && <div className="panel-opciones" style={ordenDe("opciones")}>
-          {config.herramientas.puntos && esPrueba ? (
-            <>
-              <p className="rotulo">{t("panel.pruebaRotulo")}</p>
-              <p className="nota">{t("panel.pruebaNota")}</p>
-              <div className="dupla">
-                <button type="button" className="primario" onClick={guardarPrueba}>{t("panel.guardar")}</button>
-                <button type="button" onClick={descartarPrueba}>{t("panel.descartar")}</button>
-              </div>
-            </>
-          ) : e.sobrevive ? (
+          {e.sobrevive ? (
             <>
               <p className="rotulo">{t("panel.queHacer")}</p>
               <p className="nota vacio">{t("panel.nadaQueCambiar")}</p>
@@ -622,6 +632,8 @@ function Cabina({ perfil }) {
               tierra={{ lat: geometria.tierra_lat[iGeo], lon: geometria.tierra_lon[iGeo] }}
               onElegir={elegirSitio}
               onPunto={tocarLuna ? puntoEnGlobo : null}
+              propios={propios}
+              onQuitar={quitarPropio}
               vecindad={vecindad}
               i0={i0}
               duracionH={duracionH}
