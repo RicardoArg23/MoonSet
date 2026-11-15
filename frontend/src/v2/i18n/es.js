@@ -135,7 +135,7 @@ export default {
     mapaAyudaPolar: "Se abre centrado en el sitio, en vista polar sur",
     buscar: "Si el visor no cae en el sitio, en su buscador:",
     validado: "✓ Validado contra JPL Horizons: error < {tope}°",
-    validadoAyuda: "Posiciones del Sol y la Tierra comparadas con JPL Horizons en 13 sitios y 5 fechas: error máximo {max}°. Abre el informe.",
+    validadoAyuda: "Posición del Sol y la Tierra validada contra JPL Horizons: error máximo {max}°",
     copiar: "Copiar",
     copiado: "Copiado",
   },

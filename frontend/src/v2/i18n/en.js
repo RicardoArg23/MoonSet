@@ -145,7 +145,7 @@ export default {
     mapaAyudaPolar: "Opens centered on the site, in the south polar view",
     buscar: "If the viewer doesn't land on the site, in its search box:",
     validado: "✓ Validated against JPL Horizons: error < {tope}°",
-    validadoAyuda: "Sun and Earth positions compared with JPL Horizons at 13 sites and 5 dates: maximum error {max}°. Opens the report.",
+    validadoAyuda: "Sun and Earth positions validated against JPL Horizons: maximum error {max}°",
     copiar: "Copy",
     copiado: "Copied",
   },
