@@ -64,7 +64,7 @@ const Mano = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const Equis = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>;
 
 /** Invitación chica que no bloquea (solo la primera visita) y, durante el recorrido, el foco y el cartel del paso. */
-export default function Tutorial({ tutorial, conDock }) {
+export default function Tutorial({ tutorial }) {
   const { t } = useIdioma();
   const { paso, indice, total, hecho, sentido, invitado, empezar, salir, siguiente, atras, noInvitar } = tutorial;
   const focoRef = useRef(null);
@@ -133,9 +133,9 @@ export default function Tutorial({ tutorial, conDock }) {
   if (!paso) {
     if (!invitado) return null;
     return (
-      <div className={`tt-invitacion${conDock ? " sobre-dock" : ""}`} role="region" aria-label={t("tutorial.titulo")}>
+      <div className="tt-invitacion" role="region" aria-label={t("tutorial.titulo")}>
         <p>{t("tutorial.invitacion")}<small>{t("tutorial.invitacionDetalle")}</small></p>
-        <button type="button" className="primario" onClick={empezar}>{t("tutorial.empezar")}</button>
+        <button type="button" className="tt-empezar" onClick={empezar}>{t("tutorial.empezar")}</button>
         <button type="button" className="tt-equis" aria-label={t("tutorial.ahoraNo")} onClick={noInvitar}><Equis /></button>
       </div>
     );

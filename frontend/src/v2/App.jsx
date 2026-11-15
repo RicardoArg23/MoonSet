@@ -983,7 +983,7 @@ function Cabina({ perfil }) {
         />
       )}
 
-      <Tutorial tutorial={tutorial} conDock={config.herramientas.lineaTiempo && !plegarDock} />
+      <Tutorial tutorial={tutorial} />
 
       <p className="creditos">{t("app.creditos")}</p>
     </div>
