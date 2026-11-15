@@ -1,7 +1,11 @@
 // Tests de los enlaces a herramientas de NASA: npm test (node:test, sin librerías).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { enlaceHorizons, enlaceMoonTrek, enlaceQuickmap, enlacesNasa, fechaHorizons, lonEste180, lonEste360, proyeccion, textoCoordenadas } from "../src/v2/enlaces.js";
+import { readFileSync } from "node:fs";
+import {
+  centroPolar, desproyectarPolar, enlaceHorizons, enlaceMoonTrek, enlaceQuickmap, enlacesNasa, fechaHorizons, lonEste180, lonEste360,
+  proyeccion, textoCoordenadas, VALIDACION_ERROR_MAX_DEG, VALIDACION_ERROR_TOPE_DEG,
+} from "../src/v2/enlaces.js";
 
 const LLEGADA = Date.UTC(2027, 4, 2, 0, 0); // 2 de mayo de 2027, 00:00 UTC
 const FIN = LLEGADA + 14 * 24 * 3_600_000;
@@ -62,8 +66,8 @@ test("las coordenadas para el buscador de QuickMap van en lat, lon este -180..18
 });
 
 test("Moon Trek centra en x = longitud este -180..180, y = latitud, vista geográfica", () => {
-  const { url, deepLink } = enlaceMoonTrek({ lat: 0.67408, lon: 23.47297 });
-  assert.equal(deepLink, true);
+  const { url, vista } = enlaceMoonTrek({ lat: 0.67408, lon: 23.47297 });
+  assert.equal(vista, "geografica");
   const [base, hash] = url.split("#");
   assert.equal(base, "https://trek.nasa.gov/moon/");
   const p = new URLSearchParams(hash);
@@ -72,7 +76,7 @@ test("Moon Trek centra en x = longitud este -180..180, y = latitud, vista geogr�
   assert.equal(p.get("p"), "urn:ogc:def:crs:EPSG::104903");
   assert.equal(p.get("b"), "moon");
   assert.equal(p.has("e"), false);
-  assert.equal(new URLSearchParams(enlaceMoonTrek({ lat: -89.45, lon: 222.69 }).url.split("#")[1]).get("x"), "-137.31");
+  assert.equal(enlaceMoonTrek({ lat: 0.67408, lon: 23.47297 }).vista, "geografica");
 });
 
 test("QuickMap arma un rectángulo en metros centrado en el sitio", () => {
@@ -85,11 +89,75 @@ test("QuickMap arma un rectángulo en metros centrado en el sitio", () => {
   assert.ok(Math.abs((y0 + y1) / 2 / m - 22.387) < 1e-3);
 });
 
-test("cerca del polo el rectángulo de QuickMap no pasa de 90° y se avisa que falta la vista polar", () => {
-  const m = (1_737_400 * Math.PI) / 180;
-  const e = enlaceQuickmap({ lat: -89.45, lon: 222.69 });
-  const [, y0] = new URL(e.url).searchParams.get("prjExtent").split(",").map(Number);
-  assert.ok(y0 >= -90 * m - 1);
-  assert.equal(e.vistaPolarPendiente, true);
-  assert.equal(enlaceQuickmap({ lat: 0.67408, lon: 23.47297 }).vistaPolarPendiente, false);
+// Sitios polares de la lista (data/sitios.json) y el centro de las URLs reales que se usaron de referencia.
+const POLARES = [
+  { nombre: "Connecting Ridge", lat: -89.45, lon: 222.69 },
+  { nombre: "Borde de Shackleton", lat: -89.78, lon: 204.27 },
+  { nombre: "Macizo Malapert", lat: -85.9876, lon: 2.0528 },
+  { nombre: "IM-1 Odysseus", lat: -80.13, lon: 1.44 },
+];
+const mismaLonEste = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+
+test("el centro polar, desproyectado, da la lat/lon del sitio", () => {
+  for (const s of POLARES) {
+    const { x, y } = centroPolar(s.lat, s.lon);
+    const v = desproyectarPolar(x, y);
+    assert.ok(Math.abs(v.lat - s.lat) < 1e-6, s.nombre);
+    assert.ok(mismaLonEste(v.lon, s.lon) < 1e-4, s.nombre);
+  }
+});
+
+test("la proyección es la de las URLs reales de Moon Trek y QuickMap (centro cerca de Shackleton)", () => {
+  // Moon Trek: x=6805.77, y=-6471.63 -> 89,69° S 133,6° E. QuickMap: centro del prjExtent -> 89,63° S 137,1° E.
+  const mt = desproyectarPolar(6805.77457109595, -6471.632537841384);
+  assert.ok(Math.abs(mt.lat + 89.69) < 0.01 && Math.abs(mt.lon - 133.56) < 0.1);
+  const qm = desproyectarPolar((-15131.4882299 + 30508.6790547) / 2, (-20485.9153772 + 3955.9000976) / 2);
+  assert.ok(Math.abs(qm.lat + 89.63) < 0.01 && Math.abs(qm.lon - 137.07) < 0.1);
+});
+
+test("Moon Trek polar: x, y del sitio en metros, IAU2000:30120 y sin extensión", () => {
+  for (const s of POLARES) {
+    const e = enlaceMoonTrek(s);
+    assert.equal(e.vista, "polar-sur");
+    const p = new URLSearchParams(e.url.split("#")[1]);
+    assert.equal(p.get("p"), "urn:ogc:def:crs:IAU2000::30120");
+    assert.equal(p.get("b"), "moon");
+    assert.equal(p.get("z"), "8");
+    assert.equal(p.has("e"), false);
+    const v = desproyectarPolar(Number(p.get("x")), Number(p.get("y")));
+    assert.ok(Math.abs(v.lat - s.lat) < 1e-5 && mismaLonEste(v.lon, s.lon) < 1e-3, s.nombre);
+  }
+});
+
+test("QuickMap polar: proj=27 y un rectángulo de 40 x 25 km centrado en el sitio, sin stack ni defs", () => {
+  for (const s of POLARES) {
+    const e = enlaceQuickmap(s);
+    assert.equal(e.vista, "polar-sur");
+    const url = new URL(e.url);
+    assert.equal(url.searchParams.get("proj"), "27");
+    assert.equal(url.searchParams.has("stack"), false);
+    assert.equal(url.searchParams.has("defs"), false);
+    const [x0, y0, x1, y1] = url.searchParams.get("prjExtent").split(",").map(Number);
+    assert.ok(Math.abs(x1 - x0 - 40_000) < 1 && Math.abs(y1 - y0 - 25_000) < 1);
+    const v = desproyectarPolar((x0 + x1) / 2, (y0 + y1) / 2);
+    assert.ok(Math.abs(v.lat - s.lat) < 1e-5 && mismaLonEste(v.lon, s.lon) < 1e-3, s.nombre);
+  }
+});
+
+test("al norte de 80° S los visores siguen en vista geográfica", () => {
+  for (const s of [{ lat: -69.373, lon: 32.319 }, { lat: 0.67408, lon: 23.47297 }]) {
+    assert.equal(enlaceMoonTrek(s).vista, "geografica");
+    assert.equal(new URL(enlaceQuickmap(s).url).searchParams.get("proj"), "10");
+  }
+});
+
+test("el sello de validación usa los valores de docs/VALIDACION.md", () => {
+  const doc = readFileSync(new URL("../../docs/VALIDACION.md", import.meta.url), "utf-8");
+  const global = doc.split("## Global")[1].split("##")[0];
+  const filas = global.split(/\r?\n/).filter((l) => /^\| (sol|tierra) \|/.test(l));
+  assert.equal(filas.length, 2);
+  // Columnas: Cuerpo | Δaz máx | Δaz medio | Δel máx | Δel medio | Sep. máx
+  const maximo = Math.max(...filas.flatMap((l) => l.split("|").slice(2, -1).map(Number)));
+  assert.equal(maximo, VALIDACION_ERROR_MAX_DEG);
+  assert.ok(maximo < VALIDACION_ERROR_TOPE_DEG);
 });

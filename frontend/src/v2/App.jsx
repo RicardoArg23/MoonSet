@@ -11,7 +11,7 @@ import Vecindad from "./Vecindad";
 import MapaPolar from "./MapaPolar";
 import Sistema from "./Sistema";
 import { csvComparacion, csvMision, nombreArchivo, nombreComparacion } from "./exportar";
-import EnlacesNasa from "./EnlacesNasa";
+import EnlacesNasa, { SelloValidacion } from "./EnlacesNasa";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
@@ -584,7 +584,8 @@ function Cabina({ perfil }) {
           )}
         </div>
 
-        <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} />
+        <SelloValidacion />
+        <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} conHorizons={perfil === "planificar"} />
 
         {/* Fijar y exportar comparten fila para que el panel no necesite scroll. Exportar es una herramienta de
             planificación: el perfil explorar no la muestra. */}

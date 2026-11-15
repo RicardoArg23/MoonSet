@@ -24,9 +24,24 @@ contacto, energía y batería, fechas en UTC) y los datos del sistema arriba. "E
 Comparar, descarga una fila por escenario fijado. Con la interfaz en castellano el separador es ";" y la coma decimal
 (Excel en castellano lo abre con doble clic); en inglés, "," y punto decimal. Los nombres de columna no cambian. Se arma
 en `frontend/src/v2/exportar.js`.
-Desde el panel del sitio, "Ver en herramientas de NASA" abre JPL Horizons (Sol o Tierra, cada hora de la misión,
-con los mismos parámetros que `backend/scripts/validar_horizons.py`), NASA Moon Trek y LROC QuickMap. Los enlaces se
-arman en `frontend/src/v2/enlaces.js`.
+
+Las líneas del principio que empiezan con `#` son metadatos (sitio, coordenadas, perfil, batería, criterio de luz y
+contacto…), no datos: después viene el encabezado y una fila por hora o por escenario. Para leerlo en Python, se
+saltean con `comment="#"`, y `encoding="utf-8-sig"` quita la marca BOM del principio (la que pone el
+archivo para que Excel lea bien los acentos):
+
+```python
+import pandas
+
+pandas.read_csv(archivo, sep=";", decimal=",", comment="#", encoding="utf-8-sig")  # interfaz en castellano
+pandas.read_csv(archivo, sep=",", comment="#", encoding="utf-8-sig")               # interfaz en inglés
+```
+
+Desde el panel del sitio, "Ver en herramientas de NASA" abre NASA Moon Trek y LROC QuickMap centrados en el sitio
+(en vista polar sur al sur de 80° S, con la misma proyección que el mapa 2D) y, en el perfil planificar, las tablas de
+JPL Horizons del Sol y de la Tierra (cada hora de la misión, con los mismos parámetros que
+`backend/scripts/validar_horizons.py`). Los enlaces se arman en `frontend/src/v2/enlaces.js`. El panel muestra además
+el sello "Validado contra JPL Horizons", que abre [docs/VALIDACION.md](docs/VALIDACION.md).
 
 ## Arquitectura
 
