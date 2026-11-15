@@ -4,7 +4,8 @@
 
 export const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"];
 /** Bloques del panel de respuesta que se pueden ocultar y reordenar. */
-export const BLOQUES = ["medidor", "opciones", "cifras", "detalle", "sello", "enlaces"];
+// "riesgos" es la franja "Riesgos de la misión · Próximamente" (Proximamente.jsx): no calcula nada todavía.
+export const BLOQUES = ["medidor", "opciones", "cifras", "riesgos", "detalle", "sello", "enlaces"];
 /** Botones del pie del panel: se ocultan, pero siempre van al final. */
 export const ACCIONES = ["fijar", "exportar"];
 export const CIFRAS = ["luz", "contacto", "energia", "noche", "autonomia", "minimo"];

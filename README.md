@@ -97,6 +97,29 @@ planificador, explicaciones, exportación, enlaces).
 - **Imágenes del globo.** El mosaico es una foto promedio: sus sombras no son las de la fecha elegida.
 - **Puntos propios** solo con el backend encendido; sin él la app funciona con los 25 sitios precalculados.
 
+## Próximamente
+
+Modelos que sumaríamos con más tiempo. **Hoy no están calculados**: la app los muestra como "Próximamente", sin
+números, semáforos ni gráficos de ejemplo (franja "Riesgos de la misión" del panel y la entrada "Próximamente" del
+cajón de personalización).
+
+- **P0 · Terreno para el alunizaje.** Antes que todo: pendiente, rocas y cráteres del terreno, y marcar qué dato es
+  medido, estimado o falta.
+- **Prioridad 1 · Térmico.** ¿El módulo y la batería se mantienen dentro de su rango de temperatura? Hoy la
+  calefacción es una potencia fija. El modelo simularía un nodo térmico (batería o interior) cada 10–30 minutos, con
+  calor radiado, aislamiento y aporte del Sol según la elevación que MoonSet ya calcula. La energía de calefacción
+  calculada reemplazaría a la fija en la simulación de batería y podría cambiar si la misión sobrevive la noche.
+  Datos: masa, calor específico, emisividad y absorción, aislamiento, límites de temperatura, y temperatura del suelo
+  con LRO Diviner.
+- **Prioridad 2 · Radiación.** ¿Cuánta dosis acumulan la tripulación y la electrónica? No se deduce de la luz ni de
+  la latitud: depende del blindaje y de los eventos solares. Serían escenarios (nominal y evento solar de referencia)
+  con una fuente validada como NASA OLTARIS, comparando la dosis acumulada con el límite de la misión. Sin datos dirá
+  "sin datos", nunca un nivel de riesgo. Los eventos solares no se pronostican: se muestran escenarios.
+- **Prioridad 3 · Micrometeoritos.** ¿Qué probabilidad hay de un impacto que dañe un equipo? Hace falta un flujo
+  ambiental y un criterio de perforación del blindaje. Sería la probabilidad de al menos un impacto dañino,
+  `P = 1 − e^(−F·A·t)`, por etapa (descenso, actividad, permanencia), y la comparación de blindajes. Importa sobre
+  todo para bases expuestas durante meses.
+
 ## Recursos usados
 
 ### Datos e imágenes
