@@ -216,6 +216,8 @@ export default {
     sitioAria: "Sitio de alunizaje",
     sinRelieve: "sin relieve",
     conRelieve: "con relieve real",
+    impacto: "Impacto",
+    impactoAyuda: "La misión se estrelló acá; el cálculo muestra cómo habría sido operar en este punto.",
     luzToda: "Hay luz toda la misión",
     sobrevive: "Misión viable",
     noSobrevive: "Misión inviable",

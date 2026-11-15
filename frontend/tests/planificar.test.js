@@ -17,16 +17,17 @@ const dia = (iso) => Math.round((Date.parse(`${iso}T00:00:00Z`) - Date.parse("20
 const fecha = (d) => new Date(Date.parse("2027-01-01T00:00:00Z") + d * 86_400_000).toISOString().slice(0, 10);
 const CASO = { region: "polo", dia: dia("2027-03-14"), tolerancia: 3, duracionH: 10 * 24 };
 
-test("caso conocido: rover, polo sur, 14 de marzo ± 3 días, 10 días -> solo Malapert sobrevive, llegando el 16", () => {
+test("caso conocido: rover, polo sur, 14 de marzo ± 3 días, 10 días -> sobreviven IM-2 (el 15) y Malapert (el 16)", () => {
   for (const s of SITIOS) assert.equal(s.margenComunicacionDeg ?? 0, MARGEN_COMUNICACION_DEG);
   const ranking = rankear(SITIOS, ROVER, CASO);
-  assert.deepEqual(ranking.map((f) => f.id).sort(), ["borde-de-gerlache", "borde-shackleton", "connecting-ridge", "im-1-odysseus", "malapert-massif"]);
+  assert.deepEqual(ranking.map((f) => f.id).sort(), ["borde-de-gerlache", "borde-shackleton", "connecting-ridge", "im-1-odysseus", "im-2-athena", "malapert-massif"]);
   const sirven = ranking.filter((f) => f.sobrevive);
-  assert.deepEqual(sirven.map((f) => f.id), ["malapert-massif"]);
-  assert.equal(ranking[0].id, "malapert-massif");
-  assert.equal(fecha(ranking[0].dia), "2027-03-16");
-  assert.equal(ranking[0].desvio, 2);
-  assert.equal(ranking[0].primera, ranking[0].dia);
+  assert.deepEqual(sirven.map((f) => f.id).sort(), ["im-2-athena", "malapert-massif"]);
+  const llegada = Object.fromEntries(sirven.map((f) => [f.id, [fecha(f.dia), f.desvio]]));
+  assert.deepEqual(llegada["malapert-massif"], ["2027-03-16", 2]); // el caso de siempre, sin cambios
+  assert.deepEqual(llegada["im-2-athena"], ["2027-03-15", 1]); // IM-2 (84,79° S) entró al catálogo con relieve LOLA
+  assert.equal(sitio("im-2-athena").horizonte.fuente, "dem_lola_80s_80m");
+  for (const f of sirven) assert.equal(f.primera, f.dia);
 });
 
 test("la mejor llegada: primero que sobreviva, después batería mínima, contacto y cercanía a la fecha", () => {
@@ -62,10 +63,11 @@ test("orden del ranking: sobreviven por batería y contacto; los que no, por noc
 });
 
 test("regiones y límites: polo sur es al sur de 80° S; las llegadas no salen de 2027", () => {
-  assert.equal(sitiosDeRegion(SITIOS, "polo").length, 5);
-  assert.ok(sitiosDeRegion(SITIOS, "polo").every((s) => s.sitio.lat <= -80));
-  assert.equal(sitiosDeRegion(SITIOS, "todos").length, 13);
-  assert.equal(rankear(SITIOS, ROVER, { ...CASO, region: "todos" }).length, 13);
+  const polares = SITIOS.filter((s) => s.sitio.lat <= -80);
+  assert.ok(polares.length > 0 && polares.length < SITIOS.length);
+  assert.deepEqual(sitiosDeRegion(SITIOS, "polo"), polares);
+  assert.equal(sitiosDeRegion(SITIOS, "todos").length, SITIOS.length);
+  assert.equal(rankear(SITIOS, ROVER, { ...CASO, region: "todos" }).length, SITIOS.length);
   for (const d of [0, 364]) {
     for (const f of rankear(SITIOS, ROVER, { ...CASO, dia: d, tolerancia: 15 })) assert.ok(f.dia >= 0 && f.dia <= 364);
   }
@@ -194,4 +196,14 @@ test("ajustar un valor crea el perfil del planificador y no toca la app ni los p
   const reabierto = alternarPlan(alternarPlan({ ...dos, abierto: true }, APP), APP);
   assert.equal(reabierto.perfilId, PERFIL_PLAN);
   assert.equal(perfilElegido(reabierto).valores.capacidadKWh, 40);
+});
+
+test("sitios de impacto: los 5 que se estrellaron están marcados, y la marca no cambia ningún cálculo", () => {
+  const impacto = SITIOS.filter((s) => s.sitio.estado === "impacto").map((s) => s.sitio.id).sort();
+  assert.deepEqual(impacto, ["chandrayaan-2-vikram", "hakuto-r-m1", "hakuto-r-m2-resilience", "luna-25", "spaceil-beresheet"]);
+  assert.ok(SITIOS.every((s) => s.sitio.estado === undefined || s.sitio.estado === "impacto"));
+  const opciones = { ...CASO, region: "todos" };
+  const sinMarca = SITIOS.map((s) => ({ ...s, sitio: { ...s.sitio, estado: undefined } }));
+  const resumen = (filas) => filas.map((f) => [f.id, f.sobrevive, f.dia, f.e.minimoPct, f.m.luzPct, f.m.senalPct, f.primera]);
+  assert.deepEqual(resumen(rankear(SITIOS, ROVER, opciones)), resumen(rankear(sinMarca, ROVER, opciones)));
 });

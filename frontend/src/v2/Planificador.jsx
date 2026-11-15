@@ -70,6 +70,16 @@ export function PestanasPlan({ pestana, alElegir, alCerrar, alLimpiar }) {
   );
 }
 
+/**
+ * Etiqueta chica para los sitios donde la misión se estrelló (`estado: "impacto"` en data/sitios.json).
+ * Solo informa: el cálculo es el de siempre, como si se operara en ese punto.
+ */
+export function EtiquetaImpacto({ sitio }) {
+  const { t } = useIdioma();
+  if (sitio.estado !== "impacto") return null;
+  return <span className="etiqueta-impacto" title={t("panel.impactoAyuda")}>{t("panel.impacto")}</span>;
+}
+
 /** Lista de frases de explicar() ya traducidas. La usan las tarjetas del ranking y el panel del sitio. */
 export function Explicaciones({ frases }) {
   const { t, f } = useIdioma();
@@ -332,6 +342,7 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
               <button type="button" className="plan-cabeza" aria-expanded={desplegada} onFocus={() => alCambiar({ sobre: fila.id })} onBlur={() => alCambiar({ sobre: null })} onClick={() => !desplegada && alCambiar({ abierta: fila.id, hilo: [] })}>
                 <span className="plan-puesto">{k + 1}</span>
                 <b>{nombre}{fila.sitio.sitio.aproximado && <abbr title={t("plan.aproximadoMarca")}> *</abbr>}</b>
+                <EtiquetaImpacto sitio={fila.sitio.sitio} />
                 <span className="plan-pill">{desplegada && !fila.sobrevive ? t("panel.noSobrevive") : veredicto}</span>
               </button>
               {desplegada && (
