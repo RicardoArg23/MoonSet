@@ -22,6 +22,7 @@ import Planificador, { Explicaciones, IconoAstronauta, PestanasPlan } from "./Pl
 import { HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
 import { explicar } from "./explicar";
 import "./estilos.css";
+import "./movil.css"; // al final: pisa solo en teléfono
 
 const Globo = lazy(() => import("./Globo"));
 const Inicio = lazy(() => import("./inicio/Inicio"));
