@@ -231,7 +231,9 @@ pandas.read_csv(archivo, sep=",", comment="#", encoding="utf-8-sig")            
 ## Equipo
 
 - Ricardo Argüello
-- ...
+- Simon Ordeig
+- Leonardo Frey
+- Maximiliano Cristaldo
 
 ## Licencia
 
