@@ -115,6 +115,11 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
     if (estado.ajustando && estado.hilo.at(-1)?.id === "bateria") ultimo.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [estado.ajustando]);
 
+  // Cuando aparece el aviso de recalcular (pegado abajo), la respuesta se corre para quedar sobre él y no debajo.
+  const rankingDesactualizado = estado.ranking !== null && perfilElegido(estado).valores !== estado.ranking.sistema;
+  useEffect(() => {
+    if (rankingDesactualizado) ultimo.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [rankingDesactualizado]);
   const fecha = (dia) => fechaLarga(t0 + dia * DIA_MS);
   const isoDe = (dia) => new Date(t0 + dia * DIA_MS).toISOString().slice(0, 10);
   const detallePerfil = (v) => t("plan.perfilDetalle", { bateria: BATERIAS[v.tipoBateria].nombre, kwh: num(v.capacidadKWh, v.capacidadKWh % 1 ? 1 : 0), n: v.paneles });
@@ -225,6 +230,7 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
 
   const r = estado.ranking;
   const valoresPlan = perfilElegido(estado).valores; // lo que se está editando; r.sistema es con lo que se calculó el ranking
+  const desactualizado = valoresPlan !== r.sistema; // el ranking se calculó con otros valores que los que se editan
   const sirven = r.filas.filter((fila) => fila.sobrevive).length;
   const abierta = r.filas.find((fila) => fila.id === estado.abierta) ?? r.filas[0];
   const nMejores = Math.min(MEJORES, r.filas.length);
@@ -404,12 +410,6 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
                         <CamposSistema sistema={valoresPlan} alCambiar={alAjustar} />
                       </div>
                     )}
-                    {valoresPlan !== r.sistema && (
-                      <div className="plan-recalcular">
-                        <p className="tenue plan-nota">{t("plan.ranking_desactualizado")}</p>
-                        <button type="button" className="primario" onClick={() => alBuscar(true)}>{t("plan.recalcular")}</button>
-                      </div>
-                    )}
                   </div>
                 );
               })()}
@@ -418,6 +418,13 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
         </div>
       </section>
 
+      {/* Fuera del hilo y pegado abajo del panel: si estuviera dentro de la respuesta, había que desplazarse para verlo. */}
+      {desactualizado && (
+        <div className="plan-recalcular">
+          <p className="tenue plan-nota">{t("plan.ranking_desactualizado")}</p>
+          <button type="button" className="primario" onClick={() => alBuscar(true)}>{t("plan.recalcular")}</button>
+        </div>
+      )}
     </div>
   );
 }

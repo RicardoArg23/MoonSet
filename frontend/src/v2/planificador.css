@@ -105,9 +105,12 @@ form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de a
   text-decoration: underline dotted var(--acento); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 .plan-enlace::after { content: " ›"; color: var(--acento); }
 .plan-parametros { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-left: 4px; font-size: 13px; color: var(--texto-2); }
-.plan-parametros .plan-campos, .plan-recalcular { align-self: stretch; }
+.plan-parametros .plan-campos { align-self: stretch; }
+.plan-mensaje { scroll-margin-bottom: 104px; } /* deja lugar al aviso de recalcular, que va pegado abajo */
 .plan-parametros-acciones { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 .plan-recalcular { display: flex; flex-direction: column; gap: 6px; }
+/* Queda pegado al borde de abajo del panel: si hay que desplazarse para verlo, se podía perder. */
+.plan > .plan-recalcular { position: sticky; bottom: -2px; z-index: 2; padding: 10px 12px 12px; margin-inline: -4px; border-radius: 16px; background: #1a1713; border: 1px solid rgba(255, 184, 74, 0.45); box-shadow: 0 -10px 22px rgba(0, 0, 0, 0.5); }
 .plan-enlace:hover { color: var(--acento); }
 .plan-enlace:active:not(:disabled) { transform: none; }
 
