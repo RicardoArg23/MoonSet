@@ -2,7 +2,7 @@
 
 Generado por `backend/scripts/validar_horizons.py`. No editar a mano.
 
-- Horizons: efemérides DE441, marco lunar `MEAN_ME (high precision)`, consultado 2026-11-14.
+- Horizons: efemérides DE441, marco lunar `MEAN_ME (high precision)`, consultado 2026-11-15.
 - Nosotros: skyfield + DE421, marco `MOON_ME_DE421` (`backend/app/efemerides.py`).
 - 13 sitios × 5 instantes UTC × Sol y Tierra: 2027-01-15 00:00, 2027-03-29 06:00, 2027-06-10 12:00, 2027-08-22 18:00, 2027-11-03 03:30.
 - Errores en grados, nosotros − Horizons. **Sep.** es la distancia angular entre las dos direcciones (no depende de lo mal definido que está el azimut cerca del cenit).
@@ -36,8 +36,8 @@ Generado por `backend/scripts/validar_horizons.py`. No editar a mano.
 | borde-shackleton | -89.7800 | 204.2700 | tierra | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
 | borde-de-gerlache | -88.7100 | 291.9000 | sol | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
 | borde-de-gerlache | -88.7100 | 291.9000 | tierra | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
-| malapert-massif | -86.0000 | 2.9000 | sol | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
-| malapert-massif | -86.0000 | 2.9000 | tierra | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
+| malapert-massif | -85.9876 | 2.0528 | sol | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
+| malapert-massif | -85.9876 | 2.0528 | tierra | 0.00001 | 0.00001 | 0.00001 | 0.00001 | 0.00001 |
 
 ## Global
 
