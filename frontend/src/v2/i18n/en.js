@@ -96,6 +96,8 @@ export default {
     longitud: "East longitude",
     probar: "Try",
     calculando: "Computing…",
+    calculandoPunto: "Computing {lat}°, {lon}°…",
+    cerrarAviso: "Close",
     sinBackend: "Trying your own points needs the computation server running.",
     errorRango: "Check the values: latitude goes from −90 to 90.",
     errorCalculo: "Could not compute: {error}",
@@ -298,6 +300,8 @@ export default {
 
   alrededores: {
     vacio: "The surroundings map is computed for the listed sites south of 85° S: Connecting Ridge, Shackleton rim, de Gerlache rim and Malapert Massif.",
+    noDisponibleNorte: "Not available for this site: surroundings are precomputed only for the listed sites south of 85° S.",
+    noDisponiblePropio: "Not available for your own points: surroundings are precomputed only for the listed sites south of 85° S.",
     yaMejor: "The chosen point is already the best in its surroundings for this mission.",
     frase: "Moving {distancia} {rumbo}, the lowest charge goes from {bateria0}% to {bateria1}% and sunlight from {luz0}% to {luz1}%.",
     mapaAria: "Map of {n} by {n} points around the site. {viables} of {total} work for this mission.",

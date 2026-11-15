@@ -86,6 +86,8 @@ export default {
     longitud: "Longitud este",
     probar: "Probar",
     calculando: "Calculando…",
+    calculandoPunto: "Calculando {lat}°, {lon}°…",
+    cerrarAviso: "Cerrar",
     sinBackend: "Probar puntos propios necesita el servidor de cálculo encendido.",
     errorRango: "Revisá los valores: la latitud va de −90 a 90.",
     errorCalculo: "No se pudo calcular: {error}",
@@ -288,6 +290,8 @@ export default {
 
   alrededores: {
     vacio: "El mapa de alrededores está calculado para los sitios de la lista al sur de 85° S: Connecting Ridge, Borde de Shackleton, Borde de de Gerlache y Macizo Malapert.",
+    noDisponibleNorte: "No disponible para este sitio: los alrededores están precalculados solo para los sitios de la lista al sur de 85° S.",
+    noDisponiblePropio: "No disponible para puntos propios: los alrededores están precalculados solo para los sitios de la lista al sur de 85° S.",
     yaMejor: "El punto elegido ya es el mejor de los alrededores para esta misión.",
     frase: "Moviéndote {distancia} hacia {rumbo}, la batería mínima pasa de {bateria0} % a {bateria1} % y la luz de {luz0} % a {luz1} %.",
     mapaAria: "Mapa de {n} por {n} puntos alrededor del sitio. {viables} de {total} sirven para esta misión.",
