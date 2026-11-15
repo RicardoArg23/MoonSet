@@ -69,3 +69,29 @@ export function PanelPendiente({ pendiente, alReintentar, alVolver }) {
     </>
   );
 }
+
+// Horizonte y Alrededores mientras se calcula un punto tocado: en lugar de la vista del sitio anterior,
+// las coordenadas del punto nuevo y un bloque de carga. Los avisos para lectores de pantalla ya los da
+// el panel; acá no se repiten.
+export function VistaPendiente({ pendiente, vista, alReintentar }) {
+  const { t, f } = useIdioma();
+  const fallo = pendiente.estado === "error";
+  const polar = pendiente.lat <= LAT_POLAR_SUR;
+  return (
+    <div className={`vista-pendiente ${vista}`}>
+      <p className="panel-punto">{f.coordenadas(pendiente)}</p>
+      {fallo ? (
+        <>
+          <p className="error">{t("carga.error", { error: pendiente.error })}</p>
+          <button type="button" className="primario" onClick={alReintentar}>{t("carga.reintentar")}</button>
+        </>
+      ) : (
+        <>
+          <p className="tenue">{t(polar ? "carga.calculandoPolar" : "carga.calculando")}</p>
+          {vista === "alrededores" && <p className="tenue nota-chica">{t("carga.alrededoresPropio")}</p>}
+          <i className="bloque panorama" aria-hidden="true" />
+        </>
+      )}
+    </div>
+  );
+}

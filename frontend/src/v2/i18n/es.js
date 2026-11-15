@@ -96,6 +96,7 @@ export default {
     error: "No se pudo calcular el punto: {error}",
     reintentar: "Reintentar",
     volver: "Volver al sitio anterior",
+    alrededoresPropio: "Los alrededores están precalculados solo para los sitios de la lista al sur de 85° S: al terminar, la vista pasa al Globo.",
   },
 
   panel: {

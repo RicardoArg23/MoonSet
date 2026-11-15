@@ -12,7 +12,7 @@ import MapaPolar from "./MapaPolar";
 import Sistema from "./Sistema";
 import { csvComparacion, csvMision, nombreArchivo, nombreComparacion } from "./exportar";
 import EnlacesNasa, { SelloValidacion } from "./EnlacesNasa";
-import { BarraProgreso, PanelPendiente } from "./CargaPunto";
+import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
@@ -668,13 +668,20 @@ function Cabina({ perfil }) {
           </section>
         )}
 
-        {vista === "horizonte" && (
+        {/* Mientras se calcula un punto tocado, Horizonte y Alrededores no muestran el sitio anterior. */}
+        {(vista === "horizonte" || vista === "alrededores") && pendiente && (
+          <section className="tarjeta vidrio" aria-busy={pendiente.estado === "cargando" || undefined}>
+            <VistaPendiente pendiente={pendiente} vista={vista} alReintentar={() => probarPunto(pendiente.lat, pendiente.lon)} />
+          </section>
+        )}
+
+        {vista === "horizonte" && !pendiente && (
           <section className="tarjeta vidrio">
             <VistaHorizonte sitio={sitio} i={iAhora} />
           </section>
         )}
 
-        {vista === "alrededores" && (
+        {vista === "alrededores" && !pendiente && (
           <section className="tarjeta vidrio">
             {vecindad ? (
               <Vecindad sitio={sitio} vecindad={vecindad} i0={i0} duracionH={duracionH} sistema={sistema} />
