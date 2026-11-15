@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { IDS_MODELOS, contenidoModal } from "./proximamente.js"; // con extensión: en Windows "Proximamente" y "proximamente" son el mismo nombre
 import { useIdioma } from "./i18n";
 import "./proximamente.css";
@@ -27,15 +27,33 @@ function Candado() {
 export function FranjaRiesgos({ style }) {
   const { t } = useIdioma();
   const abrir = useProximamente();
+  const franja = useRef(null);
+  const chips = useRef(null);
+  const [haciaArriba, setHaciaArriba] = useState(false);
   if (!abrir) return null;
+
+  // Los chips se abren hacia abajo si entran en el espacio libre que queda bajo la franja. Si no entran (taparían
+  // "Fijar para comparar" y "Exportar", o se saldrían del panel), se abren hacia arriba. Se mide al acercarse,
+  // porque el espacio depende del alto de la ventana y de qué bloques están a la vista.
+  function medir() {
+    const nodo = franja.current;
+    const panel = nodo?.closest(".panel");
+    if (!nodo || !panel || !chips.current) return;
+    const abajo = nodo.getBoundingClientRect().bottom;
+    const pie = [...panel.querySelectorAll(".panel-pie, .quitar-punto")].map((x) => x.getBoundingClientRect().top).filter((y) => y >= abajo);
+    const borde = panel.getBoundingClientRect().bottom - parseFloat(getComputedStyle(panel).paddingBottom || "0");
+    const limite = Math.min(borde, ...pie);
+    setHaciaArriba(abajo + chips.current.offsetHeight > limite);
+  }
+
   return (
-    <div className="riesgos" style={style} role="group" aria-label={t("proximamente.franjaAria")}>
+    <div ref={franja} className={`riesgos${haciaArriba ? " arriba" : ""}`} style={style} role="group" aria-label={t("proximamente.franjaAria")} onMouseEnter={medir} onFocus={medir}>
       <button type="button" className="riesgos-titulo" onClick={() => abrir(null)}>
         <Candado />
         <b>{t("proximamente.franja")}</b>
         <span className="riesgos-etiqueta">{t("proximamente.etiqueta")}</span>
       </button>
-      <div className="riesgos-chips">
+      <div ref={chips} className="riesgos-chips">
         {IDS_MODELOS.map((id) => (
           <button key={id} type="button" className="riesgos-chip" aria-label={t("proximamente.chipAria", { modelo: t(`proximamente.modelos.${id}.nombre`) })} onClick={() => abrir(id)}>
             <Candado />{t(`proximamente.modelos.${id}.nombre`)}

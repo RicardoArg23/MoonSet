@@ -11,6 +11,8 @@
 .riesgos-etiqueta::before { content: "· "; }
 /* Los chips no suman alto al panel: aparecen flotando debajo de la franja al pasar el mouse o al llegar con Tab. */
 .riesgos-chips { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; padding-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; opacity: 0; pointer-events: none; transition: opacity 0.15s var(--salida); }
+/* Sin lugar debajo (Proximamente.jsx lo mide), se abren hacia arriba para no tapar los botones del pie del panel. */
+.riesgos.arriba .riesgos-chips { top: auto; bottom: 100%; padding-top: 0; padding-bottom: 4px; }
 .riesgos:focus-within .riesgos-chips { opacity: 1; pointer-events: auto; }
 @media (hover: hover) {
   .riesgos:hover .riesgos-chips { opacity: 1; pointer-events: auto; }
