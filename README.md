@@ -77,7 +77,7 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python scripts/descargar_datos.py          # kernels JPL (~20 MB)
+python scripts/descargar_datos.py          # kernels JPL (~18 MB) y DEM LOLA 80 m (115 MB)
 uvicorn app.main:app --reload              # http://127.0.0.1:8000/docs
 
 # Terminal 2 — frontend
@@ -111,18 +111,66 @@ python scripts/generar_mapa_polo.py      # fondo del mapa 2D del polo sur (usa e
 node ../frontend/scripts/copiar-datos.mjs
 ```
 
-Para el relieve real al sur de 80°S hay que bajar el DEM de LOLA de 80 m (115 MB) a `data/raw/`:
-
-```bash
-mkdir -p data/raw
-curl -L -o data/raw/LDEM_80S_80M.IMG https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/LDEM_80S_80M.IMG
-```
+Para el relieve real al sur de 80°S hace falta el DEM de LOLA de 80 m (115 MB) en `data/raw/`.
+`python scripts/descargar_datos.py` lo baja junto con los kernels (con `--sin-dem`, solo los kernels).
 
 Sin ese archivo el horizonte se calcula sobre la esfera lisa (sin relieve). Tests: `cd backend && pytest`.
 
 Con el DEM descargado, `python scripts/generar_mapa_polo.py` reemplaza el fondo del mapa 2D (que viene
 de la textura LROC, en baja resolución) por el relieve sombreado de LOLA a 80 m. Después hay que commitear
 `data/mapa/polo_sur.jpg` y `data/mapa/polo_sur.json`.
+
+## Deploy
+
+El frontend es estático y el backend es opcional: sin backend la página funciona con los 13 sitios
+precalculados; con backend se suman los puntos propios (`GET /anual`).
+
+### Frontend en Vercel
+
+- Proyecto con **Root Directory** `frontend`, framework **Vite** (build `npm run build`, salida `dist`).
+- Variable de entorno **`VITE_API_URL`** con la URL del backend, sin barra final
+  (por ejemplo `https://moonset-api-xxxxx.southamerica-east1.run.app`). Se lee en el build: después de
+  cambiarla hay que volver a desplegar. Vacía o sin definir, la app queda en modo estático.
+- Publicado en https://moon-set.vercel.app.
+
+### Backend en Google Cloud Run
+
+`backend/Dockerfile` (Python 3.12 slim) instala las dependencias y, en el build, baja los kernels de JPL y el DEM
+LOLA 80 m con `scripts/descargar_datos.py`: quedan dentro de la imagen y el contenedor no descarga nada al
+arrancar. Escucha en `$PORT` (8000 si no está), corre sin `--reload`, como usuario sin privilegios, y no escribe
+en disco (solo podría usar `/tmp`). Desde la raíz del repo:
+
+```bash
+gcloud run deploy moonset-api --source backend --region southamerica-east1   --memory 1Gi --cpu 1 --min-instances 1 --allow-unauthenticated   --set-env-vars MOONSET_CORS=https://moon-set.vercel.app
+```
+
+- `MOONSET_CORS` es la lista exacta de orígenes permitidos, separada por comas (las vistas previas de Vercel,
+  `moon-set-git-….vercel.app`, no entran si no se agregan). Sin la variable solo se acepta `localhost`.
+- Memoria: unos 500 MB con el DEM cargado y después de varios pedidos; entra en 1 GiB.
+- **`--min-instances 1` evita que se duerma, pero consume crédito todo el tiempo.** Configurá una alerta de
+  presupuesto en Billing → Budgets & alerts antes de dejarlo andando. Con `--min-instances 0` es gratis en reposo,
+  pero el primer pedido después de un rato espera el arranque (unos segundos más el precalentado).
+- La imagen solo ve la carpeta `backend/`: por eso lleva una copia de `data/sitios.json` en
+  `backend/datos/sitios.json`. Si cambia la lista, copiala (`pytest` avisa si quedaron distintas).
+
+Probar la imagen en local (con Docker):
+
+```bash
+docker build -t moonset-api backend
+docker run --rm -p 8000:8000 --read-only --tmpfs /tmp -e MOONSET_CORS=https://moon-set.vercel.app moonset-api
+curl http://localhost:8000/salud
+curl "http://localhost:8000/anual?lat=-89.45&lon=222.69" -o /dev/null -w "%{http_code} %{size_download}
+"
+```
+
+### Alternativa sin tarjeta: Render
+
+Un **Web Service** de tipo Docker con el mismo `Dockerfile` (Root Directory `backend`), la variable
+`MOONSET_CORS=https://moon-set.vercel.app` y Health Check Path `/salud`. Render pasa el puerto en `$PORT`.
+El plan gratis duerme el servicio tras unos minutos sin pedidos: para evitarlo, un monitor externo (por ejemplo
+UptimeRobot o cron-job.org) que llame a `https://<servicio>.onrender.com/salud` cada 10 minutos.
+**Ojo con la memoria:** el backend usa unos 500 MB con el DEM cargado; si el plan tiene 512 MB queda al límite y
+puede reiniciarse por memoria. Revisá el límite del plan antes de elegirlo.
 
 ## Datos
 

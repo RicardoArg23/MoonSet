@@ -84,3 +84,47 @@ def test_precalentar_arranca_sin_dem(monkeypatch, tmp_path):
     assert "kernels" in tiempos and "scipy" in tiempos and "dem_80s" not in tiempos
     with TestClient(app) as c:  # con el ciclo de vida: arranca igual sin el DEM
         assert c.get("/salud").status_code == 200
+
+
+# En producción MOONSET_CORS se lee al importar la app: se prueba en un proceso aparte con la variable puesta.
+_CORS_PRODUCCION = r"""
+from fastapi.testclient import TestClient
+from app.main import app
+c = TestClient(app)
+front = "https://moon-set.vercel.app"
+# Preflight del navegador para /anual y un pedido real (corto, para que el test sea rápido).
+pre = c.options("/anual", headers={"Origin": front, "Access-Control-Request-Method": "GET"})
+assert pre.status_code == 200, pre.status_code
+assert pre.headers["access-control-allow-origin"] == front
+r = c.get("/anual", params={"lat": -89.45, "lon": 222.69, "dias": 2}, headers={"Origin": front})
+assert r.status_code == 200 and r.headers["access-control-allow-origin"] == front
+assert r.json()["horizonte"]["fuente"] in ("dem_lola_80s_80m", "esfera")
+# Con la lista puesta, localhost y otros orígenes ya no pasan.
+for otro in ("http://localhost:5173", "https://otro.vercel.app"):
+    assert "access-control-allow-origin" not in c.get("/salud", headers={"Origin": otro}).headers
+print("ok")
+"""
+
+
+def test_cors_en_produccion_acepta_el_frontend_publicado():
+    """Con MOONSET_CORS=https://moon-set.vercel.app (aunque lleve barra final) el navegador puede llamar a /anual."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    for valor in ("https://moon-set.vercel.app", "https://moon-set.vercel.app/ , http://otro.local"):
+        r = subprocess.run([sys.executable, "-c", _CORS_PRODUCCION], cwd=Path(__file__).resolve().parents[1],
+                           env={**os.environ, "MOONSET_CORS": valor}, capture_output=True, text=True, timeout=300)
+        assert r.returncode == 0 and r.stdout.strip().endswith("ok"), r.stderr[-2000:]
+
+
+def test_la_copia_de_sitios_para_la_imagen_esta_al_dia():
+    """La imagen de Docker solo ve backend/: lleva una copia de data/sitios.json que tiene que ser igual."""
+    from pathlib import Path
+
+    from app import config
+
+    copia = config.BACKEND_DIR / "datos" / "sitios.json"
+    assert copia.read_bytes() == (config.REPO_DIR / "data" / "sitios.json").read_bytes(), \
+        "Copiá data/sitios.json a backend/datos/sitios.json"

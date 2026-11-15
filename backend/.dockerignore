@@ -1,0 +1,22 @@
+# Lo que no entra a la imagen: entornos y caches locales, tests y datos pesados que el build baja solo.
+.venv/
+venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+tests/
+kernels/
+data/
+datos/raw/
+*.bsp
+*.bpc
+*.tpc
+*.tf
+*.IMG
+*.img
+*.tif
+*.tiff
+.env
+*.log
+Dockerfile
+.dockerignore
