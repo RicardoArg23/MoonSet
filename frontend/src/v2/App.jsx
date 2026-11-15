@@ -12,6 +12,10 @@ import MapaPolar from "./MapaPolar";
 import Sistema from "./Sistema";
 import { csvComparacion, csvMision, nombreArchivo, nombreComparacion } from "./exportar";
 import EnlacesNasa, { SelloValidacion } from "./EnlacesNasa";
+import { PERFILES_BASE, PERSONALIZADO, VISTAS, borrarPersonalizado, configDePerfil, guardarPersonalizado, leerPersonalizado } from "./ajustes";
+import { ANGOSTO, useMedia } from "./useMedia";
+import Cajon from "./Cajon";
+import Asa from "./Asa";
 import "./estilos.css";
 
 const Globo = lazy(() => import("./Globo"));
@@ -20,18 +24,11 @@ const DIA_MS = 86_400_000;
 const HORA_MS = 3_600_000;
 const MAX_FIJADOS = 4;
 const SITIO_INICIAL = "connecting-ridge";
-const VISTAS = ["globo", "mapa", "horizonte", "alrededores", "comparar"]; // sus nombres están en i18n: vistas.<id>
 const dos = (n) => String(n).padStart(2, "0");
-// Qué piezas de la cabina arranca viendo cada perfil de la pantalla de inicio. Es solo el punto de partida:
-// el menú lateral (botón MoonSet) permite prender o apagar cada una después.
-const FUNCIONES_POR_PERFIL = {
-  explorar: { globo: true, mapa: false, horizonte: true, alrededores: false, comparar: false, parametros: false, puntos: false, lineaTiempo: false },
-  planificar: { globo: true, mapa: true, horizonte: true, alrededores: true, comparar: true, parametros: true, puntos: true, lineaTiempo: true },
-};
 // El perfil elegido va en el hash (#explorar, #planificar): recargar conserva la cabina y "atrás" vuelve al inicio.
 const perfilDelHash = () => {
   const perfil = window.location.hash.slice(1);
-  return perfil in FUNCIONES_POR_PERFIL ? perfil : null;
+  return PERFILES_BASE.includes(perfil) ? perfil : null;
 };
 
 function Cinta({ serie, desde, hasta, color }) {
@@ -79,7 +76,7 @@ export default function App() {
 }
 
 function Cabina({ perfil }) {
-  const { idioma, setIdioma, idiomas, t, f } = useIdioma();
+  const { idioma, t, f } = useIdioma();
   const { num, coordenadas, fechaCorta, fechaLarga, nombreCorto, duracion } = f;
   const [base, setBase] = useState(null); // sitios de la lista curada
   const [guardados, setGuardados] = useState([]); // puntos propios que el usuario decidió conservar
@@ -98,17 +95,24 @@ function Cabina({ perfil }) {
   const [fijados, setFijados] = useState([]); // [{ sitioId, dia, horaLlegada }]
   const [vecindades, setVecindades] = useState({}); // id -> grilla | null
   const [verPuntos, setVerPuntos] = useState(false);
-  const [menuAbierto, setMenuAbierto] = useState(false);
   // En el perfil explorar la cabina arranca solo con la Luna: el panel de respuesta se despliega al elegir un sitio.
   const [panelAbierto, setPanelAbierto] = useState(perfil !== "explorar");
-  const [funciones, setFunciones] = useState(FUNCIONES_POR_PERFIL[perfil]);
+  // Qué se ve en la cabina (ajustes.js). Arranca con el perfil elegido en el inicio; al cambiar algo pasa a ser
+  // el perfil personalizado, que se guarda en el navegador. `origen` es el perfil del que partió.
+  const [config, setConfig] = useState(() => configDePerfil(perfil));
+  const [activo, setActivo] = useState(perfil);
+  const [origen, setOrigen] = useState(perfil);
+  const [propio, setPropio] = useState(leerPersonalizado);
+  const [cajonAbierto, setCajonAbierto] = useState(false);
+  // Plegar es momentáneo (un toque en el asa) y no cambia el perfil; ocultar se hace desde el cajón.
+  const [panelPlegado, setPanelPlegado] = useState(false);
+  const [dockPlegado, setDockPlegado] = useState(false);
+  const angosto = useMedia(ANGOSTO);
   const [coord, setCoord] = useState({ lat: "-88.80", lon: "125.00" });
   const [estadoCoord, setEstadoCoord] = useState(""); // "", "cargando" o un mensaje de error
   const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
-  const marcaRef = useRef(null);
-  const menuRef = useRef(null);
-  const cerrarMenuRef = useRef(null);
+  const ajustesRef = useRef(null);
 
   useEffect(() => {
     Promise.all([cargarSitios(), cargarGeometria()])
@@ -119,29 +123,16 @@ function Cabina({ perfil }) {
       .catch((e) => setError(e.message));
   }, []);
 
+  // La tecla P abre y cierra el cajón, salvo que se esté escribiendo en un campo.
   useEffect(() => {
-    if (!menuAbierto) return undefined;
-    cerrarMenuRef.current?.focus();
     const alTeclado = (evento) => {
-      if (evento.key === "Escape") {
-        setMenuAbierto(false);
-        marcaRef.current?.focus();
-      } else if (evento.key === "Tab") {
-        const controles = menuRef.current?.querySelectorAll("button:not(:disabled), input:not(:disabled)") ?? [];
-        const primero = controles[0];
-        const ultimo = controles[controles.length - 1];
-        if (evento.shiftKey && document.activeElement === primero) {
-          evento.preventDefault();
-          ultimo?.focus();
-        } else if (!evento.shiftKey && document.activeElement === ultimo) {
-          evento.preventDefault();
-          primero?.focus();
-        }
-      }
+      const escribiendo = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName ?? "");
+      if (evento.key.toLowerCase() !== "p" || escribiendo || evento.ctrlKey || evento.metaKey || evento.altKey) return;
+      setCajonAbierto((abierto) => !abierto);
     };
     window.addEventListener("keydown", alTeclado);
     return () => window.removeEventListener("keydown", alTeclado);
-  }, [menuAbierto]);
+  }, []);
 
   // La grilla de alrededores se pide una vez por sitio, cuando se lo elige. Los puntos propios no la
   // tienen (se precalcula solo para los sitios de la lista al sur de 85° S): ni se la pide.
@@ -240,15 +231,37 @@ function Cabina({ perfil }) {
     setPerfilId(PERFIL_PERSONALIZADO);
   }
   // Tocar la Luna para probar un punto: con "Mis puntos" activo, o en el perfil explorar si hay backend que lo calcule.
-  const tocarLuna = funciones.puntos || (perfil === "explorar" && hayBackend);
+  const tocarLuna = config.herramientas.puntos || (origen === "explorar" && hayBackend);
   const deCerca = detalle.metrosPorPixel < 1000; // el globo está acercado: el botón ofrece volver a la Luna entera
 
-  function cambiarFuncion(clave, activa) {
-    const siguientes = { ...funciones, [clave]: activa };
-    setFunciones(siguientes);
-    if (VISTAS.includes(clave) && !activa && vista === clave) {
-      setVista(VISTAS.find((v) => siguientes[v]) ?? "globo");
-    }
+  // Si la vista que se estaba mirando deja de estar disponible, se pasa a la primera que sí.
+  const ajustarVista = (c) => { if (!c.vistas[vista]) setVista(VISTAS.find((v) => c.vistas[v]) ?? "globo"); };
+  // Todo cambio de la cabina pasa por acá: deja de ser un perfil del inicio y queda guardado como personalizado.
+  function cambiarConfig(cambio) {
+    const siguiente = cambio(config);
+    if (siguiente === config) return;
+    const base = activo === PERSONALIZADO ? origen : activo;
+    setConfig(siguiente);
+    setActivo(PERSONALIZADO);
+    setOrigen(base);
+    setPropio({ config: siguiente, origen: base });
+    guardarPersonalizado(siguiente, base);
+    ajustarVista(siguiente);
+  }
+  function elegirPerfilCabina(id) {
+    const destino = id === PERSONALIZADO ? propio : { config: configDePerfil(id), origen: id };
+    if (!destino) return;
+    setConfig(destino.config);
+    setActivo(id);
+    setOrigen(destino.origen);
+    ajustarVista(destino.config);
+    // El hash acompaña sin recargar la cabina: al actualizar la página se vuelve al perfil de origen.
+    window.history.replaceState(null, "", `#${destino.origen}`);
+  }
+  function restablecerPropio() {
+    borrarPersonalizado();
+    setPropio(null);
+    if (activo === PERSONALIZADO) elegirPerfilCabina(origen);
   }
 
   function elegirSitio(id) {
@@ -342,8 +355,22 @@ function Cabina({ perfil }) {
   // El de más margen: el que termina con más batería en su peor momento.
   const mejorFijado = fijadosVista.length > 1 ? fijadosVista.reduce((a, b) => (b.en.minimoPct > a.en.minimoPct ? b : a)) : null;
 
+  const hayPanel = panelAbierto && config.panel;
+  // En pantalla angosta todo se apila y no hay asas: nada queda plegado.
+  const plegarPanel = panelPlegado && !angosto;
+  const plegarDock = dockPlegado && !angosto;
+  const ordenDe = (bloque) => ({ order: config.orden.indexOf(bloque) + 1 });
+  const cifras = {
+    luz: { rotulo: t("panel.luzSolar"), valor: num(m.luzPct), unidad: "%" },
+    contacto: { rotulo: t("panel.contacto"), valor: num(m.senalPct), unidad: "%" },
+    energia: { rotulo: t("panel.energia"), valor: num(m.energiaSeguidorPct), unidad: "%", ayuda: t("panel.energiaAyuda") },
+    noche: { rotulo: t("ajustes.cifras.noche"), valor: num(m.nocheH), unidad: "h" },
+    autonomia: { rotulo: t("ajustes.cifras.autonomia"), valor: Number.isFinite(e.autonomiaH) ? num(Math.round(e.autonomiaH)) : "—", unidad: Number.isFinite(e.autonomiaH) ? "h" : "" },
+    minimo: { rotulo: t("ajustes.cifras.minimo"), valor: num(e.minimoPct), unidad: "%" },
+  };
+
   return (
-    <div className={`cabina en-${vista}${panelAbierto ? "" : " sin-panel"}${funciones.lineaTiempo ? "" : " sin-dock"}`}>
+    <div className={`cabina en-${vista}${hayPanel ? "" : " sin-panel"}${config.herramientas.lineaTiempo ? "" : " sin-dock"}${cajonAbierto ? " con-cajon" : ""}${hayPanel && plegarPanel ? " panel-plegado" : ""}${plegarDock ? " dock-plegado" : ""}`}>
       <div className="escena" aria-hidden={vista !== "globo"}>
         <Suspense fallback={null}>
           <Globo
@@ -365,24 +392,16 @@ function Cabina({ perfil }) {
       <div className="resplandor" aria-hidden="true" />
 
       <header className="barra">
-        <button
-          ref={marcaRef}
-          type="button"
-          className="marca vidrio"
-          aria-label={t("app.abrirMenu")}
-          aria-expanded={menuAbierto}
-          aria-controls="menu-lateral"
-          onClick={() => setMenuAbierto((abierto) => !abierto)}
-        >
+        <a className="marca vidrio" href="#" aria-label={t("ajustes.inicio")} title={t("ajustes.inicio")}>
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
-        </button>
-        {funciones.parametros && (
+        </a>
+        {config.herramientas.parametros && (
           <div className="parametros vidrio">
             <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => setDuracionDias(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
           </div>
         )}
-        {funciones.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
-        {funciones.puntos && <div className="puntos">
+        {config.herramientas.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
+        {config.herramientas.puntos && <div className="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
             {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}
           </button>
@@ -416,9 +435,9 @@ function Cabina({ perfil }) {
           )}
         </div>}
         {/* Las vistas van siempre al final, a la derecha: sumar herramientas no las corre de lugar. */}
-        {VISTAS.some((v) => funciones[v]) && (
+        {VISTAS.some((v) => config.vistas[v]) && (
           <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
-            {VISTAS.filter((v) => funciones[v]).map((v) => {
+            {VISTAS.filter((v) => config.vistas[v]).map((v) => {
               // aria-disabled en vez de disabled: el botón sigue mostrando el tooltip y se puede enfocar.
               const bloqueada = v === "alrededores" && sinVecindad;
               return (
@@ -436,75 +455,12 @@ function Cabina({ perfil }) {
             })}
           </nav>
         )}
+        <button ref={ajustesRef} type="button" className="ajustes" aria-expanded={cajonAbierto} aria-controls="cajon-ajustes" aria-label={t("ajustes.abrir")} title={t("ajustes.abrir")} onClick={() => setCajonAbierto((abierto) => !abierto)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2.2" /><circle cx="9" cy="17" r="2.2" /></svg>
+        </button>
       </header>
 
-      {menuAbierto && (
-        <div className="menu-capa">
-          <button
-            type="button"
-            className="menu-fondo"
-            aria-label={t("app.cerrarMenu")}
-            onClick={() => {
-              setMenuAbierto(false);
-              marcaRef.current?.focus();
-            }}
-          />
-          <aside ref={menuRef} id="menu-lateral" className="menu-lateral vidrio" role="dialog" aria-modal="true" aria-label={t("app.menu")}>
-            <button
-              ref={cerrarMenuRef}
-              type="button"
-              className="menu-cerrar"
-              aria-label={t("app.cerrarMenu")}
-              onClick={() => {
-                setMenuAbierto(false);
-                marcaRef.current?.focus();
-              }}
-            >
-              ×
-            </button>
-            <div className="menu-contenido">
-              <div className="menu-cabeza">
-                <a className="menu-inicio" href="#"><span aria-hidden="true">←</span>{t("menu.inicio")}</a>
-                <div className="idioma" role="group" aria-label={t("app.idioma")}>
-                  {idiomas.map((i) => (
-                    <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)}>{i.toUpperCase()}</button>
-                  ))}
-                </div>
-              </div>
-              <h2>{t("menu.ajustes")}</h2>
-              <section className="menu-grupo" aria-labelledby="menu-vistas">
-                <h3 id="menu-vistas">{t("menu.vistas")}</h3>
-                {VISTAS.map((v) => (
-                  <label className="menu-opcion" key={v}>
-                    <span>{t(`vistas.${v}`)}</span>
-                    <input
-                      type="checkbox"
-                      checked={funciones[v]}
-                      disabled={funciones[v] && VISTAS.filter((opcion) => funciones[opcion]).length === 1}
-                      onChange={(e) => cambiarFuncion(v, e.target.checked)}
-                    />
-                  </label>
-                ))}
-              </section>
-              <section className="menu-grupo" aria-labelledby="menu-herramientas">
-                <h3 id="menu-herramientas">{t("menu.herramientas")}</h3>
-                {["parametros", "puntos", "lineaTiempo"].map((clave) => (
-                  <label className="menu-opcion" key={clave}>
-                    <span>{t(`menu.${clave}`)}</span>
-                    <input
-                      type="checkbox"
-                      checked={funciones[clave]}
-                      onChange={(e) => cambiarFuncion(clave, e.target.checked)}
-                    />
-                  </label>
-                ))}
-              </section>
-            </div>
-          </aside>
-        </div>
-      )}
-
-      {panelAbierto && <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
+      {hayPanel && !plegarPanel && <aside className={`panel vidrio ${e.sobrevive ? "si" : "no"}`} aria-live="polite">
         <div className="panel-sitio">
           <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
             {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
@@ -525,19 +481,21 @@ function Cabina({ perfil }) {
           </ul>
         )}
 
-        <div className="panel-medidor">
+        {config.bloques.medidor && <div className="panel-medidor" style={ordenDe("medidor")}>
           <p><span>{t("energia.minima")} <b>{num(e.minimoPct)} %</b></span><span>{t("energia.reserva")} <b>{num(sistema.reservaPct)} %</b></span></p>
           <BarraCarga minimoPct={e.minimoPct} reservaPct={sistema.reservaPct} sobrevive={e.sobrevive} />
-        </div>
-        <p className="panel-accion">{fraseAccion}</p>
+        </div>}
+        {config.bloques.medidor && <p className="panel-accion" style={ordenDe("medidor")}>{fraseAccion}</p>}
 
-        <dl className="panel-cifras">
-          <div><dt>{t("panel.luzSolar")}</dt><dd>{num(m.luzPct)}<small> %</small></dd></div>
-          <div><dt>{t("panel.contacto")}</dt><dd>{num(m.senalPct)}<small> %</small></dd></div>
-          <div title={t("panel.energiaAyuda")}><dt>{t("panel.energia")}</dt><dd>{num(m.energiaSeguidorPct)}<small> %</small></dd></div>
-        </dl>
+        {config.bloques.cifras && config.cifras.length > 0 && (
+          <dl className="panel-cifras" style={ordenDe("cifras")}>
+            {config.cifras.map((c) => (
+              <div key={c} title={cifras[c].ayuda}><dt>{cifras[c].rotulo}</dt><dd>{cifras[c].valor}{cifras[c].unidad && <small> {cifras[c].unidad}</small>}</dd></div>
+            ))}
+          </dl>
+        )}
 
-        <details className="panel-detalle">
+        {config.bloques.detalle && <details className="panel-detalle" style={ordenDe("detalle")}>
           <summary>{t("energia.detalle")}</summary>
           <dl>
             <div><dt>{t("energia.generada")}</dt><dd>{num(e.generadaKWh, 1)} kWh</dd></div>
@@ -547,10 +505,10 @@ function Cabina({ perfil }) {
             <div><dt>{t("energia.bajoReserva")}</dt><dd>{e.horasBajoReserva} h</dd></div>
             <div><dt>{t("energia.nocheLarga")}</dt><dd>{m.nocheH} h</dd></div>
           </dl>
-        </details>
+        </details>}
 
-        <div className="panel-opciones">
-          {funciones.puntos && esPrueba ? (
+        {config.bloques.opciones && <div className="panel-opciones" style={ordenDe("opciones")}>
+          {config.herramientas.puntos && esPrueba ? (
             <>
               <p className="rotulo">{t("panel.pruebaRotulo")}</p>
               <p className="nota">{t("panel.pruebaNota")}</p>
@@ -582,23 +540,29 @@ function Cabina({ perfil }) {
               {diaViable === null && !mejorOtro && <p className="nota vacio">{t("panel.sinAlternativa")}</p>}
             </>
           )}
-        </div>
+        </div>}
 
-        <SelloValidacion />
-        <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} conHorizons={perfil === "planificar"} />
+        {config.bloques.sello && <div className="panel-bloque" style={ordenDe("sello")}><SelloValidacion /></div>}
+        {config.bloques.enlaces && (
+          <div className="panel-bloque" style={ordenDe("enlaces")}>
+            <EnlacesNasa lat={sitio.sitio.lat} lon={sitio.sitio.lon} inicioMs={sitio.t0 + i0 * HORA_MS} finMs={sitio.t0 + (i0 + duracionH) * HORA_MS} conHorizons={origen === "planificar"} />
+          </div>
+        )}
 
-        {/* Fijar y exportar comparten fila para que el panel no necesite scroll. Exportar es una herramienta de
-            planificación: el perfil explorar no la muestra. */}
-        <div className="panel-pie">
-          {funciones.comparar && (
-            <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
-              {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
-            </button>
-          )}
-          {perfil !== "explorar" && <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>}
-        </div>
-        {funciones.puntos && esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
+        {/* Fijar y exportar comparten fila para que el panel no necesite scroll; van siempre al final. */}
+        {(config.acciones.fijar || config.acciones.exportar) && (
+          <div className="panel-pie">
+            {config.acciones.fijar && (
+              <button type="button" className="primario fijar" disabled={yaFijado || fijados.length >= MAX_FIJADOS} onClick={fijar}>
+                {yaFijado ? t("panel.yaEnComparar") : fijados.length >= MAX_FIJADOS ? t("panel.maximo", { n: MAX_FIJADOS }) : t("panel.fijar")}
+              </button>
+            )}
+            {config.acciones.exportar && <button type="button" className="exportar" onClick={exportarCsv} title={t("panel.exportarAyuda")}>{t("panel.exportar")}</button>}
+          </div>
+        )}
+        {config.herramientas.puntos && esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
       </aside>}
+      {hayPanel && <Asa lado="panel" plegada={plegarPanel} etiqueta={t(plegarPanel ? "ajustes.plegar.abrirPanel" : "ajustes.plegar.panel")} alAlternar={() => setPanelPlegado((plegado) => !plegado)} />}
 
       {estadoCoord && (
         <div className={`calculando vidrio${estadoCoord === "cargando" ? "" : " con-error"}`} role={estadoCoord === "cargando" ? "status" : "alert"} aria-live="polite">
@@ -698,7 +662,7 @@ function Cabina({ perfil }) {
                       onClick={() => {
                         elegirSitio(f.sitioId);
                         cambiarLlegada(f.dia, f.horaLlegada);
-                        setVista(VISTAS.find((v) => funciones[v]) ?? "globo");
+                        setVista(VISTAS.find((v) => config.vistas[v]) ?? "globo");
                       }}
                     >
                       {t("comparar.ver")}
@@ -716,7 +680,7 @@ function Cabina({ perfil }) {
         )}
       </main>
 
-      {funciones.lineaTiempo && <Dock
+      {config.herramientas.lineaTiempo && !plegarDock && <Dock
         sitio={sitio}
         dia={dia}
         horaLlegada={horaLlegada}
@@ -729,6 +693,23 @@ function Cabina({ perfil }) {
         horaMision={hora}
         setHoraMision={setHoraMision}
       />}
+      {config.herramientas.lineaTiempo && <Asa lado="dock" plegada={plegarDock} etiqueta={t(plegarDock ? "ajustes.plegar.abrirDock" : "ajustes.plegar.dock")} alAlternar={() => setDockPlegado((plegado) => !plegado)} />}
+
+      {cajonAbierto && (
+        <Cajon
+          config={config}
+          alCambiar={cambiarConfig}
+          activo={activo}
+          hayPropio={propio !== null}
+          alElegirPerfil={elegirPerfilCabina}
+          alRestablecer={restablecerPropio}
+          alCerrar={() => { setCajonAbierto(false); ajustesRef.current?.focus(); }}
+          duracionDias={duracionDias}
+          alCambiarDuracion={setDuracionDias}
+          margenCom={margenCom}
+          alCambiarMargen={setMargenCom}
+        />
+      )}
 
       <p className="creditos">{t("app.creditos")}</p>
     </div>

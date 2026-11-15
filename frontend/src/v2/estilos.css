@@ -57,25 +57,8 @@ a { color: var(--texto-2); }
 .barra { grid-area: barra; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; pointer-events: none; }
 .barra > * { pointer-events: auto; }
 .marca { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 12px; border-radius: 999px; font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
-.barra .marca { color: inherit; }
+.barra .marca { color: inherit; text-decoration: none; }
 .marca img { display: block; height: 36px; width: auto; }
-.menu-capa { position: fixed; inset: 0; z-index: 10; }
-.menu-fondo { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 0; background: rgba(0, 0, 0, 0.58); animation: menu-aparecer 0.2s ease-out both; }
-.menu-lateral { position: absolute; inset: 0 auto 0 0; width: min(380px, 88vw); border-radius: 0 24px 24px 0; padding: 20px; overflow-y: auto; animation: menu-deslizar 0.28s var(--salida) both; }
-.menu-cerrar { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; font-size: 24px; line-height: 1; z-index: 1; }
-.menu-contenido { display: grid; gap: 24px; }
-.menu-cabeza { display: flex; align-items: center; gap: 10px; padding-right: 52px; }
-.menu-cabeza .idioma { border: 1px solid var(--borde); background: var(--relleno); }
-.menu-contenido > h2 { font-size: 24px; font-weight: 500; }
-.menu-grupo { display: grid; gap: 8px; }
-.menu-grupo h3 { margin: 0 0 4px; color: var(--tenue); font-size: 12px; font-weight: 500; letter-spacing: 0.08em; }
-.menu-opcion { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 0 14px; border: 1px solid var(--borde); border-radius: 14px; background: var(--relleno); color: var(--texto-2); cursor: pointer; }
-.menu-opcion input { width: 18px; height: 18px; margin: 0; accent-color: var(--acento); cursor: pointer; }
-.menu-opcion input:disabled { cursor: not-allowed; }
-.menu-inicio { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px 0 12px; border: 1px solid var(--borde-fuerte); border-radius: 999px; font-size: 14px; color: var(--texto); text-decoration: none; }
-.menu-inicio:hover { border-color: rgba(255, 255, 255, 0.5); }
-@keyframes menu-aparecer { from { opacity: 0; } to { opacity: 1; } }
-@keyframes menu-deslizar { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 .vistas { display: flex; padding: 4px; border-radius: 999px; margin-left: auto; }
 .vistas button { min-height: 40px; padding: 0 18px; border: 0; font-size: 14px; }
 .vistas button[aria-pressed="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
@@ -111,10 +94,11 @@ a { color: var(--texto-2); }
 /* ---------- panel: cada bloque tiene alto fijo, así nada salta al mover la fecha ---------- */
 .panel { grid-area: panel; border-radius: 24px; padding: 22px 26px; display: flex; flex-direction: column; overflow: hidden auto; animation: panel-entra 0.45s var(--salida) both; }
 /* Si el contenido no entra (ventana baja, grupos desplegados), la barra de desplazamiento es fina y del color del vidrio. */
-.panel, .menu-lateral { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
-.panel::-webkit-scrollbar, .menu-lateral::-webkit-scrollbar { width: 6px; }
-.panel::-webkit-scrollbar-track, .menu-lateral::-webkit-scrollbar-track { background: transparent; margin-block: 22px; }
-.panel::-webkit-scrollbar-thumb, .menu-lateral::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 999px; }
+/* (el cajón de personalización tiene sus estilos en cajon.css) */
+.panel { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+.panel::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-track { background: transparent; margin-block: 22px; }
+.panel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 999px; }
 @keyframes panel-entra { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
 /* Perfil explorar: sin panel y sin línea de tiempo, la Luna ocupa toda la cabina. */
 .cabina.sin-panel { grid-template-areas: "barra barra" "centro centro" "dock dock"; }
@@ -135,7 +119,8 @@ a { color: var(--texto-2); }
 .medidor { position: relative; height: 12px; background: var(--apagado); border-radius: 999px; }
 .medidor i { position: absolute; inset: 0; border-radius: 999px; transform-origin: left; transition: transform 0.25s var(--salida); }
 .medidor b { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1px; background: var(--texto); border-radius: 2px; }
-.panel-cifras { flex: 0 0 88px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+/* Las cifras se eligen en el cajón: cada fila de tres mide lo mismo, así el bloque no salta al mover la fecha. */
+.panel-cifras { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 88px; gap: 8px; }
 .panel-cifras div { background: var(--relleno); border-radius: 16px; padding: 11px 14px; }
 .panel-cifras dt { font-size: 12px; color: var(--tenue); }
 .panel-cifras dd { font-size: 30px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; }
@@ -166,6 +151,9 @@ a { color: var(--texto-2); }
 .panel-pie { margin-top: auto; flex-shrink: 0; display: flex; gap: 8px; padding-top: 8px; }
 .panel-pie .fijar { margin-top: 0; flex: 1.4 1 0; font-size: 15px; }
 .panel-pie .exportar { margin-top: 0; flex: 1 1 0; min-height: 0; padding: 0 10px; font-size: 13px; line-height: 1.2; }
+/* El orden de los bloques del medio lo da el cajón (order en línea); el pie va siempre al final. */
+.panel-pie, .quitar-punto { order: 99; }
+.panel-bloque { flex: 0 0 auto; display: flex; flex-direction: column; }
 .quitar-punto { margin-top: 8px; flex-shrink: 0; min-height: 36px; font-size: 13px; color: var(--texto-2); border-color: var(--borde); }
 
 /* ---------- centro ---------- */
@@ -354,7 +342,7 @@ a { color: var(--texto-2); }
   .fijar { min-height: 44px; }
   .panel-pie { padding-top: 2px; }
   .panel-veredicto h1 { font-size: 46px; }
-  .panel-cifras { flex-basis: 68px; }
+  .panel-cifras { grid-auto-rows: 68px; }
   .panel-cifras dd { font-size: 26px; }
   .panel-opciones { flex-basis: 150px; padding-top: 10px; }
   .opcion { height: 56px; }

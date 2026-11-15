@@ -17,7 +17,7 @@ cruza el resultado con la duración de la misión y la autonomía de la batería
 | Sitios | 11 | **13**: se suman `borde-shackleton` y `borde-de-gerlache` (puntos elevados elegidos sobre el DEM) |
 | Datos | 30 días, resumen de métricas por sitio | **Año 2027 completo, cada hora** (`data/anual/`): horizonte + elevación y azimut del Sol y la Tierra |
 | API | `/salud`, `/sitios`, `/sitios/{id}`, `/evaluar` | Lo mismo **+ `GET /anual?lat=&lon=`** para coordenadas propias |
-| Interfaz | Explorador / Planificador (`src/`) | **Interfaz nueva `src/v2/`**, la principal. La anterior **no se borró**: sigue en `/?clasico` |
+| Interfaz | Explorador / Planificador (`src/`) | **Interfaz `src/v2/`** (la anterior, `src/`, se borró) |
 | Textura | — | Mosaico LROC WAC 4k para el globo (`frontend/public/texturas/luna_wac_4k.jpg`) |
 
 Los JSON de `data/precalculado/` de los sitios polares cambiaron porque ahora se calculan con relieve:
@@ -59,12 +59,28 @@ data/sitios.json ─► backend/scripts/precalcular_*.py ─► data/anual/*.jso
    Como luz y señal no se guardan, cambiar duración o batería no necesita recalcular nada.
 4. Las coordenadas propias pasan por `/anual`, que genera el mismo formato al vuelo.
 
+## Cajón de personalización y perfiles (15/11)
+
+- **Cajón** (`frontend/src/v2/Cajon.jsx`, estilos en `cajon.css`): se abre con el engranaje de la barra o la tecla P,
+  a la derecha. Lista secciones (Panel de respuesta, Vistas, Barra y línea de tiempo, Misión); al pasar el mouse por
+  una fila su pantalla aparece flotando al costado (en táctil, con un toque; en pantalla angosta, una pantalla por
+  vez). Todo sale de la lista `secciones` del componente: un ajuste nuevo es una entrada más y queda buscable solo.
+- **Configuración** (`frontend/src/v2/ajustes.js`, sin React, con tests): qué vistas, herramientas y bloques del
+  panel se ven, el orden de los bloques y qué cifras. Los perfiles `explorar` y `planificar` son los de la pantalla
+  de inicio. Cualquier cambio crea el perfil **personalizado**, que se guarda en `localStorage`
+  (`moonset.personalizado`) y se valida al leerlo. El tacho del cajón lo borra.
+- **Asas** (`Asa.jsx`): el panel de respuesta y la línea de tiempo se pliegan con la pestaña curva de su borde.
+  Plegar es momentáneo y no cambia el perfil; ocultar del todo se hace desde el cajón.
+- El logo de la barra vuelve al inicio y el idioma está arriba del cajón. Se borró la interfaz anterior (`src/`,
+  `?clasico`) y el menú lateral.
+- Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
+
 ## Idioma y globo con detalle (14/11)
 
 - **Español / inglés**: los textos de la interfaz están en `frontend/src/v2/i18n/es.js` y `en.js`, agrupados por
   apartado. En los componentes se usa `const { t, f } = useIdioma()`: `t("panel.sobrevive")` para textos y `f` para
   números, fechas, coordenadas y nombres de sitios (`frontend/src/v2/formato.js`). **Un texto nuevo va en los dos
-  archivos, no en el componente.** `calculo.js` devuelve solo números. La interfaz clásica (`?clasico`) no se tradujo.
+  archivos, no en el componente.** `calculo.js` devuelve solo números.
 - **Globo con detalle progresivo**: a cualquier distancia se ve el mismo mosaico; sobre la textura local
   (`texturas/luna_wac_4k.jpg`, generada con `backend/scripts/generar_textura_luna.py` desde ese mosaico) se cargan teselas de NASA Moon Trek
   (`frontend/src/v2/globo/`): mosaico LROC WAC global (hasta ~83 m/px) y mosaico LROC NAC del polo sur
