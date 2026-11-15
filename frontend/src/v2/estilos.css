@@ -123,7 +123,7 @@ a { color: var(--texto-2); }
 .chip i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 .panel.si .chip { background: rgba(123, 220, 162, 0.15); color: var(--bien); }
 .panel.no .chip { background: rgba(255, 156, 138, 0.16); color: var(--mal); }
-.panel-veredicto h1 { font-size: clamp(44px, 4.3vw, 60px); line-height: 1.05; font-weight: 500; letter-spacing: -0.04em; margin-top: 8px; white-space: nowrap; }
+.panel-veredicto h1 { font-size: clamp(34px, 3.3vw, 46px); line-height: 1.05; font-weight: 500; letter-spacing: -0.04em; margin-top: 8px; white-space: nowrap; }
 .panel-medidor { flex: 0 0 62px; }
 
 /* Mientras se calcula un punto tocado: barra de avance arriba y bloques de carga en lugar de los valores. */
@@ -255,7 +255,7 @@ a { color: var(--texto-2); }
 .columna .tenue { font-size: 13px; }
 .equis { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; }
 .equis svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.veredicto-chico { font-size: 32px; line-height: 1.05; font-weight: 500; letter-spacing: -0.04em; margin-top: 6px; }
+.veredicto-chico { font-size: 26px; line-height: 1.05; font-weight: 500; letter-spacing: -0.04em; margin-top: 6px; }
 .columna.si .veredicto-chico { color: var(--bien); }
 .columna.no .veredicto-chico { color: var(--mal); }
 .margen { margin-bottom: 6px; }
@@ -387,7 +387,7 @@ a { color: var(--texto-2); }
   .cabina { padding-top: 12px; gap: 10px 16px; }
   .panel { padding: 12px 22px; }
   .panel-veredicto { flex-basis: 84px; padding-top: 2px; }
-  .panel-veredicto h1 { font-size: 42px; margin-top: 4px; }
+  .panel-veredicto h1 { font-size: 40px; margin-top: 4px; }
   .fijar { min-height: 42px; font-size: 15px; }
   .panel-pie { padding-top: 2px; }
   .panel-medidor { flex-basis: 52px; }
@@ -415,7 +415,7 @@ a { color: var(--texto-2); }
 @media (min-height: 801px) and (max-height: 880px) and (min-width: 981px) {
   .panel { padding: 14px 24px; }
   .panel-veredicto { flex-basis: 96px; }
-  .panel-veredicto h1 { font-size: 46px; }
+  .panel-veredicto h1 { font-size: 44px; }
   .panel-cifras { grid-auto-rows: 76px; }
   .panel-medidor { flex-basis: 54px; }
 }
@@ -429,7 +429,7 @@ a { color: var(--texto-2); }
 @media (max-height: 740px) and (min-width: 981px) {
   .panel { padding: 10px 20px; }
   .panel-veredicto { flex-basis: 70px; }
-  .panel-veredicto h1 { font-size: 36px; }
+  .panel-veredicto h1 { font-size: 34px; }
   .panel-cifras { grid-auto-rows: 52px; }
   .panel-cifras dd { font-size: 22px; line-height: 1.1; }
   .panel-opciones { flex-basis: 136px; }
@@ -445,7 +445,7 @@ a { color: var(--texto-2); }
 /* Viewports de ~650 px (notebook de 768 con la barra del navegador): se achica la altura mínima y un escalón más. */
 @media (max-height: 680px) and (min-width: 981px) {
   .panel-veredicto { flex-basis: 62px; }
-  .panel-veredicto h1 { font-size: 34px; }
+  .panel-veredicto h1 { font-size: 30px; }
   .panel { padding: 8px 18px; }
   .panel-cifras { grid-auto-rows: 48px; }
   .panel-cifras div { padding: 6px 12px; }
