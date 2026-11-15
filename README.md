@@ -72,6 +72,10 @@ npm install
 npm run dev
 ```
 
+Para una demo, corré el backend sin `--reload` (`uvicorn app.main:app`). Al arrancar carga los kernels, scipy y
+el DEM de `data/raw` (unos segundos, lo muestra en la consola) para que el primer punto no espere; con `--reload`
+cada cambio de archivo reinicia el proceso y se pierde eso.
+
 Si los puertos 8000/5173 están ocupados, usá otros: `uvicorn ... --port 8010`, `npm run dev -- --port 5174`.
 En desarrollo el backend acepta cualquier puerto de `localhost`/`127.0.0.1`. En producción, fijá los orígenes
 permitidos con `MOONSET_CORS` (por ejemplo `MOONSET_CORS="https://moonset.ejemplo.org"`): si está definida,

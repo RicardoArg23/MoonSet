@@ -55,3 +55,32 @@ def test_sitio_inexistente():
 def test_demasiadas_muestras():
     r = cliente.post("/evaluar", json={"lat": 0, "lon": 0, "inicio": INICIO, "dias": 366, "paso_horas": 0.25})
     assert r.status_code == 422
+
+
+def test_anual_igual_sin_subpuntos():
+    """/anual no calcula los puntos subsolar y subterrestre, y el resto no cambia."""
+    from datetime import datetime
+
+    from app.anual import construir_anual
+    from app.efemerides import calcular_posiciones
+
+    inicio = datetime(2027, 1, 1)
+    con = calcular_posiciones(-88.5, 100.0, inicio, 2, 1.0)
+    sin = calcular_posiciones(-88.5, 100.0, inicio, 2, 1.0, subpuntos=False)
+    assert "subsolar" not in sin and "subterrestre" not in sin
+    assert con["tiempos"] == sin["tiempos"]
+    for cuerpo in ("sol", "tierra"):
+        for clave, valores in con[cuerpo].items():
+            assert (valores == sin[cuerpo][clave]).all()
+    sitio = {"id": "x", "lat": -88.5, "lon": 100.0}
+    assert construir_anual(sitio, inicio, 2)[0] == construir_anual(sitio, inicio, 2, subpuntos=False)[0]
+
+
+def test_precalentar_arranca_sin_dem(monkeypatch, tmp_path):
+    from app import config, precalentar
+
+    monkeypatch.setattr(config, "DEM_80S", tmp_path / "no_existe.IMG")
+    tiempos = precalentar.precalentar()
+    assert "kernels" in tiempos and "scipy" in tiempos and "dem_80s" not in tiempos
+    with TestClient(app) as c:  # con el ciclo de vida: arranca igual sin el DEM
+        assert c.get("/salud").status_code == 200

@@ -1,6 +1,7 @@
 /* MoonSet v2 — cabina sin scroll, estética "Atmósfera": la Luna a pantalla completa y paneles
    flotantes encima. Decisiones en .claude/skills/diseno-frontend. */
 :root {
+  color-scheme: dark; /* controles nativos (listas, barras, calendario) en oscuro */
   --texto: #f5f2ec;
   --texto-2: #cfc9bf;
   --tenue: #a9a39a;
@@ -9,6 +10,7 @@
   --borde-fuerte: rgba(255, 255, 255, 0.24);
   --relleno: rgba(255, 255, 255, 0.07);
   --apagado: rgba(255, 255, 255, 0.09);
+  --menu: #1c1915; /* fondo opaco de las listas desplegables: el vidrio no se aplica a las opciones */
   --acento: #ffb84a; /* ámbar: Sol, luz, fecha elegida, acción primaria */
   --tierra: #6faef0;
   --bien: #7bdca2;
@@ -28,6 +30,10 @@ p, h1, h3, dl, dd { margin: 0; }
 .rotulo { font-size: 12px; color: var(--tenue); }
 
 button, input, select { font: inherit; color: inherit; }
+/* Chrome en Windows dibuja las opciones con fondo blanco y heredaba el texto claro: ilegible. */
+select { color-scheme: dark; }
+option, optgroup { background-color: var(--menu); color: var(--texto); }
+option:disabled { color: var(--tenue); }
 button { cursor: pointer; background: transparent; border: 1px solid var(--borde-fuerte); border-radius: 999px; transition: transform 0.18s var(--salida), border-color 0.18s var(--salida), background-color 0.18s var(--salida); }
 button:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.5); }
 button:active:not(:disabled) { transform: scale(0.98); }
@@ -73,6 +79,16 @@ a { color: var(--texto-2); }
 .vistas { display: flex; padding: 4px; border-radius: 999px; margin-left: auto; }
 .vistas button { min-height: 40px; padding: 0 18px; border: 0; font-size: 14px; }
 .vistas button[aria-pressed="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
+.vistas button[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.vistas button[aria-disabled="true"]:active { transform: none; }
+
+/* Aviso flotante mientras se calcula un punto tocado (y si falla): arriba al centro, sobre todo. */
+.calculando { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; align-items: center; gap: 10px; max-width: min(480px, calc(100vw - 32px)); padding: 8px 14px; border-radius: 999px; font-size: 13px; color: var(--texto-2); }
+.calculando.con-error { color: var(--mal); }
+.calculando button { flex-shrink: 0; min-height: 28px; padding: 0 12px; font-size: 12px; color: var(--texto); }
+.girando { flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--borde-fuerte); border-top-color: var(--acento); animation: girar 0.8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .girando { animation-duration: 2.4s; } }
 .parametros { display: flex; align-items: center; gap: 18px; height: 48px; padding: 0 18px; border-radius: 999px; font-size: 14px; color: var(--texto-2); }
 .parametros label { display: inline-flex; align-items: center; gap: 8px; }
 .parametros input { width: 58px; height: 32px; padding: 0 6px; text-align: center; font-weight: 600; color: var(--texto); background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color-scheme: dark; }

@@ -143,15 +143,25 @@ function Cabina({ perfil }) {
     return () => window.removeEventListener("keydown", alTeclado);
   }, [menuAbierto]);
 
-  // La grilla de alrededores se pide una vez por sitio, cuando se lo elige.
+  // La grilla de alrededores se pide una vez por sitio, cuando se lo elige. Los puntos propios no la
+  // tienen (se precalcula solo para los sitios de la lista al sur de 85° S): ni se la pide.
   useEffect(() => {
     if (!sitioId || sitioId in vecindades) return undefined;
+    if (base && !base.some((s) => s.sitio.id === sitioId)) {
+      setVecindades((x) => ({ ...x, [sitioId]: null }));
+      return undefined;
+    }
     let vigente = true;
     cargarVecindad(sitioId)
       .catch(() => null)
       .then((v) => vigente && setVecindades((x) => ({ ...x, [sitioId]: v })));
     return () => { vigente = false; };
-  }, [sitioId, vecindades]);
+  }, [sitioId, vecindades, base]);
+
+  // Si se elige un sitio sin grilla estando en Alrededores, se vuelve al globo en vez de mostrar una vista vacía.
+  useEffect(() => {
+    if (vista === "alrededores" && vecindades[sitioId] === null) setVista("globo");
+  }, [vista, sitioId, vecindades]);
 
   // Los sitios con la señal según el margen para comunicación: todo lo que mira el contacto usa esta lista.
   const sitios = useMemo(
@@ -198,6 +208,9 @@ function Cabina({ perfil }) {
     ? null
     : evaluados.filter((r) => r.e.sobrevive && r.s !== sitio).sort((a, b) => b.m.senalPct - a.m.senalPct || b.m.luzPct - a.m.luzPct)[0];
   const vecindad = vecindades[sitio.sitio.id];
+  // null: ya se sabe que no hay grilla (undefined es que todavía se está pidiendo).
+  const sinVecindad = vecindad === null;
+  const motivoSinVecindad = !sinVecindad ? "" : base.some((s) => s.sitio.id === sitio.sitio.id) ? t("alrededores.noDisponibleNorte") : t("alrededores.noDisponiblePropio");
   const yaFijado = fijados.some((f) => f.sitioId === sitio.sitio.id && f.dia === dia && f.horaLlegada === horaLlegada);
   const av = e.avisos;
   const hayAvisos = av.potenciaNominal || av.ciclos || av.nochesSinCalefaccion;
@@ -405,11 +418,22 @@ function Cabina({ perfil }) {
         {/* Las vistas van siempre al final, a la derecha: sumar herramientas no las corre de lugar. */}
         {VISTAS.some((v) => funciones[v]) && (
           <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
-            {VISTAS.filter((v) => funciones[v]).map((v) => (
-              <button key={v} type="button" aria-pressed={vista === v} onClick={() => setVista(v)}>
-                {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
-              </button>
-            ))}
+            {VISTAS.filter((v) => funciones[v]).map((v) => {
+              // aria-disabled en vez de disabled: el botón sigue mostrando el tooltip y se puede enfocar.
+              const bloqueada = v === "alrededores" && sinVecindad;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={vista === v}
+                  aria-disabled={bloqueada || undefined}
+                  title={bloqueada ? motivoSinVecindad : undefined}
+                  onClick={() => !bloqueada && setVista(v)}
+                >
+                  {t(`vistas.${v}`)}{v === "comparar" && fijados.length > 0 ? ` · ${fijados.length}` : ""}
+                </button>
+              );
+            })}
           </nav>
         )}
       </header>
@@ -574,6 +598,22 @@ function Cabina({ perfil }) {
         </div>
         {funciones.puntos && esGuardado && <button type="button" className="quitar-punto" onClick={() => quitarPunto(sitio.sitio.id)}>{t("panel.quitarPunto")}</button>}
       </aside>}
+
+      {estadoCoord && (
+        <div className={`calculando vidrio${estadoCoord === "cargando" ? "" : " con-error"}`} role={estadoCoord === "cargando" ? "status" : "alert"} aria-live="polite">
+          {estadoCoord === "cargando" ? (
+            <>
+              <i className="girando" aria-hidden="true" />
+              <span>{t("puntos.calculandoPunto", { lat: num(Number(coord.lat), 2), lon: num(Number(coord.lon), 2) })}</span>
+            </>
+          ) : (
+            <>
+              <span>{estadoCoord}</span>
+              <button type="button" onClick={() => setEstadoCoord("")}>{t("puntos.cerrarAviso")}</button>
+            </>
+          )}
+        </div>
+      )}
 
       <main className="centro">
         {vista === "globo" && (

@@ -20,9 +20,14 @@ def _lista(arr, decimales: int) -> list:
     return np.round(np.asarray(arr, dtype="float64"), decimales).tolist()
 
 
-def construir_anual(sitio: dict, inicio: datetime, dias: int = DIAS_MAX, altura_m: float = 2.0) -> tuple[dict, dict]:
-    """Devuelve (datos del sitio listos para JSON, posiciones crudas)."""
-    pos = calcular_posiciones(sitio["lat"], sitio["lon"], inicio, dias, 1.0)
+def construir_anual(sitio: dict, inicio: datetime, dias: int = DIAS_MAX, altura_m: float = 2.0,
+                    subpuntos: bool = True) -> tuple[dict, dict]:
+    """Devuelve (datos del sitio listos para JSON, posiciones crudas).
+
+    Los datos no incluyen los puntos subsolar y subterrestre: solo los usa `geometria(pos)`, que
+    los necesita con subpuntos=True. La API pasa False y se ahorra ese cálculo.
+    """
+    pos = calcular_posiciones(sitio["lat"], sitio["lon"], inicio, dias, 1.0, subpuntos=subpuntos)
     horizonte, fuente = obtener_horizonte(sitio["lat"], sitio["lon"], altura_m)
     datos = {
         "sitio": sitio,

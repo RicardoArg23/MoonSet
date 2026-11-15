@@ -25,8 +25,12 @@ python scripts/descargar_datos.py   # baja ~20 MB de kernels de NASA/JPL a backe
 ## Uso
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload   # desarrollo
+uvicorn app.main:app            # demo: lo precalentado al arrancar no se pierde
 ```
+
+Al arrancar, el backend carga los kernels, scipy y el DEM de `data/raw` si está, y loguea cuánto tardó
+(`MoonSet precalentado en …`). Sin el DEM arranca igual.
 
 - API: http://127.0.0.1:8000
 - Documentación interactiva (para probar los endpoints desde el navegador): http://127.0.0.1:8000/docs
