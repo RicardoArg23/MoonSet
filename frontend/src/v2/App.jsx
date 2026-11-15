@@ -789,30 +789,22 @@ function Cabina({ perfil }) {
           </dl>
         </details>}
 
-        {config.bloques.opciones && <div className="panel-opciones" style={ordenDe("opciones")}>
-          {e.sobrevive ? (
-            <>
-              <p className="rotulo">{t("panel.queHacer")}</p>
-              <p className="nota vacio">{t("panel.nadaQueCambiar")}</p>
-            </>
-          ) : (
-            <>
-              <p className="rotulo">{t("panel.queHacer")}</p>
-              {diaViable !== null && (
-                <button type="button" className="opcion" onClick={() => cambiarLlegada(diaViable, horaLlegada)}>
-                  <span><b>{t("panel.esperar", { fecha: fechaLarga(sitio.t0 + diaViable * DIA_MS) })}</b><small>{t("panel.esperarDetalle", { n: diaViable - dia, pct: num(minimoDiaViable) })}</small></span>
-                  <i aria-hidden="true">→</i>
-                </button>
-              )}
-              {mejorOtro && (
-                <button type="button" className="opcion" onClick={() => elegirSitio(mejorOtro.s.sitio.id)}>
-                  <span><b>{t("panel.irA", { sitio: nombreCorto(mejorOtro.s.sitio) })}</b><small>{t("panel.irADetalle", { pct: num(mejorOtro.e.minimoPct), contacto: mejorOtro.m.senalPct === 0 ? t("panel.sinContacto") : t("panel.pctContacto", { pct: num(mejorOtro.m.senalPct) }) })}</small></span>
-                  <i aria-hidden="true">→</i>
-                </button>
-              )}
-              {diaViable === null && !mejorOtro && <p className="nota vacio">{t("panel.sinAlternativa")}</p>}
-            </>
+        {/* Solo cuando no sobrevive: si la misión sobrevive no hay nada que cambiar y el bloque no se muestra. */}
+        {config.bloques.opciones && !e.sobrevive && <div className="panel-opciones" style={ordenDe("opciones")}>
+          <p className="rotulo">{t("panel.queHacer")}</p>
+          {diaViable !== null && (
+            <button type="button" className="opcion" onClick={() => cambiarLlegada(diaViable, horaLlegada)}>
+              <span><b>{t("panel.esperar", { fecha: fechaLarga(sitio.t0 + diaViable * DIA_MS) })}</b><small>{t("panel.esperarDetalle", { n: diaViable - dia, pct: num(minimoDiaViable) })}</small></span>
+              <i aria-hidden="true">→</i>
+            </button>
           )}
+          {mejorOtro && (
+            <button type="button" className="opcion" onClick={() => elegirSitio(mejorOtro.s.sitio.id)}>
+              <span><b>{t("panel.irA", { sitio: nombreCorto(mejorOtro.s.sitio) })}</b><small>{t("panel.irADetalle", { pct: num(mejorOtro.e.minimoPct), contacto: mejorOtro.m.senalPct === 0 ? t("panel.sinContacto") : t("panel.pctContacto", { pct: num(mejorOtro.m.senalPct) }) })}</small></span>
+              <i aria-hidden="true">→</i>
+            </button>
+          )}
+          {diaViable === null && !mejorOtro && <p className="nota vacio">{t("panel.sinAlternativa")}</p>}
         </div>}
 
         {config.bloques.sello && <div className="panel-bloque" style={ordenDe("sello")}><SelloValidacion /></div>}

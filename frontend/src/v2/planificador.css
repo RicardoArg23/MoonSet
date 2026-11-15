@@ -41,6 +41,9 @@ form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de a
 .plan-opcion.ancha { flex: 1 1 auto; width: auto; min-height: 40px; padding: 6px 14px; flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 10px; }
 .plan-opcion.ancha small { white-space: nowrap; }
 .plan-perfil { display: flex; gap: 6px; min-width: 0; }
+.plan-perfil select { flex: 1 1 auto; min-width: 0; height: 40px; padding: 0 12px; border-radius: 14px; border: 1px solid var(--borde); background: var(--relleno); font-size: 14px; font-weight: 500; color: var(--texto); color-scheme: dark; cursor: pointer; }
+.plan-perfil select:hover { border-color: var(--borde-fuerte); }
+.plan-detalle-perfil { margin: 4px 2px 0; font-size: 12.5px; color: var(--tenue); }
 .plan-ajustar { flex: none; min-height: 40px; padding: 0 14px; font-size: 13px; }
 .plan-ajustar[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
 .plan-campos { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--borde); font-size: 14px; }

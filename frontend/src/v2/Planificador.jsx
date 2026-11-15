@@ -113,22 +113,16 @@ export default function Planificador({ estado, duracionDias, alCambiarDuracion, 
 
         <fieldset className="plan-paso">
           <legend><span>1</span>{t("plan.queLlevas")}</legend>
-          {perfilesDelPlan(estado).map((p) => {
-            const esElegido = elegido.id === p.id;
-            return (
-              <div key={p.id} className="plan-perfil">
-                <button type="button" className="plan-opcion ancha" aria-pressed={esElegido} onClick={() => alCambiar({ perfilId: p.id })}>
-                  <b>{nombrePerfil(p.id)}</b>
-                  <small>{detallePerfil(p.valores)}</small>
-                </button>
-                {esElegido && (
-                  <button type="button" className="plan-ajustar" aria-expanded={estado.ajustando} aria-controls="plan-campos" onClick={() => alCambiar({ ajustando: !estado.ajustando })}>
-                    {t("plan.ajustar")}
-                  </button>
-                )}
-              </div>
-            );
-          })}
+          {/* Un selector en vez de una tarjeta por perfil: ocupa una línea y el detalle del elegido va debajo. */}
+          <div className="plan-perfil">
+            <select value={elegido.id} aria-label={t("plan.queLlevas")} onChange={(evento) => alCambiar({ perfilId: evento.target.value })}>
+              {perfilesDelPlan(estado).map((p) => <option key={p.id} value={p.id}>{nombrePerfil(p.id)}</option>)}
+            </select>
+            <button type="button" className="plan-ajustar" aria-expanded={estado.ajustando} aria-controls="plan-campos" onClick={() => alCambiar({ ajustando: !estado.ajustando })}>
+              {t("plan.ajustar")}
+            </button>
+          </div>
+          <p className="plan-detalle-perfil">{detallePerfil(elegido.valores)}</p>
           {estado.ajustando && (
             <div className="plan-campos" id="plan-campos">
               <p className="tenue plan-nota">{t("plan.ajustarNota")}</p>

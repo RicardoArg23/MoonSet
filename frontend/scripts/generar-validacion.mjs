@@ -83,7 +83,6 @@ const html = `<!doctype html>
   summary small { color: var(--tenue); margin-left: 8px; }
   details[open] summary { border-bottom: 1px solid var(--borde); margin-bottom: 12px; }
   details .tabla { margin-bottom: 12px; }
-  .pie { color: var(--tenue); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -108,7 +107,7 @@ const html = `<!doctype html>
     <h2 data-es="Cómo se validó" data-en="How it was validated">Cómo se validó</h2>
     <ul>
       <li><span data-es="Horizons: efemérides" data-en="Horizons: ephemerides">Horizons: efemérides</span> ${esc(meta.horizons_efemerides)}, <span data-es="marco lunar" data-en="lunar frame">marco lunar</span> ${esc(meta.horizons_marco)}, <span data-es="consultado" data-en="queried">consultado</span> ${esc(meta.horizons_consultado)}.</li>
-      <li><span data-es="MoonSet:" data-en="MoonSet:">MoonSet:</span> ${esc(meta.nuestro)} (<code>backend/app/efemerides.py</code>).</li>
+      <li><span data-es="MoonSet:" data-en="MoonSet:">MoonSet:</span> ${esc(meta.nuestro.replace(/^skyfield \+ /, "efemérides "))}.</li>
       <li>${sitios.length} <span data-es="sitios" data-en="sites">sitios</span> × ${meta.fechas_utc.length} <span data-es="instantes UTC" data-en="UTC instants">instantes UTC</span> × <span data-es="Sol y Tierra" data-en="Sun and Earth">Sol y Tierra</span>: ${meta.fechas_utc.map((f) => esc(instante(f))).join("; ")}.</li>
       <li data-es="Errores en grados, nosotros − Horizons. Sep. es la distancia angular entre las dos direcciones (no depende de lo mal definido que está el azimut cerca del cenit)." data-en="Errors in degrees, ours − Horizons. Sep. is the angular distance between the two directions (it does not depend on how ill-defined the azimuth is near the zenith).">Errores en grados, nosotros − Horizons. Sep. es la distancia angular entre las dos direcciones (no depende de lo mal definido que está el azimut cerca del cenit).</li>
       <li><span data-es="Umbral:" data-en="Threshold:">Umbral:</span> ${esc(meta.umbral_deg)}°.</li>
@@ -135,7 +134,14 @@ const html = `<!doctype html>
     ${detalle}
   </section>
 
-  <p class="pie" data-es="Página generada a partir de data/validacion/horizons.json (salida de backend/scripts/validar_horizons.py); no se edita a mano." data-en="Page generated from data/validacion/horizons.json (output of backend/scripts/validar_horizons.py); not edited by hand.">Página generada a partir de data/validacion/horizons.json (salida de backend/scripts/validar_horizons.py); no se edita a mano.</p>
+  <section>
+    <h2 data-es="Fuentes" data-en="Sources">Fuentes</h2>
+    <ul>
+      <li><a href="https://ssd.jpl.nasa.gov/horizons/" target="_blank" rel="noopener noreferrer">JPL Horizons System</a> — <span data-es="NASA/JPL, referencia de las posiciones" data-en="NASA/JPL, reference for the positions">NASA/JPL, referencia de las posiciones</span>.</li>
+      <li><a href="https://naif.jpl.nasa.gov/naif/" target="_blank" rel="noopener noreferrer">NASA NAIF · SPICE</a> — <span data-es="efemérides planetarias DE421 y orientación de la Luna" data-en="DE421 planetary ephemerides and lunar orientation">efemérides planetarias DE421 y orientación de la Luna</span>.</li>
+      <li><a href="https://ssd.jpl.nasa.gov/planets/eph_export.html" target="_blank" rel="noopener noreferrer">JPL Planetary and Lunar Ephemerides</a> — <span data-es="familia de efemérides DE (DE421, DE441)" data-en="DE ephemeris family (DE421, DE441)">familia de efemérides DE (DE421, DE441)</span>.</li>
+    </ul>
+  </section>
 </main>
 <script>
   // Mismo idioma que la app (moonset.idioma); el botón lo cambia para esta página.
