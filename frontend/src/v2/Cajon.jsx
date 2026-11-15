@@ -41,6 +41,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
   const raizRef = useRef(null);
   const flotantesRef = useRef([]);
   const esperaRef = useRef(0);
+  const pausaRef = useRef(null); // dónde estaba el mouse al elegir un resultado: hasta que no se mueva, no abre nada
 
   const vistasActivas = VISTAS.filter((v) => config.vistas[v]);
   const bloquesVisibles = config.orden.filter((b) => config.bloques[b]).length + ACCIONES.filter((a) => config.acciones[a]).length;
@@ -99,6 +100,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
           alCambiar: (activa) => alCambiar((c) => conVista(c, v, activa)),
         })),
         { tipo: "nota", texto: t("ajustes.vistasNota") },
+        { tipo: "interruptor", clave: "pista-globo", texto: t("ajustes.pistaGlobo"), ayuda: t("ajustes.pistaGloboAyuda"), valor: config.pistaGlobo, alCambiar: (activa) => alCambiar((c) => ({ ...c, pistaGlobo: activa })) },
       ],
     },
     {
@@ -148,7 +150,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
   // Con mouse, pasar por una fila abre su pantalla y pasar por otra la cambia; el clic solo la fija.
   const abrir = (destino) => setRuta((actual) => (!conPuntero && actual.join("/") === destino.join("/") ? destino.slice(0, -1) : destino));
   function alPasar(evento) {
-    if (!conPuntero || consulta) return;
+    if (!conPuntero || consulta || pausaRef.current) return;
     const fila = evento.target.closest("[data-fila]");
     const nivel = evento.target.closest("[data-nivel]");
     if (!fila || !nivel) return;
@@ -204,7 +206,16 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
     return () => clearTimeout(id);
   }, [resaltado]);
 
-  function irAResultado(entrada) {
+  // Al elegir un resultado la lista cambia debajo del mouse, que queda sobre otra fila sin haberse movido:
+  // el paso del mouse se ignora hasta que se mueva de verdad, para no pisar lo que se acaba de buscar.
+  const MOVIMIENTO_MIN_PX = 12;
+  function alMover(evento) {
+    const pausa = pausaRef.current;
+    if (pausa && Math.hypot(evento.clientX - pausa.x, evento.clientY - pausa.y) > MOVIMIENTO_MIN_PX) pausaRef.current = null;
+  }
+  function irAResultado(entrada, evento) {
+    pausaRef.current = { x: evento.clientX, y: evento.clientY };
+    clearTimeout(esperaRef.current);
     setRuta(entrada.ruta);
     setResaltado(entrada.clave);
     setConsulta("");
@@ -273,7 +284,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
   const cuerpoRaiz = consulta
     ? resultados.length
       ? resultados.map((e, k) => (
-          <button type="button" className="cj-resultado" key={`${e.clave}-${k}`} onClick={() => irAResultado(e)}>
+          <button type="button" className="cj-resultado" key={`${e.clave}-${k}`} onClick={(evento) => irAResultado(e, evento)}>
             <b>{e.texto}</b>
             {e.contexto && <small>{e.contexto}</small>}
           </button>
@@ -292,7 +303,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
 
   return (
     <>
-      <aside ref={raizRef} id="cajon-ajustes" className="cajon cj-nivel" data-nivel="0" aria-label={t("ajustes.titulo")} onMouseOver={alPasar} onMouseLeave={() => clearTimeout(esperaRef.current)}>
+      <aside ref={raizRef} id="cajon-ajustes" className="cajon cj-nivel" data-nivel="0" aria-label={t("ajustes.titulo")} onMouseOver={alPasar} onMouseMove={alMover} onMouseLeave={() => clearTimeout(esperaRef.current)}>
         <div className="cj-cabeza">
           <div className="cj-titulo">
             {enAngosto && volver}
@@ -307,9 +318,9 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
               <div className="cj-perfiles">
                 <div role="group" aria-label={t("ajustes.perfiles.aria")}>
                   {PERFILES_BASE.map((p) => <button key={p} type="button" aria-pressed={activo === p} onClick={() => alElegirPerfil(p)}>{t(`ajustes.perfiles.${p}`)}</button>)}
-                  <button type="button" aria-pressed={activo === PERSONALIZADO} aria-disabled={!hayPropio || undefined} title={hayPropio ? undefined : t("ajustes.perfiles.personalizadoAyuda")} onClick={() => hayPropio && alElegirPerfil(PERSONALIZADO)}>{t("ajustes.perfiles.personalizado")}</button>
+                  <button type="button" className={hayPropio ? undefined : "con-ayuda a-derecha"} data-ayuda={hayPropio ? undefined : t("ajustes.perfiles.personalizadoAyuda")} aria-pressed={activo === PERSONALIZADO} aria-disabled={!hayPropio || undefined} onClick={() => hayPropio && alElegirPerfil(PERSONALIZADO)}>{t("ajustes.perfiles.personalizado")}</button>
                 </div>
-                {hayPropio && <button type="button" className="cj-tacho" data-ayuda={t("ajustes.perfiles.restablecer")} aria-label={t("ajustes.perfiles.restablecer")} onClick={alRestablecer}><Icono d={I.tacho} /></button>}
+                {hayPropio && <button type="button" className="cj-tacho con-ayuda a-derecha" data-ayuda={t("ajustes.perfiles.restablecer")} aria-label={t("ajustes.perfiles.restablecer")} onClick={alRestablecer}><Icono d={I.tacho} /></button>}
               </div>
               <label className="cj-buscar">
                 <Icono d={I.lupa} />
@@ -324,13 +335,13 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
       </aside>
 
       {!angosto && seccion && (
-        <section ref={(n) => { flotantesRef.current[0] = n; }} key={seccion.id} className="cj-flotante cj-nivel" data-nivel="1" aria-label={seccion.titulo} onMouseOver={alPasar} onMouseLeave={() => clearTimeout(esperaRef.current)}>
+        <section ref={(n) => { flotantesRef.current[0] = n; }} key={seccion.id} className="cj-flotante cj-nivel" data-nivel="1" aria-label={seccion.titulo} onMouseOver={alPasar} onMouseMove={alMover} onMouseLeave={() => clearTimeout(esperaRef.current)}>
           <h3>{seccion.titulo}</h3>
           <div className="cj-cuerpo" onScroll={posicionar}>{lista(seccion.items, [seccion.id])}</div>
         </section>
       )}
       {!angosto && detalle && (
-        <section ref={(n) => { flotantesRef.current[1] = n; }} key={`${seccion.id}/${detalle.id}`} className="cj-flotante cj-nivel" data-nivel="2" aria-label={detalle.titulo} onMouseOver={alPasar}>
+        <section ref={(n) => { flotantesRef.current[1] = n; }} key={`${seccion.id}/${detalle.id}`} className="cj-flotante cj-nivel" data-nivel="2" aria-label={detalle.titulo} onMouseOver={alPasar} onMouseMove={alMover}>
           <h3>{detalle.titulo}</h3>
           <div className="cj-cuerpo">{lista(detalle.items, rutaValida)}</div>
         </section>

@@ -43,11 +43,20 @@ a { color: var(--texto-2); }
 .primario { background: var(--acento); border-color: var(--acento); color: #14110d; font-weight: 600; }
 .primario:hover:not(:disabled) { background: #ffc76e; border-color: #ffc76e; }
 .enlace { border: 0; padding: 0; text-align: left; text-decoration: underline; text-decoration-color: var(--borde-fuerte); text-underline-offset: 3px; border-radius: 4px; }
+/* Ayuda al pasar el mouse o enfocar: un solo estilo para toda la cabina (texto en data-ayuda). */
+.con-ayuda { position: relative; }
+.con-ayuda::after { content: attr(data-ayuda); position: absolute; left: 0; top: calc(100% + 6px); z-index: 50; width: max-content; max-width: 240px; padding: 7px 10px; border-radius: 10px; background: #1d1a17; border: 1px solid var(--borde-fuerte); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); color: var(--texto-2); font-size: 12px; font-weight: 400; letter-spacing: 0; line-height: 1.3; text-align: left; white-space: normal; opacity: 0; transform: translateY(-3px); pointer-events: none; transition: opacity 0.15s var(--salida), transform 0.15s var(--salida); }
+.con-ayuda.a-derecha::after { left: auto; right: 0; }
+.con-ayuda:hover::after, .con-ayuda:focus-visible::after { opacity: 1; transform: none; }
 .vidrio { background: var(--vidrio); border: 1px solid var(--borde); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 
 /* ---------- estructura ---------- */
-.cabina { position: relative; height: 100vh; min-height: 680px; overflow: hidden; display: grid; grid-template-columns: var(--panel) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "barra barra" "panel centro" "panel dock"; gap: 14px 16px; padding: 18px 20px 30px; }
-.escena { position: absolute; inset: 0 0 150px calc(var(--panel) - 20px); z-index: 0; transition: opacity 0.3s var(--salida); touch-action: none; }
+.cabina { position: relative; height: 100vh; min-height: 680px; overflow: hidden; display: grid; transition: grid-template-columns 0.35s var(--salida); grid-template-columns: var(--panel) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "barra barra" "panel centro" "panel dock"; gap: 14px 16px; padding: 18px 20px 30px; }
+/* La escena ocupa siempre todo el ancho y no cambia de tamaño cuando se abre, pliega u oculta un panel: redimensionar
+   el lienzo 3D lo borra un instante. Para quedar centrada en el lugar libre se corre con transform, que es suave.
+   --izq y --der son lo que tapan el panel y el cajón; --baja, cuánto baja al plegar la línea de tiempo. */
+.cabina { --izq: calc(var(--panel) - 20px); --der: 0px; --baja: 0px; }
+.escena { position: absolute; inset: 0 0 150px 0; z-index: 0; transform: translate(calc((var(--izq) - var(--der)) / 2), var(--baja)); transition: transform 0.45s var(--salida), opacity 0.3s var(--salida); touch-action: none; }
 .cabina:not(.en-globo) .escena { opacity: 0.28; pointer-events: none; }
 .resplandor { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(55% 50% at 78% 12%, rgba(255, 176, 64, 0.16), rgba(255, 176, 64, 0) 70%); }
 .barra, .panel, .centro, .dock { position: relative; z-index: 1; }
@@ -102,7 +111,7 @@ a { color: var(--texto-2); }
 @keyframes panel-entra { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: none; } }
 /* Perfil explorar: sin panel y sin línea de tiempo, la Luna ocupa toda la cabina. */
 .cabina.sin-panel { grid-template-areas: "barra barra" "centro centro" "dock dock"; }
-.cabina.sin-panel .escena { left: 0; }
+.cabina.sin-panel { --izq: 0px; }
 .cabina.sin-dock .escena { bottom: 0; }
 .panel-sitio { flex: 0 0 62px; }
 .panel-sitio select { width: 100%; height: 34px; padding: 0; background: transparent; border: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; color-scheme: dark; cursor: pointer; text-overflow: ellipsis; }
@@ -352,7 +361,7 @@ a { color: var(--texto-2); }
 /* Pantallas angostas: se apila y vuelve el scroll, que ahí es lo natural. */
 @media (max-width: 980px) {
   .cabina { display: flex; flex-direction: column; height: auto; min-height: 0; overflow: visible; padding: 14px 14px 40px; }
-  .escena { position: relative; inset: auto; height: 340px; order: 2; border-radius: 24px; overflow: hidden; }
+  .escena { position: relative; inset: auto; height: 340px; order: 2; border-radius: 24px; overflow: hidden; transform: none; }
   .cabina:not(.en-globo) .escena { display: none; }
   .resplandor { display: none; }
   .barra { order: 1; }

@@ -35,6 +35,8 @@ export default {
     buscar: "Buscar un ajuste",
     sinResultados: "Ningún ajuste coincide con esa búsqueda.",
     vistasNota: "Siempre queda al menos una vista.",
+    pistaGlobo: "Ayuda del globo",
+    pistaGloboAyuda: "Tarjeta con la pista, el botón para acercar y la fuente de la imagen",
     perfiles: {
       aria: "Perfil de la cabina",
       explorar: "Explorar",

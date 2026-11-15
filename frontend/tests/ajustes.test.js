@@ -66,6 +66,7 @@ test("una configuración guardada rota o vieja se completa con el perfil de orig
   assert.deepEqual(c.orden, ["sello", ...BLOQUES.filter((b) => b !== "sello")]);
   assert.deepEqual(c.cifras, ["luz", "minimo"]);
   assert.equal(c.panel, true);
+  assert.equal(c.pistaGlobo, true, "una clave que falta toma el valor del perfil");
   assert.equal(c.bloques.cifras, false);
   assert.equal(c.bloques.medidor, true);
   assert.ok(c.cifras.every((x) => CIFRAS.includes(x)));

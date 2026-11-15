@@ -392,7 +392,7 @@ function Cabina({ perfil }) {
       <div className="resplandor" aria-hidden="true" />
 
       <header className="barra">
-        <a className="marca vidrio" href="#" aria-label={t("ajustes.inicio")} title={t("ajustes.inicio")}>
+        <a className="marca vidrio con-ayuda" href="#" aria-label={t("ajustes.inicio")} data-ayuda={t("ajustes.inicio")}>
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
         </a>
         {config.herramientas.parametros && (
@@ -455,7 +455,7 @@ function Cabina({ perfil }) {
             })}
           </nav>
         )}
-        <button ref={ajustesRef} type="button" className="ajustes" aria-expanded={cajonAbierto} aria-controls="cajon-ajustes" aria-label={t("ajustes.abrir")} title={t("ajustes.abrir")} onClick={() => setCajonAbierto((abierto) => !abierto)}>
+        <button ref={ajustesRef} type="button" className="ajustes con-ayuda a-derecha" aria-expanded={cajonAbierto} aria-controls="cajon-ajustes" aria-label={t("ajustes.abrir")} data-ayuda={cajonAbierto ? undefined : t("ajustes.abrir")} onClick={() => setCajonAbierto((abierto) => !abierto)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2.2" /><circle cx="9" cy="17" r="2.2" /></svg>
         </button>
       </header>
@@ -581,7 +581,7 @@ function Cabina({ perfil }) {
       )}
 
       <main className="centro">
-        {vista === "globo" && (
+        {vista === "globo" && config.pistaGlobo && (
           <div className="pista-globo vidrio">
             <p>{!panelAbierto ? t("globo.pistaExplorar") : hayBackend ? t("globo.pistaBackend") : t("globo.pistaSinBackend")}</p>
             <div className="pista-acciones">

@@ -45,6 +45,8 @@ export default {
     buscar: "Search a setting",
     sinResultados: "No setting matches that search.",
     vistasNota: "At least one view always stays on.",
+    pistaGlobo: "Globe help",
+    pistaGloboAyuda: "Card with the hint, the zoom button and the image source",
     perfiles: {
       aria: "Cockpit profile",
       explorar: "Explore",
