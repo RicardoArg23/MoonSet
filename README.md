@@ -27,13 +27,14 @@ en `frontend/src/v2/exportar.js`.
 
 Las líneas del principio que empiezan con `#` son metadatos (sitio, coordenadas, perfil, batería, criterio de luz y
 contacto…), no datos: después viene el encabezado y una fila por hora o por escenario. Para leerlo en Python, se
-saltean con `comment="#"`:
+saltean con `comment="#"`, y `encoding="utf-8-sig"` quita la marca BOM del principio (la que pone el
+archivo para que Excel lea bien los acentos):
 
 ```python
 import pandas
 
-pandas.read_csv(archivo, comment="#", sep=";", decimal=",")  # interfaz en castellano
-pandas.read_csv(archivo, comment="#")                         # interfaz en inglés
+pandas.read_csv(archivo, sep=";", decimal=",", comment="#", encoding="utf-8-sig")  # interfaz en castellano
+pandas.read_csv(archivo, sep=",", comment="#", encoding="utf-8-sig")               # interfaz en inglés
 ```
 
 Desde el panel del sitio, "Ver en herramientas de NASA" abre NASA Moon Trek y LROC QuickMap centrados en el sitio
