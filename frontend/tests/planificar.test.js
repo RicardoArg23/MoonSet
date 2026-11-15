@@ -197,3 +197,13 @@ test("ajustar un valor crea el perfil del planificador y no toca la app ni los p
   assert.equal(reabierto.perfilId, PERFIL_PLAN);
   assert.equal(perfilElegido(reabierto).valores.capacidadKWh, 40);
 });
+
+test("sitios de impacto: los 5 que se estrellaron están marcados, y la marca no cambia ningún cálculo", () => {
+  const impacto = SITIOS.filter((s) => s.sitio.estado === "impacto").map((s) => s.sitio.id).sort();
+  assert.deepEqual(impacto, ["chandrayaan-2-vikram", "hakuto-r-m1", "hakuto-r-m2-resilience", "luna-25", "spaceil-beresheet"]);
+  assert.ok(SITIOS.every((s) => s.sitio.estado === undefined || s.sitio.estado === "impacto"));
+  const opciones = { ...CASO, region: "todos" };
+  const sinMarca = SITIOS.map((s) => ({ ...s, sitio: { ...s.sitio, estado: undefined } }));
+  const resumen = (filas) => filas.map((f) => [f.id, f.sobrevive, f.dia, f.e.minimoPct, f.m.luzPct, f.m.senalPct, f.primera]);
+  assert.deepEqual(resumen(rankear(SITIOS, ROVER, opciones)), resumen(rankear(sinMarca, ROVER, opciones)));
+});

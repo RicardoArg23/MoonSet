@@ -216,6 +216,7 @@
    "categoria": "otros_paises",
    "anio": 2023,
    "aproximado": false,
+   "estado": "impacto",
    "fuente": "NASA / LROC (vía Wikipedia), https://en.wikipedia.org/wiki/Hakuto-R_Mission_1 (23 de mayo de 2023)",
    "horizonte_fuente": "esfera",
    "archivo": "hakuto-r-m1.json"
@@ -228,6 +229,7 @@
    "categoria": "otros_paises",
    "anio": 2025,
    "aproximado": true,
+   "estado": "impacto",
    "fuente": "ispace / NASA LRO, https://www.nasa.gov/missions/lro/nasas-lro-views-ispace-hakuto-r-mission-2-moon-lander-impact-site/ (20 de junio de 2025)",
    "horizonte_fuente": "esfera",
    "archivo": "hakuto-r-m2-resilience.json"
@@ -276,6 +278,7 @@
    "categoria": "otros_paises",
    "anio": 2019,
    "aproximado": false,
+   "estado": "impacto",
    "fuente": "NASA / LROC, https://www.nasa.gov/image-article/vikram-lander-found/ (2 de diciembre de 2019)",
    "horizonte_fuente": "esfera",
    "archivo": "chandrayaan-2-vikram.json"
@@ -288,6 +291,7 @@
    "categoria": "otros_paises",
    "anio": 2023,
    "aproximado": false,
+   "estado": "impacto",
    "fuente": "NASA / LROC, https://www.nasa.gov/humans-in-space/nasas-lro-observes-crater-likely-from-luna-25-impact/ (31 de agosto de 2023)",
    "horizonte_fuente": "esfera",
    "archivo": "luna-25.json"
@@ -300,6 +304,7 @@
    "categoria": "otros_paises",
    "anio": 2019,
    "aproximado": false,
+   "estado": "impacto",
    "fuente": "LROC / NASA / ASU, https://lroc.im-ldi.com/images/1101 (15 de mayo de 2019)",
    "horizonte_fuente": "esfera",
    "archivo": "spaceil-beresheet.json"

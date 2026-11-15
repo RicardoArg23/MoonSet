@@ -68,8 +68,7 @@ data/sitios.json ─► backend/scripts (skyfield + DE421, DEM LOLA) ─► data
 ## Validación
 
 Las posiciones del Sol y la Tierra se compararon con **JPL Horizons** (efemérides DE441, marco lunar `MEAN_ME`) en
-los 13 sitios que tenía el catálogo al validar, en 5 instantes repartidos en 2027 (los 12 sitios sumados después
-todavía no se validaron; se agregan corriendo de nuevo `validar_horizons.py`). El error máximo es de **0,00006° en azimut y 0,00001° en
+los 25 sitios, en 5 instantes repartidos en 2027 (250 comparaciones). El error máximo es de **0,00006° en azimut y 0,00001° en
 elevación**, frente a un umbral de 0,05°; ningún caso lo supera. La tabla completa está en
 [docs/VALIDACION.md](docs/VALIDACION.md) y se regenera con `backend/scripts/validar_horizons.py`. En la app, el sello
 "Validado contra JPL Horizons" abre una página propia con el resumen y las tablas en es/en
@@ -89,8 +88,9 @@ planificador, explicaciones, exportación, enlaces).
 - **Solo 2027.** Los datos y las fechas de llegada son de ese año.
 - **Coordenadas aproximadas.** Connecting Ridge, Macizo Malapert, los bordes de Shackleton y de Gerlache, IM-3 (todavía
   no alunizó) y Hakuto-R M2 están marcados para verificar contra una fuente oficial; la app lo avisa.
-- **Sitios de impacto.** Hakuto-R M1 y M2, Chandrayaan-2 Vikram, Luna-25 y Beresheet se estrellaron. Están en la lista
-  para comparar, y se calculan como si una misión alunizara ahí.
+- **Sitios de impacto.** Hakuto-R M1 y M2, Chandrayaan-2 Vikram, Luna-25 y Beresheet se estrellaron
+  (`"estado": "impacto"` en `data/sitios.json`). Están en la lista para comparar: la app los marca con la etiqueta
+  «Impacto» en el panel y en el ranking, y los calcula como si una misión operara ahí.
 - **Perfiles de batería de ejemplo.** Módulo chico, rover y base usan valores de ejemplo, no de misiones reales.
   Se pueden ajustar todos los campos.
 - **Alrededores** solo para los 4 sitios al sur de 85° S, con la posición del Sol del sitio central.

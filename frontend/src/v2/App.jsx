@@ -18,7 +18,7 @@ import Cajon from "./Cajon";
 import Asa from "./Asa";
 import Tutorial, { useTutorial } from "./Tutorial.jsx"; // con extensión: en Windows "Tutorial" y "tutorial" son el mismo nombre
 import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
-import Planificador, { Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
+import Planificador, { EtiquetaImpacto, Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
 import { HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
 import { explicar } from "./explicar";
 import "./estilos.css";
@@ -747,7 +747,7 @@ function Cabina({ perfil }) {
           <select value={sitio.sitio.id} onChange={(e) => elegirSitio(e.target.value)} aria-label={t("panel.sitioAria")}>
             {sitios.map((s) => <option key={s.sitio.id} value={s.sitio.id}>{nombreCorto(s.sitio)}</option>)}
           </select>
-          <p className="tenue">{coordenadas(sitio.sitio)} · {sitio.horizonte.fuente === "esfera" ? t("panel.sinRelieve") : t("panel.conRelieve")}</p>
+          <p className="tenue">{coordenadas(sitio.sitio)} · {sitio.horizonte.fuente === "esfera" ? t("panel.sinRelieve") : t("panel.conRelieve")}<EtiquetaImpacto sitio={sitio.sitio} /></p>
         </div>
 
         <div className="panel-veredicto" data-tutorial="respuesta">

@@ -117,7 +117,10 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
 - **Con relieve LOLA: 6** (se suma IM-2 Athena, a 84,79° S). Alrededores sigue en 4 (solo al sur de 85° S).
 - Chang'e 4, Chandrayaan-3 e IM-1 pasan a coordenadas verificadas en LROC NAC (`aproximado: false`).
 - `backend/datos/sitios.json` es la copia para la imagen de Docker; `pytest` avisa si difiere de `data/sitios.json`.
-- La validación contra Horizons (`docs/VALIDACION.md`) sigue siendo de los 13 sitios originales.
+- Sitios de impacto: `"estado": "impacto"` en los 5 que se estrellaron. La app muestra la etiqueta «Impacto» / «Crash site»
+  (`EtiquetaImpacto`, en `Planificador.jsx`) en el panel del sitio y en la tarjeta del ranking; no cambia ningún cálculo.
+- Validación contra Horizons de los 25 sitios (`docs/VALIDACION.md`, 250 comparaciones): error máximo 0,00006°, ninguno
+  sobre 0,05°. Solo se consultaron los 12 nuevos y Chandrayaan-3; el resto salió de la caché.
 - `data/precalculado/` (de `precalcular_sitios.py`) ya no lo usa la app y quedó con los 13 sitios.
 
 ## Página de validación (16/11)

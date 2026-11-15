@@ -238,6 +238,8 @@ export default {
     sitioAria: "Landing site",
     sinRelieve: "no terrain data",
     conRelieve: "real terrain",
+    impacto: "Crash site",
+    impactoAyuda: "The mission crashed here; the calculation shows what operating at this point would have been like.",
     luzToda: "Sunlit for the whole mission",
     sobrevive: "Viable",
     noSobrevive: "Not viable",
