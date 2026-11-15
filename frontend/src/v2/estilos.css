@@ -265,7 +265,9 @@ a { color: var(--texto-2); }
 .cinta i { display: block; border-radius: 999px; min-width: 1px; }
 
 /* Sistema de energía: botón con resumen y panel desplegable (Sistema.jsx) */
-.sistema { position: relative; }
+/* En la barra, el resumen del sistema cede lugar (con puntos suspensivos) antes de que el engranaje caiga a otra línea. */
+.sistema { position: relative; min-width: 0; }
+.sistema > button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .sistema > button { height: 48px; padding: 0 18px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .sistema > button[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
 .sistema-icono { color: var(--acento); }

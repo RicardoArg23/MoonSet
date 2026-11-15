@@ -7,8 +7,9 @@ import { IDIOMAS } from "../src/v2/i18n/traductor.js";
 const inicio = { paso: 0, hecho: false, sentido: 1 };
 
 test("cada perfil tiene su recorrido: corto en explorar, completo en planificar", () => {
-  assert.deepEqual(pasosDe("explorar").map((p) => p.id), ["sitio", "respuesta", "duracion", "horizonte", "finExplorar"]);
-  assert.equal(pasosDe("planificar").length, 8);
+  assert.deepEqual(pasosDe("explorar").map((p) => p.id), ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "finExplorar"]);
+  assert.equal(pasosDe("planificar").length, 12);
+  assert.ok(pasosDe("explorar").every((p) => p.necesita !== "plan" && p.accion !== "plan"), "explorar presenta el asistente pero no lo abre");
   assert.deepEqual(pasosDe("otro"), pasosDe("planificar"));
   assert.ok(pasosDe("explorar").every((p) => !["fecha", "sistema", "fijar"].includes(p.objetivo)), "explorar no señala herramientas que no tiene");
 });
@@ -20,6 +21,7 @@ test("todos los pasos tienen sus textos en los dos idiomas, y los que piden una 
         const textos = IDIOMAS[idioma].tutorial.pasos[paso.id];
         assert.ok(textos?.titulo && textos?.texto, `${idioma}: faltan textos de ${paso.id}`);
         assert.equal(Boolean(textos.hace), Boolean(paso.accion), `${idioma}: ${paso.id} y su "hace" no coinciden`);
+        assert.equal(Array.isArray(textos.lista), Boolean(paso.lista), `${idioma}: ${paso.id} y su lista no coinciden`);
       }
     }
   }

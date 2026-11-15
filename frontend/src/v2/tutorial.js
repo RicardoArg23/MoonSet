@@ -7,24 +7,32 @@ export const CLAVE_VISTO = "moonset.tutorial";
  * objetivo: valor de data-tutorial del control que se señala.
  * accion:   lo que la persona tiene que hacer para que el paso se dé por hecho (si falta, es solo para leer).
  * vista:    vista que tiene que estar abierta para que el control exista.
- * necesita: panel flotante que tiene que estar a la vista ("panel" o "dock").
+ * necesita: qué tiene que estar a la vista: "panel" o "dock" (paneles flotantes) o "plan" (el modo planificación abierto).
+ *           Un paso sin "plan" cierra el modo planificación si estaba abierto: el recorrido sigue en la cabina.
+ * lista:    el paso trae además una lista de ítems (tutorial.pasos.<id>.lista).
  */
 const PASO = {
   sitio: { id: "sitio", objetivo: "luna", vista: "globo", accion: "sitio" },
   respuesta: { id: "respuesta", objetivo: "respuesta", necesita: "panel" },
   duracion: { id: "duracion", objetivo: "duracion", accion: "duracion" },
   horizonte: { id: "horizonte", objetivo: "horizonte", accion: "horizonte" },
+  vistas: { id: "vistas", objetivo: "vistas", accion: "vista", lista: true },
   fecha: { id: "fecha", objetivo: "fecha", necesita: "dock", accion: "fecha" },
   sistema: { id: "sistema", objetivo: "sistema" },
+  puntos: { id: "puntos", objetivo: "puntos" },
   fijar: { id: "fijar", objetivo: "fijar", necesita: "panel", accion: "fijar" },
+  astronauta: { id: "astronauta", objetivo: "astronauta", accion: "plan" },
+  astronautaExplorar: { id: "astronautaExplorar", objetivo: "astronauta" },
+  plan: { id: "plan", objetivo: "plan", necesita: "plan" },
   ajustes: { id: "ajustes", objetivo: "ajustes" },
   finExplorar: { id: "finExplorar", objetivo: "ayuda" },
   fin: { id: "fin", objetivo: "ayuda" },
 };
 
 const RECORRIDOS = {
-  explorar: ["sitio", "respuesta", "duracion", "horizonte", "finExplorar"],
-  planificar: ["sitio", "respuesta", "duracion", "fecha", "sistema", "fijar", "ajustes", "fin"],
+  // Explorar: lo mínimo, y el asistente solo presentado (hace preguntas técnicas: no se lo empuja a quien recién mira).
+  explorar: ["sitio", "respuesta", "duracion", "horizonte", "astronautaExplorar", "finExplorar"],
+  planificar: ["sitio", "respuesta", "duracion", "vistas", "fecha", "sistema", "puntos", "fijar", "astronauta", "plan", "ajustes", "fin"],
 };
 
 /** @param {string} perfil "explorar" | "planificar" @returns {typeof PASO.sitio[]} los pasos del recorrido, en orden */

@@ -105,7 +105,7 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
   if (estado.paso === "preguntas" || !estado.ranking) {
     const elegido = perfilElegido(estado);
     return (
-      <form className="plan" onSubmit={(evento) => { evento.preventDefault(); alBuscar(); }}>
+      <form className="plan" data-tutorial="plan" onSubmit={(evento) => { evento.preventDefault(); alBuscar(); }}>
         <div className="plan-titulo">
           <h2>{t("plan.titulo")}</h2>
           <p className="tenue">{t("plan.bajada")}</p>
@@ -267,7 +267,7 @@ export default function Planificador({ estado, alCambiar, alAjustar, totalSitios
   }
 
   return (
-    <div className="plan">
+    <div className="plan" data-tutorial="plan">
       <div className="plan-respuestas">
         <ul aria-label={t("plan.respuestasAria")}>
           <li>{nombrePerfil(r.perfilId)}</li>

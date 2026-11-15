@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { conAccion, irAPaso, marcarTutorialVisto, pasosDe, tutorialVisto } from "./tutorial";
-import { useIdioma } from "./i18n";
+import { rico, useIdioma } from "./i18n";
 import "./tutorial.css";
 
 const PAUSA_HECHO_MS = 950; // se ve el "Hecho" antes de pasar al paso siguiente
@@ -153,6 +153,7 @@ export default function Tutorial({ tutorial, conDock }) {
         </div>
         <h3>{t(`tutorial.pasos.${paso.id}.titulo`)}</h3>
         <p>{t(`tutorial.pasos.${paso.id}.texto`)}</p>
+        {paso.lista && <ul className="tt-lista">{t(`tutorial.pasos.${paso.id}.lista`).map((item) => <li key={item}>{rico(item)}</li>)}</ul>}
         {pide && <p className={`tt-hace${hecho ? " hecho" : ""}`}>{hecho ? <Tilde /> : <Mano />}<span>{hecho ? t("tutorial.hecho") : pide}</span></p>}
         <div className="tt-pie">
           <button type="button" className="tt-salir" onClick={salir}>{t("tutorial.salir")}</button>

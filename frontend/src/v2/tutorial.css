@@ -22,6 +22,11 @@
 .tt-cartel > p { font-size: 14px; color: var(--texto-2); }
 .tt-cartel .tt-hace { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 184, 74, 0.1); color: var(--acento); font-size: 13.5px; }
 .tt-cartel .tt-hace.hecho { background: rgba(123, 220, 162, 0.12); color: var(--bien); }
+.tt-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; }
+.tt-lista li { font-size: 13px; line-height: 1.35; color: var(--texto-2); padding-left: 12px; position: relative; }
+.tt-lista li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 4px; height: 4px; border-radius: 50%; background: var(--acento); }
+.tt-lista b { color: var(--texto); font-weight: 500; }
+.tt-cartel:has(.tt-lista) { width: min(370px, calc(100vw - 20px)); }
 .tt-hace svg { flex: none; width: 15px; height: 15px; }
 .tt-pie { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
 .tt-pie button { min-height: 36px; padding: 0 14px; font-size: 13.5px; border-color: var(--borde); color: var(--texto-2); }

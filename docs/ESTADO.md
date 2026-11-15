@@ -116,6 +116,10 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
   qué tiene que estar a la vista. Los textos van en i18n (`tutorial.pasos.<id>`). La cabina avisa las acciones con
   `tutorial.cumplir("…")`. Si el control está oculto desde Personalizar, el paso se saltea solo.
 - Se recuerda en `localStorage` (`moonset.tutorial`) que la invitación ya se mostró.
+- **Dos recorridos con distinta profundidad**: Explorar (6 pasos) presenta el astronauta como atajo opcional, sin
+  abrirlo, porque sus preguntas (batería, paneles) son técnicas; Planificar (12 pasos) suma la explicación de las
+  cinco vistas (`lista` en el paso), Mis puntos, y hace abrir el astronauta y explica su ranking. Los pasos que no
+  son del planificador cierran su modo si estaba abierto (`necesita: "plan"` lo abre).
 
 ## Idioma y globo con detalle (14/11)
 

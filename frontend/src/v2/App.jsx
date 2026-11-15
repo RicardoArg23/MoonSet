@@ -131,6 +131,9 @@ function Cabina({ perfil }) {
   useEffect(() => {
     if (!pasoTutorial) return;
     if (pasoTutorial.vista) setVista(pasoTutorial.vista);
+    // El modo planificación se abre solo en los pasos que lo muestran; en el resto, el recorrido sigue en la cabina.
+    if (pasoTutorial.necesita === "plan" && !plan.abierto) alternarModoPlan();
+    else if (pasoTutorial.necesita !== "plan" && plan.abierto) cerrarPlan();
     if (pasoTutorial.necesita === "panel") {
       setPanelAbierto(true);
       setPanelPlegado(false);
@@ -459,6 +462,7 @@ function Cabina({ perfil }) {
       cerrarPlan();
       return;
     }
+    tutorial.cumplir("plan");
     plegadoAntes.current = panelPlegado;
     if (vista !== "globo" && vista !== "mapa" && config.vistas.globo) setVista("globo"); // la Luna sigue a la vista
     setEnfoque({ modo: "lejos" });
@@ -618,7 +622,7 @@ function Cabina({ perfil }) {
         <a className="marca vidrio con-ayuda" href="#" aria-label={t("ajustes.inicio")} data-ayuda={t("ajustes.inicio")}>
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
         </a>
-        <button type="button" className={`astronauta vidrio con-ayuda${pulso ? " pulso" : ""}`} aria-pressed={plan.abierto} aria-label={t("plan.boton")} data-ayuda={t(plan.abierto ? "plan.cerrar" : "plan.boton")} onClick={alternarModoPlan}>
+        <button type="button" className={`astronauta vidrio con-ayuda${pulso ? " pulso" : ""}`} data-tutorial="astronauta" aria-pressed={plan.abierto} aria-label={t("plan.boton")} data-ayuda={t(plan.abierto ? "plan.cerrar" : "plan.boton")} onClick={alternarModoPlan}>
           <IconoAstronauta />
         </button>
         {/* La duración se ve siempre, en cualquier perfil: sin ella "sobrevive" no dice a qué. */}
@@ -626,7 +630,7 @@ function Cabina({ perfil }) {
           <label>{t("parametros.misionDe")}<input type="number" min="1" max="30" value={duracionDias} onChange={(e) => cambiarDuracion(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />{t("parametros.dias")}</label>
         </div>
         {config.herramientas.parametros && <Sistema sistema={sistema} perfilId={perfilId} alElegirPerfil={elegirPerfil} alCambiar={cambiarSistema} margenCom={margenCom} alCambiarMargen={setMargenCom} />}
-        {config.herramientas.puntos && <div className="puntos">
+        {config.herramientas.puntos && <div className="puntos" data-tutorial="puntos">
           <button type="button" className="vidrio" aria-expanded={verPuntos} onClick={() => setVerPuntos((v) => !v)}>
             {t("puntos.titulo")}{guardados.length > 0 ? ` · ${guardados.length}` : ""}{prueba && <i className="punto-aviso" aria-hidden="true" />}
           </button>
@@ -670,7 +674,7 @@ function Cabina({ perfil }) {
         </div>}
         {/* Las vistas van siempre al final, a la derecha: sumar herramientas no las corre de lugar. */}
         {VISTAS.some((v) => config.vistas[v]) && (
-          <nav className="vistas vidrio" aria-label={t("vistas.aria")}>
+          <nav className="vistas vidrio" aria-label={t("vistas.aria")} data-tutorial="vistas">
             {VISTAS.filter((v) => config.vistas[v]).map((v) => {
               // aria-disabled en vez de disabled: el botón sigue mostrando el tooltip y se puede enfocar.
               const bloqueada = v === "alrededores" && sinVecindad;
@@ -685,6 +689,7 @@ function Cabina({ perfil }) {
                   onClick={() => {
                     if (bloqueada) return;
                     setVista(v);
+                    tutorial.cumplir("vista");
                     if (v === "horizonte") tutorial.cumplir("horizonte");
                   }}
                 >
