@@ -110,6 +110,16 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
   `?clasico`) y el menú lateral.
 - Chequeos: `npm test` (incluye `tests/ajustes.test.js`), `node scripts/probar-i18n.mjs`, `npm run build`.
 
+## Más sitios (rama `mas-sitios`)
+
+- El catálogo pasa de 13 a **25 sitios**: IM-2 Athena, Blue Ghost M1, IM-3, JAXA SLIM, Hakuto-R M1 y M2, Chang'e 3, 5 y 6,
+  Chandrayaan-2 Vikram, Luna-25 y Beresheet. Los marcados «· impacto» se estrellaron: quedan para comparar.
+- **Con relieve LOLA: 6** (se suma IM-2 Athena, a 84,79° S). Alrededores sigue en 4 (solo al sur de 85° S).
+- Chang'e 4, Chandrayaan-3 e IM-1 pasan a coordenadas verificadas en LROC NAC (`aproximado: false`).
+- `backend/datos/sitios.json` es la copia para la imagen de Docker; `pytest` avisa si difiere de `data/sitios.json`.
+- La validación contra Horizons (`docs/VALIDACION.md`) sigue siendo de los 13 sitios originales.
+- `data/precalculado/` (de `precalcular_sitios.py`) ya no lo usa la app y quedó con los 13 sitios.
+
 ## Página de validación (16/11)
 
 El sello «Validado contra JPL Horizons» abre `validacion.html`, una página de la propia app (resumen, tablas global y por

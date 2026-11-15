@@ -25,6 +25,18 @@ export default {
     "borde-shackleton": "Shackleton rim",
     "borde-de-gerlache": "de Gerlache rim",
     "malapert-massif": "Malapert Massif (Artemis III region)",
+    "im-2-athena": "IM-2 Athena — Mons Mouton (CLPS)",
+    "blue-ghost-m1": "Firefly Blue Ghost M1 — Mare Crisium (CLPS)",
+    "im-3": "IM-3 — Reiner Gamma (CLPS)",
+    "jaxa-slim": "JAXA SLIM — Shioli crater (Japan)",
+    "hakuto-r-m1": "ispace Hakuto-R M1 — Atlas crater (Japan) · impact",
+    "hakuto-r-m2-resilience": "ispace Hakuto-R M2 Resilience — Mare Frigoris (Japan) · impact",
+    "change-5": "Chang'e 5 — Mons Rümker / Oceanus Procellarum (China)",
+    "change-6": "Chang'e 6 — Apollo basin (China)",
+    "change-3": "Chang'e 3 — Mare Imbrium (China)",
+    "chandrayaan-2-vikram": "Chandrayaan-2 Vikram — southern highlands (India) · impact",
+    "luna-25": "Luna-25 — Pontécoulant G crater (Russia) · impact",
+    "spaceil-beresheet": "SpaceIL Beresheet — Mare Serenitatis (Israel) · impact",
   },
 
   app: {

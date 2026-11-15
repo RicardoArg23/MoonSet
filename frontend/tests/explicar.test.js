@@ -70,7 +70,7 @@ test("regla 1, variantes: sin noche, o con una noche que la batería sí cubre, 
 test("regla 2, sin contacto: en la cara oculta la Tierra nunca supera 0° en 2027", () => {
   const sitio = SITIOS["change-4"];
   const c = caso(sitio, CHICO, "2027-05-02");
-  assert.deepEqual(c.reglas, ["sinContacto", "luzToda", "aproximado"]);
+  assert.deepEqual(c.reglas, ["sinContacto", "luzToda"]); // coordenadas verificadas en LROC NAC: sin "aproximado"
   cerca(c.de("sinContacto").params.el, -37.73);
   assert.equal(c.de("sinContacto").params.el, elevacionMaxTierra(sitio));
   assert.ok(Math.max(...sitio.tierra_el) < 0);
@@ -119,8 +119,10 @@ test("regla 5, sobrevive con poco margen: batería mínima por debajo del 40 %",
 });
 
 test("regla 6, coordenadas aproximadas: solo en los sitios marcados", () => {
-  assert.equal(caso(SITIOS["change-4"], CHICO, "2027-05-02").reglas.at(-1), "aproximado");
+  assert.equal(SITIOS["malapert-massif"].sitio.aproximado, true);
+  assert.deepEqual(caso(SITIOS["malapert-massif"], ROVER, "2027-05-02").reglas, ["noSobrevive", "solRasante", "aproximado"]);
   assert.ok(!caso(SITIOS["apollo-11"], CHICO, "2027-05-02").reglas.includes("aproximado"));
+  assert.ok(!caso(SITIOS["change-4"], CHICO, "2027-05-02").reglas.includes("aproximado")); // verificado en LROC NAC
 });
 
 test("devuelve como mucho tres frases, en orden de prioridad", () => {

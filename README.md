@@ -16,8 +16,8 @@ Proyecto para el **NASA Space Apps Challenge 2026**, desafío *Lunar Landing Sit
 Al entrar elegís un perfil: **Explorar** (lo esencial, en lenguaje simple) o **Planificar** (todas las vistas y
 cifras). La interfaz está en español e inglés, y un tutorial guiado presenta cada parte la primera vez.
 
-- **Explorar la Luna.** Un globo 3D con 13 sitios (Apollo, Artemis, CLPS, Chang'e 4, Chandrayaan-3) y un mapa del
-  polo sur, coloreados según si la misión es viable en la fecha elegida. Al tocar un sitio, el panel dice si la
+- **Explorar la Luna.** Un globo 3D con 25 sitios (Apollo, Artemis, CLPS y misiones de China, India, Japón, Israel
+  y Rusia, incluidas algunas que se estrellaron) y un mapa del polo sur, coloreados según si la misión es viable en la fecha elegida. Al tocar un sitio, el panel dice si la
   misión es viable o inviable, cuánta luz y cuánto contacto con la Tierra tiene, y por qué. Con el backend se puede probar cualquier
   punto propio.
 - **Planificar con el astronauta.** Cuatro preguntas (qué llevás, dónde, cuándo ± cuántos días, cuánto dura) y un
@@ -51,7 +51,7 @@ cifras). La interfaz está en español e inglés, y un tutorial guiado presenta 
    Tierra está sobre el relieve (con un margen mínimo opcional para la antena).
 4. **Energía.** Se simula la batería hora por hora: paneles, consumo de día y de noche, calefacción, eficiencia,
    autodescarga y reserva. La misión sobrevive si la batería nunca baja de la reserva.
-5. **Dónde corre.** Los 13 sitios están precalculados en JSON (`data/anual/`) y las métricas se calculan en el
+5. **Dónde corre.** Los 25 sitios están precalculados en JSON (`data/anual/`) y las métricas se calculan en el
    navegador: cambiar la fecha, la duración o la batería es instantáneo y no hace falta servidor. El backend
    (FastAPI) solo se usa para coordenadas propias (`GET /anual?lat=&lon=`).
 
@@ -68,7 +68,8 @@ data/sitios.json ─► backend/scripts (skyfield + DE421, DEM LOLA) ─► data
 ## Validación
 
 Las posiciones del Sol y la Tierra se compararon con **JPL Horizons** (efemérides DE441, marco lunar `MEAN_ME`) en
-los 13 sitios, en 5 instantes repartidos en 2027. El error máximo es de **0,00006° en azimut y 0,00001° en
+los 13 sitios que tenía el catálogo al validar, en 5 instantes repartidos en 2027 (los 12 sitios sumados después
+todavía no se validaron; se agregan corriendo de nuevo `validar_horizons.py`). El error máximo es de **0,00006° en azimut y 0,00001° en
 elevación**, frente a un umbral de 0,05°; ningún caso lo supera. La tabla completa está en
 [docs/VALIDACION.md](docs/VALIDACION.md) y se regenera con `backend/scripts/validar_horizons.py`. En la app, el sello
 "Validado contra JPL Horizons" abre una página propia con el resumen y las tablas en es/en
@@ -81,17 +82,20 @@ planificador, explicaciones, exportación, enlaces).
 
 ## Limitaciones
 
-- **Relieve real solo al sur de 80° S.** El DEM de LOLA de 80 m cubre de 80° S al polo: 5 de los 13 sitios. Los otros
-  8 (los 6 Apollo, Chang'e 4 y Chandrayaan-3), y cualquier punto más al norte, usan la esfera lisa, y el panel lo
+- **Relieve real solo al sur de 80° S.** El DEM de LOLA de 80 m cubre de 80° S al polo: 6 de los 25 sitios (IM-1,
+  IM-2, Connecting Ridge, Macizo Malapert y los bordes de Shackleton y de Gerlache). Los otros 19, y cualquier punto
+  más al norte, usan la esfera lisa, y el panel lo
   indica ("sin relieve"). Cerca de 80° S el relieve solo cubre hacia el polo.
 - **Solo 2027.** Los datos y las fechas de llegada son de ese año.
-- **Coordenadas aproximadas.** Chang'e 4, Chandrayaan-3, IM-1, Connecting Ridge, Macizo Malapert y los bordes de
-  Shackleton y de Gerlache están marcados para verificar contra una fuente oficial; la app lo avisa.
+- **Coordenadas aproximadas.** Connecting Ridge, Macizo Malapert, los bordes de Shackleton y de Gerlache, IM-3 (todavía
+  no alunizó) y Hakuto-R M2 están marcados para verificar contra una fuente oficial; la app lo avisa.
+- **Sitios de impacto.** Hakuto-R M1 y M2, Chandrayaan-2 Vikram, Luna-25 y Beresheet se estrellaron. Están en la lista
+  para comparar, y se calculan como si una misión alunizara ahí.
 - **Perfiles de batería de ejemplo.** Módulo chico, rover y base usan valores de ejemplo, no de misiones reales.
   Se pueden ajustar todos los campos.
 - **Alrededores** solo para los 4 sitios al sur de 85° S, con la posición del Sol del sitio central.
 - **Imágenes del globo.** El mosaico es una foto promedio: sus sombras no son las de la fecha elegida.
-- **Puntos propios** solo con el backend encendido; sin él la app funciona con los 13 sitios precalculados.
+- **Puntos propios** solo con el backend encendido; sin él la app funciona con los 25 sitios precalculados.
 
 ## Recursos usados
 
@@ -108,7 +112,28 @@ planificador, explicaciones, exportación, enlaces).
 | NASA Moon Trek | Teselas del globo y enlaces al sitio | NASA Solar System Treks |
 | LROC QuickMap | Enlaces al sitio | [LROC, Arizona State University](https://quickmap.lroc.im-ldi.com/) |
 | Blue Marble Next Generation | La Tierra en la pantalla de inicio | NASA Earth Observatory |
-| Coordenadas de los sitios | `data/sitios.json` | NASA (módulos lunares Apollo), CNSA (Chang'e 4), ISRO (Chandrayaan-3), Intuitive Machines / NASA CLPS (IM-1), zona LROC MALAPERTLOD |
+| Coordenadas de los sitios | `data/sitios.json` | Ver la lista de abajo |
+
+Coordenadas de los sitios (cada una está también en el campo `fuente` de `data/sitios.json`):
+
+- Apollo 11, 12, 14, 15, 16 y 17: NASA, coordenadas de los módulos lunares.
+- IM-1 Odysseus: NASA / LROC, [USRA LEAG 2024](https://www.hou.usra.edu/meetings/leag2024/presentations/Tuesday/1445_Gruener.pdf).
+- IM-2 Athena: LROC / [Orrery Space](https://orreryspace.com/landing-sites/im2/).
+- IM-3: NASA PRISM / JHU APL, [LPSC 2025](https://www.hou.usra.edu/meetings/lpsc2025/pdf/1233.pdf) (sitio previsto).
+- Firefly Blue Ghost M1: [LROC / NASA / ASU, imagen 1407](https://lroc.im-ldi.com/images/1407).
+- Chang'e 3: [LROC / NASA / ASU, imagen 938](https://lroc.im-ldi.com/images/938).
+- Chang'e 4: Liu et al., *Nature Communications* 2019 (LROC NAC).
+- Chang'e 5: Wang et al., *Remote Sensing* 2021, [LROC NAC DOM](https://www.mdpi.com/2072-4292/13/4/590).
+- Chang'e 6: [LROC / NASA / ASU, imagen 1374](https://lroc.im-ldi.com/images/1374).
+- Chandrayaan-3: [LROC / NASA / ASU, imagen 1314](https://lroc.im-ldi.com/images/1314).
+- Chandrayaan-2 Vikram: [NASA / LROC](https://www.nasa.gov/image-article/vikram-lander-found/).
+- JAXA SLIM: [NASA / LROC](https://www.nasa.gov/missions/lro/nasas-lro-spots-japans-moon-lander/).
+- ispace Hakuto-R M1: NASA / LROC, vía [Wikipedia](https://en.wikipedia.org/wiki/Hakuto-R_Mission_1).
+- ispace Hakuto-R M2 Resilience: [ispace / NASA LRO](https://www.nasa.gov/missions/lro/nasas-lro-views-ispace-hakuto-r-mission-2-moon-lander-impact-site/).
+- Luna-25: [NASA / LROC](https://www.nasa.gov/humans-in-space/nasas-lro-observes-crater-likely-from-luna-25-impact/).
+- SpaceIL Beresheet: [LROC / NASA / ASU, imagen 1101](https://lroc.im-ldi.com/images/1101).
+- Connecting Ridge, Macizo Malapert y los bordes de Shackleton y de Gerlache: puntos elegidos sobre el DEM de LOLA
+  (Malapert, dentro de la zona LROC MALAPERTLOD).
 
 Opcional, no usado en la versión publicada: el mosaico LOLA de 5 m/píxel del polo
 ([pgda.gsfc.nasa.gov/products/81](https://pgda.gsfc.nasa.gov/products/81)), que el backend lee si está.
@@ -149,7 +174,7 @@ cálculos de la propia app.
 
 Requisitos: Python 3.11+ y Node 18+.
 
-**Solo la interfaz (sin backend).** Usa los 13 sitios precalculados que ya están en `data/`:
+**Solo la interfaz (sin backend).** Usa los 25 sitios precalculados que ya están en `data/`:
 
 ```bash
 cd frontend
@@ -241,7 +266,7 @@ MIT
 
 ## Deploy
 
-El frontend es estático y el backend es opcional: sin backend la página funciona con los 13 sitios
+El frontend es estático y el backend es opcional: sin backend la página funciona con los 25 sitios
 precalculados; con backend se suman los puntos propios (`GET /anual`).
 
 ### Frontend en Vercel
