@@ -157,9 +157,8 @@ a { color: var(--texto-2); }
 .nasa-botones { display: flex; flex-wrap: wrap; gap: 8px; }
 .boton { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border: 1px solid var(--borde-fuerte); border-radius: 999px; font-size: 13px; color: var(--texto); text-decoration: none; }
 .boton:hover { border-color: rgba(255, 255, 255, 0.5); }
-.nasa-horizons { display: inline-flex; align-items: center; gap: 6px; }
-.nasa .segmentos { display: inline-flex; padding: 2px; border-radius: 999px; background: var(--relleno); }
-.nasa .segmentos button { min-height: 28px; padding: 0 10px; border: 0; font-size: 12px; }
+.sello-validacion { flex: 0 0 auto; align-self: flex-start; margin-top: 10px; font-size: 12px; color: var(--bien); text-decoration: none; border-bottom: 1px dotted currentColor; }
+.sello-validacion:hover { color: var(--texto); }
 .nasa-coordenadas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 12px; color: var(--tenue); }
 .nasa-coordenadas code { font-size: 12px; color: var(--texto-2); }
 .nasa-coordenadas button { min-height: 26px; padding: 0 10px; font-size: 12px; }

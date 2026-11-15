@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cargarMapa } from "./datos";
 import { evaluarVecindadEnergia } from "./energia";
+import { invertirSur, proyectarSur } from "./globo/teselas";
 import { rico, useIdioma } from "./i18n";
 
 // Mapa 2D del polo sur visto desde arriba.
@@ -14,16 +15,15 @@ const MERIDIANOS = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 const ESCALAS_KM = [0.5, 1, 2, 5, 10, 20, 50, 100];
 const ANCHO_MIN_M = 3_000;
 
+// La proyección es proyectarSur (globo/teselas.js), la misma que usan los enlaces polares a Moon Trek y
+// QuickMap; acá solo se da vuelta la y para el SVG.
 export function proyectar(lat, lon) {
-  const r = 2 * R * Math.tan(Math.PI / 4 + (lat * RAD) / 2);
-  return [r * Math.sin(lon * RAD), -r * Math.cos(lon * RAD)];
+  const [x, y] = proyectarSur(lat, lon);
+  return [x, -y];
 }
 
 export function invertir(sx, sy) {
-  const r = Math.hypot(sx, sy);
-  const lat = (2 * Math.atan(r / (2 * R)) - Math.PI / 2) / RAD;
-  const lon = ((Math.atan2(sx, -sy) / RAD) % 360 + 360) % 360;
-  return { lat, lon };
+  return invertirSur(sx, -sy);
 }
 
 // Punto desplazado (este, norte) metros desde (lat, lon), sobre la esfera. Igual que precalcular_vecindad.py.
