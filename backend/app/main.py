@@ -2,10 +2,12 @@
 
 Correr en desarrollo (desde la carpeta backend/):
     uvicorn app.main:app --reload
+Para una demo, sin --reload: cada cambio de archivo reinicia el proceso y se pierde lo precalentado.
 Documentación interactiva: http://127.0.0.1:8000/docs
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Query
@@ -14,14 +16,23 @@ from pydantic import BaseModel, Field
 
 from . import config
 from .anual import DIAS_MAX, construir_anual
+from .precalentar import precalentar
 from .servicio import ConsultaInvalida, evaluar
 from .sitios import buscar_sitio, cargar_sitios
+
+@asynccontextmanager
+async def ciclo_de_vida(_app: FastAPI):
+    # Al arrancar: kernels, scipy y el DEM en memoria, para que el primer pedido no pague el arranque.
+    precalentar()
+    yield
+
 
 app = FastAPI(
     title="MoonSet API",
     description="Posición del Sol y la Tierra sobre el horizonte lunar, con métricas de energía "
                 "y comunicación. NASA Space Apps 2026 — Lunar Landing Site Navigator.",
     version="0.1.0",
+    lifespan=ciclo_de_vida,
 )
 app.add_middleware(
     CORSMiddleware,
@@ -95,5 +106,5 @@ def anual_coordenadas(
     sitio = {"id": f"coord:{lat:.4f},{lon:.4f}", "nombre": f"Punto propio {abs(lat):.2f}° {'S' if lat < 0 else 'N'}, {lon % 360:.2f}° E",
              "lat": lat, "lon": lon, "categoria": "personalizado", "anio": None, "aproximado": False,
              "fuente": "Coordenadas ingresadas por el usuario"}
-    datos, _ = construir_anual(sitio, inicio, dias, altura_m)
+    datos, _ = construir_anual(sitio, inicio, dias, altura_m, subpuntos=False)  # no se devuelven
     return datos

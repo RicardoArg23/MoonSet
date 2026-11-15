@@ -45,12 +45,15 @@ def _subpunto(vectores: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return lat, lon
 
 
-def calcular_posiciones(lat: float, lon: float, inicio: datetime, dias: float, paso_horas: float) -> dict:
+def calcular_posiciones(lat: float, lon: float, inicio: datetime, dias: float, paso_horas: float,
+                        subpuntos: bool = True) -> dict:
     """Azimut y elevación del Sol y la Tierra desde (lat, lon), cada `paso_horas`.
 
     - Azimut: 0° = norte, 90° = este (sentido horario, como una brújula).
     - Elevación: grados sobre el horizonte matemático (plano), sin relieve.
     - Longitud en grados este; se aceptan -180..360.
+    - subpuntos: calcular también los puntos subsolar y subterrestre (para iluminar el globo).
+      Con False no se calculan y no aparecen en el resultado; el resto no cambia.
     """
     ts, eph, pc, marco = _contexto()
     lat = float(np.clip(lat, -89.9999, 89.9999))  # en el polo exacto el azimut no está definido
@@ -66,14 +69,15 @@ def calcular_posiciones(lat: float, lon: float, inicio: datetime, dias: float, p
     sol_alt, sol_az, _ = desde_sitio.observe(sol).apparent().altaz()
     tie_alt, tie_az, tie_dist = desde_sitio.observe(tierra).apparent().altaz()
 
-    # Puntos subsolar y subterrestre: útiles para iluminar el globo 3D en el frontend
-    sub_sol = _subpunto((sol - luna).at(t).frame_xyz(marco).au)
-    sub_tie = _subpunto((tierra - luna).at(t).frame_xyz(marco).au)
-
-    return {
+    resultado = {
         "tiempos": list(t.utc_strftime("%Y-%m-%dT%H:%M:%SZ")),
         "sol": {"elevacion": sol_alt.degrees, "azimut": sol_az.degrees},
         "tierra": {"elevacion": tie_alt.degrees, "azimut": tie_az.degrees, "distancia_km": tie_dist.km},
-        "subsolar": {"lat": sub_sol[0], "lon": sub_sol[1]},
-        "subterrestre": {"lat": sub_tie[0], "lon": sub_tie[1]},
     }
+    if subpuntos:
+        # Puntos subsolar y subterrestre: útiles para iluminar el globo 3D en el frontend
+        sub_sol = _subpunto((sol - luna).at(t).frame_xyz(marco).au)
+        sub_tie = _subpunto((tierra - luna).at(t).frame_xyz(marco).au)
+        resultado["subsolar"] = {"lat": sub_sol[0], "lon": sub_sol[1]}
+        resultado["subterrestre"] = {"lat": sub_tie[0], "lon": sub_tie[1]}
+    return resultado
