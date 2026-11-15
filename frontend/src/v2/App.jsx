@@ -16,7 +16,7 @@ import { PERFILES_BASE, PERSONALIZADO, VISTAS, borrarPersonalizado, configDePerf
 import { ANGOSTO, useMedia } from "./useMedia";
 import Cajon from "./Cajon";
 import Asa from "./Asa";
-import Tutorial, { useTutorial } from "./Tutorial";
+import Tutorial, { useTutorial } from "./Tutorial.jsx"; // con extensión: en Windows "Tutorial" y "tutorial" son el mismo nombre
 import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import Planificador, { Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
 import { HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";

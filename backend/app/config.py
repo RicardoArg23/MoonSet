@@ -39,5 +39,6 @@ MAX_MUESTRAS = 10_000
 # Orígenes permitidos para el frontend.
 # - Producción: MOONSET_CORS con la lista exacta, separada por comas. Si está, es lo único que se acepta.
 # - Desarrollo (sin MOONSET_CORS): cualquier puerto de localhost, así Vite puede usar otro que no sea el 5173.
-CORS_ORIGINS = [o.strip() for o in os.getenv("MOONSET_CORS", "").split(",") if o.strip()]
+# El navegador manda el origen sin barra final: "https://moon-set.vercel.app/" se toma igual que sin barra.
+CORS_ORIGINS = [o.strip().rstrip("/") for o in os.getenv("MOONSET_CORS", "").split(",") if o.strip()]
 CORS_ORIGEN_LOCAL = None if CORS_ORIGINS else r"http://(localhost|127\.0\.0\.1):\d+"

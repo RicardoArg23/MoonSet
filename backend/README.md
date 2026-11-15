@@ -19,7 +19,7 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
-python scripts/descargar_datos.py   # baja ~20 MB de kernels de NASA/JPL a backend/kernels/
+python scripts/descargar_datos.py   # kernels de NASA/JPL (~18 MB) y DEM LOLA 80 m (115 MB) a data/raw/
 ```
 
 ## Uso

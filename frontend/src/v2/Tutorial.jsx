@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { conAccion, irAPaso, marcarTutorialVisto, pasosDe, tutorialVisto } from "./tutorial";
+import { conAccion, irAPaso, marcarTutorialVisto, pasosDe, tutorialVisto } from "./tutorial.js";
 import { rico, useIdioma } from "./i18n";
 import "./tutorial.css";
 
