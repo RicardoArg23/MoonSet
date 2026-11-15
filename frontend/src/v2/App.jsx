@@ -18,7 +18,7 @@ import Cajon from "./Cajon";
 import Asa from "./Asa";
 import { BarraProgreso, PanelPendiente, VistaPendiente } from "./CargaPunto";
 import Planificador, { Explicaciones, IconoAstronauta, PestanasPlan } from "./Planificador";
-import { HORA_LLEGADA, MEJORES, evaluarSitio, ordenarRanking, sitiosDeRegion } from "./planificar";
+import { HORA_LLEGADA, MEJORES, ajustarSistema, alternarPlan, estadoInicialPlan, evaluarSitio, ordenarRanking, perfilElegido, perfilParaApp, sitiosDeRegion } from "./planificar";
 import { explicar } from "./explicar";
 import "./estilos.css";
 
@@ -134,9 +134,9 @@ function Cabina({ perfil }) {
   const [enfoque, setEnfoque] = useState({ modo: "lejos" }); // a qué altura lleva el globo la cámara
   const [detalle, setDetalle] = useState({ capa: "wac", metrosPorPixel: BASE_METROS_POR_PIXEL }); // imagen que se ve en el globo
   const ajustesRef = useRef(null);
-  // Modo planificación (Planificador.jsx). Tiene sus propias respuestas: no toca el sitio, la fecha, la duración
-  // ni el perfil de la app hasta "Ver en la app". perfilId, dia y duracionDias se completan al abrirlo por primera vez.
-  const [plan, setPlan] = useState({ abierto: false, pestana: "planificar", paso: "preguntas", perfilId: null, region: "polo", dia: null, tolerancia: 3, duracionDias: null, ranking: null, abierta: null, sobre: null, hilo: [] });
+  // Modo planificación (Planificador.jsx, estado en planificar.js). Tiene sus propias respuestas y su propio sistema
+  // de energía: no toca el sitio, la fecha, la duración ni el perfil de la app hasta "Ver en la app".
+  const [plan, setPlan] = useState(estadoInicialPlan);
   const cambiarPlan = (cambios) => setPlan((p) => ({ ...p, ...cambios }));
   const [buscando, setBuscando] = useState(false);
   const [progresoPlan, setProgresoPlan] = useState(null); // barra del ranking: { n, estado }
@@ -422,28 +422,29 @@ function Cabina({ perfil }) {
   }
 
   // ---------- modo planificación ----------
-  // Perfiles que ofrece "¿Qué llevás?": los de la lista y, si la app está en uno personalizado, ese.
-  const perfilesPlan = [...PERFILES.map((p) => ({ id: p.id, valores: p.valores })), ...(perfilId === PERFIL_PERSONALIZADO ? [{ id: PERFIL_PERSONALIZADO, valores: sistema }] : [])];
   const enPlan = plan.abierto && plan.pestana === "planificar";
   const filasPlan = plan.abierto ? plan.ranking?.filas ?? null : null;
-  // Un toque en el astronauta abre el modo (o vuelve a él) en el ranking si ya hay uno, sin perder las respuestas.
-  function abrirPlan() {
-    if (!plan.abierto) {
-      plegadoAntes.current = panelPlegado;
-      if (vista !== "globo" && vista !== "mapa" && config.vistas.globo) setVista("globo"); // la Luna sigue a la vista
-      setEnfoque({ modo: "lejos" });
+  // El astronauta alterna: cerrado, abre la pestaña Planificar (en el ranking si ya hay uno); abierto, en cualquier
+  // pestaña, cierra igual que la X. Las respuestas y el ranking se conservan.
+  function alternarModoPlan() {
+    if (plan.abierto) {
+      cerrarPlan();
+      return;
     }
+    plegadoAntes.current = panelPlegado;
+    if (vista !== "globo" && vista !== "mapa" && config.vistas.globo) setVista("globo"); // la Luna sigue a la vista
+    setEnfoque({ modo: "lejos" });
     setPanelPlegado(false);
-    setPlan((p) => ({ ...p, abierto: true, pestana: "planificar", paso: p.ranking ? "ranking" : "preguntas", perfilId: p.perfilId ?? perfilId, dia: p.dia ?? dia, duracionDias: p.duracionDias ?? duracionDias, sobre: null }));
+    setPlan((p) => alternarPlan(p, { perfilId, sistema, dia }));
   }
   function cerrarPlan() {
-    setPlan((p) => ({ ...p, abierto: false, sobre: null }));
+    setPlan((p) => (p.abierto ? alternarPlan(p, { perfilId, sistema, dia }) : p));
     setPanelPlegado(plegadoAntes.current);
     setAvisoComparar(null);
   }
   // Arma el ranking sitio por sitio, cediendo el hilo entre uno y otro: si tarda, la barra de carga puede avanzar.
   async function buscarSitios() {
-    const opcion = perfilesPlan.find((p) => p.id === plan.perfilId) ?? perfilesPlan[0];
+    const opcion = perfilElegido(plan);
     const opciones = { region: plan.region, dia: plan.dia, tolerancia: plan.tolerancia, duracionH: plan.duracionDias * 24 };
     const precalculados = new Set(base.map((s) => s.sitio.id)); // los puntos propios no entran
     const candidatos = sitiosDeRegion(sitios.filter((s) => precalculados.has(s.sitio.id)), plan.region);
@@ -476,9 +477,12 @@ function Cabina({ perfil }) {
     elegirSitio(fila.id);
     cambiarLlegada(fila.dia, HORA_LLEGADA);
     setDuracionDias(r.duracionDias);
-    setPerfilId(r.perfilId);
-    setSistema(r.sistema);
+    aplicarPerfil(perfilParaApp(r)); // también los valores ajustados en el planificador
     setPlan((p) => ({ ...p, pestana: "sitio", sobre: null }));
+  }
+  function aplicarPerfil({ perfilId: id, sistema: valores }) {
+    setPerfilId(id);
+    setSistema(valores);
   }
   // "Comparar los 3 mejores": Comparar usa una sola duración y un solo perfil, así que también se aplican los del
   // plan. Si había escenarios fijados se avisa y se puede deshacer todo.
@@ -487,8 +491,7 @@ function Cabina({ perfil }) {
     const previo = { fijados, duracionDias, perfilId, sistema, vista };
     setFijados(r.filas.slice(0, MEJORES).map((fila) => ({ sitioId: fila.id, dia: fila.dia, horaLlegada: HORA_LLEGADA })));
     setDuracionDias(r.duracionDias);
-    setPerfilId(r.perfilId);
-    setSistema(r.sistema);
+    aplicarPerfil(perfilParaApp(r));
     setVista("comparar");
     setAvisoComparar(fijados.length > 0 ? { n: fijados.length, previo } : null);
   }
@@ -508,6 +511,22 @@ function Cabina({ perfil }) {
   }
   // Lo que el globo y el mapa muestran del plan: qué sitios sobreviven, cuál se resalta y si se mira al polo sur.
   const resaltado = enPlan && plan.paso === "ranking" && filasPlan ? plan.sobre ?? plan.abierta : null;
+  // La línea de tiempo en vista previa: el sitio de la tarjeta desplegada (o la que tiene el mouse encima) con el perfil
+  // y la duración del plan. Llega a Dock por props; el estado de la app no cambia.
+  const filaPrevia = resaltado ? filasPlan.find((fila) => fila.id === resaltado) : null;
+  const previa = filaPrevia && (() => {
+    const r = plan.ranking;
+    const duracionPrevia = r.duracionDias * 24;
+    return {
+      sitio: filaPrevia.sitio,
+      dia: filaPrevia.dia,
+      duracionDias: r.duracionDias,
+      duracionH: duracionPrevia,
+      sistema: r.sistema,
+      energia: evaluarEnergia(filaPrevia.sitio, r.sistema, filaPrevia.dia * 24 + HORA_LLEGADA, duracionPrevia),
+      marcas: { nombre: nombreCorto(filaPrevia.sitio.sitio), desde: Math.max(0, r.dia - r.tolerancia), hasta: Math.min(364, r.dia + r.tolerancia), elegido: r.dia },
+    };
+  })();
   const planLuna = !plan.abierto ? null : {
     estados: new Map((filasPlan ?? []).map((fila) => [fila.id, fila.sobrevive])),
     enPestana: enPlan,
@@ -568,7 +587,7 @@ function Cabina({ perfil }) {
         <a className="marca vidrio con-ayuda" href="#" aria-label={t("ajustes.inicio")} data-ayuda={t("ajustes.inicio")}>
           <img src={`${import.meta.env.BASE_URL}marca/moonset-imagotipo.png`} alt="MoonSet" width="509" height="184" />
         </a>
-        <button type="button" className={`astronauta vidrio con-ayuda${pulso ? " pulso" : ""}`} aria-pressed={plan.abierto} aria-label={t("plan.boton")} data-ayuda={t("plan.boton")} onClick={abrirPlan}>
+        <button type="button" className={`astronauta vidrio con-ayuda${pulso ? " pulso" : ""}`} aria-pressed={plan.abierto} aria-label={t("plan.boton")} data-ayuda={t(plan.abierto ? "plan.cerrar" : "plan.boton")} onClick={alternarModoPlan}>
           <IconoAstronauta />
         </button>
         {config.herramientas.parametros && (
@@ -643,7 +662,7 @@ function Cabina({ perfil }) {
           <Planificador
             estado={plan}
             alCambiar={cambiarPlan}
-            perfiles={perfilesPlan}
+            alAjustar={(cambios) => setPlan((p) => ajustarSistema(p, cambios))}
             totalSitios={base.length}
             t0={base[0].t0}
             buscando={buscando}
@@ -872,20 +891,37 @@ function Cabina({ perfil }) {
         )}
       </main>
 
-      {config.herramientas.lineaTiempo && !plegarDock && <Dock
-        esperando={pendiente !== null}
-        sitio={sitio}
-        dia={dia}
-        horaLlegada={horaLlegada}
-        alCambiarLlegada={cambiarLlegada}
-        duracionDias={duracionDias}
-        duracionH={duracionH}
-        sistema={sistema}
-        soc={e.soc}
-        sobrevive={e.sobrevive}
-        horaMision={hora}
-        setHoraMision={setHoraMision}
-      />}
+      {config.herramientas.lineaTiempo && !plegarDock && (previa ? (
+        <Dock
+          previa={previa.marcas}
+          sitio={previa.sitio}
+          dia={previa.dia}
+          horaLlegada={HORA_LLEGADA}
+          alCambiarLlegada={() => {}}
+          duracionDias={previa.duracionDias}
+          duracionH={previa.duracionH}
+          sistema={previa.sistema}
+          soc={previa.energia.soc}
+          sobrevive={previa.energia.sobrevive}
+          horaMision={0}
+          setHoraMision={setHoraMision}
+        />
+      ) : (
+        <Dock
+          esperando={pendiente !== null}
+          sitio={sitio}
+          dia={dia}
+          horaLlegada={horaLlegada}
+          alCambiarLlegada={cambiarLlegada}
+          duracionDias={duracionDias}
+          duracionH={duracionH}
+          sistema={sistema}
+          soc={e.soc}
+          sobrevive={e.sobrevive}
+          horaMision={hora}
+          setHoraMision={setHoraMision}
+        />
+      ))}
       {config.herramientas.lineaTiempo && <Asa lado="dock" plegada={plegarDock} etiqueta={t(plegarDock ? "ajustes.plegar.abrirDock" : "ajustes.plegar.dock")} alAlternar={() => setDockPlegado((plegado) => !plegado)} />}
 
       {cajonAbierto && (

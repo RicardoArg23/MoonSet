@@ -79,6 +79,14 @@ que ya existían (`evaluarMision`, `evaluarEnergia`, `fechaViableEnergia`, `capa
   por una tarjeta gira el globo hasta ese sitio.
 - "Comparar los 3 mejores" los fija en Comparar con la duración y el perfil del plan; si había escenarios fijados
   avisa cuántos reemplazó y ofrece "Deshacer".
+- **Paso 1 editable**: "Ajustar" despliega los mismos campos del sistema de energía (`CamposSistema`, en
+  `Sistema.jsx`). Cambiar algo crea "Personalizado (planificador)", que vive solo en el planificador hasta "Ver en la
+  app". Si la app ya tenía un perfil personalizado al abrir, aparece como opción.
+- **Línea de tiempo en vista previa**: con un ranking a la vista, el dock muestra el sitio de la tarjeta (o la que
+  tiene el mouse encima) con el perfil y la duración del plan, la ventana de tolerancia y la mejor llegada, con el
+  rótulo "Vista previa". Llega por props (`Dock previa=…`): el estado de la app no cambia.
+- **El astronauta alterna** abrir y cerrar; tolerancia libre de 0 a 30 días (por defecto 7) y duración con un
+  deslizador de 1 a 30 (por defecto 14). El estado del planificador está en funciones puras de `planificar.js`.
 - Código: `planificar.js` (ranking y preguntas, sin React), `explicar.js`, `Planificador.jsx`, `planificador.css`.
   Tests: `tests/planificar.test.js` y `tests/explicar.test.js`. Prototipo de referencia: `prototipos/planifica-tu-mision.html`.
 

@@ -29,22 +29,42 @@
 
 /* ---------- cuerpo del modo planificación ---------- */
 .plan { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+form.plan { gap: 12px; } /* el formulario entero entra sin scroll en 900 px de alto */
 .plan h2 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
 .plan-titulo p, .plan-resumen p { font-size: 13px; margin-top: 4px; }
-.plan-paso { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.plan-paso legend { padding: 0; margin-bottom: 8px; display: flex; align-items: baseline; gap: 10px; font-size: 16px; font-weight: 500; }
+.plan-paso { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.plan-paso legend { padding: 0; margin-bottom: 6px; display: flex; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 500; }
 .plan-paso legend span { font-size: 12px; font-weight: 600; color: var(--acento); }
 .plan-fila { display: flex; flex-wrap: wrap; gap: 6px; }
 .plan-opcion { flex: 1 1 0; min-width: 0; padding: 8px 14px; border-radius: 14px; border-color: var(--borde); background: var(--relleno); text-align: left; display: flex; flex-direction: column; font-size: 14px; }
-.plan-opcion.ancha { flex: none; width: 100%; }
+/* Nombre y datos en una línea; si no entran, los datos bajan a la segunda. */
+.plan-opcion.ancha { flex: 1 1 auto; width: auto; min-height: 40px; padding: 6px 14px; flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 10px; }
+.plan-opcion.ancha small { white-space: nowrap; }
+.plan-perfil { display: flex; gap: 6px; min-width: 0; }
+.plan-ajustar { flex: none; min-height: 40px; padding: 0 14px; font-size: 13px; }
+.plan-ajustar[aria-expanded="true"] { background: var(--texto); color: #14110d; font-weight: 600; }
+.plan-campos { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--borde); font-size: 14px; }
+.plan-campos select { height: 36px; padding: 0 10px; background: var(--relleno); border: 1px solid var(--borde); border-radius: 10px; color: var(--texto); color-scheme: dark; }
 .plan-opcion.chica { flex: 0 1 auto; min-height: 36px; justify-content: center; text-align: center; border-radius: 999px; font-size: 13px; }
 .plan-opcion b { font-weight: 500; }
 .plan-opcion small { font-size: 12px; color: var(--tenue); }
 .plan-opcion[aria-pressed="true"] { border-color: var(--acento); background: rgba(255, 184, 74, 0.12); }
 .plan-campo { height: 40px; padding: 0 12px; font-weight: 600; background: var(--relleno); border: 1px solid var(--borde); border-radius: 12px; color-scheme: dark; }
-.plan-duracion { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--texto-2); }
-.plan-duracion input { width: 76px; text-align: center; }
-.plan-buscar { min-height: 48px; font-size: 16px; }
+.plan-campo.chico { width: 64px; text-align: center; }
+/* Paso 3: llegada y tolerancia en una fila; en angosto se apilan. */
+.plan-cuando { display: flex; align-items: flex-end; gap: 10px; }
+.plan-etiqueta { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; color: var(--tenue); }
+.plan-cuando .plan-etiqueta:first-child { flex: 1 1 auto; }
+.plan-cuando input[type="date"] { width: 100%; }
+.plan-tolerancia { display: inline-flex; align-items: center; gap: 6px; color: var(--texto-2); font-size: 14px; }
+.plan-tolerancia i { font-style: normal; color: var(--tenue); }
+@media (max-width: 420px) { .plan-cuando { flex-direction: column; align-items: stretch; } }
+/* Paso 4: deslizador de 1 a 30 días con el valor al lado y las marcas en los extremos. */
+.plan-deslizador { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 14px; }
+.plan-deslizador input[type="range"] { width: 100%; margin: 0; accent-color: var(--acento); }
+.plan-deslizador output { min-width: 4.6em; font-size: 15px; font-weight: 600; text-align: right; }
+.plan-marcas { grid-column: 1; display: flex; justify-content: space-between; font-size: 11px; color: var(--tenue); }
+.plan-buscar { min-height: 46px; font-size: 16px; }
 .plan-nota { font-size: 12px; }
 
 .plan-respuestas { display: flex; align-items: flex-start; gap: 8px; }
@@ -105,3 +125,15 @@
   .plan-pestanas { margin: 0 0 12px; }
 }
 @keyframes plan-hoja { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- línea de tiempo en vista previa (Dock.jsx con `previa`) ---------- */
+.dock.previa { border: 1px dashed rgba(255, 184, 74, 0.6); }
+.dock-previa { position: absolute; top: -12px; left: 24px; z-index: 2; padding: 2px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #14110d; background: var(--acento); white-space: nowrap; max-width: calc(100% - 48px); overflow: hidden; text-overflow: ellipsis; }
+.dock.previa .ventana { position: absolute; top: -4px; bottom: -4px; min-width: 3px; border: 2px solid #fff; border-radius: 6px; background: rgba(255, 255, 255, 0.12); pointer-events: none; }
+.dock.previa .elegido { position: absolute; top: -8px; bottom: -8px; width: 2px; margin-left: -1px; background: var(--texto-2); pointer-events: none; }
+.dock.previa .aro { border-color: var(--acento); }
+.dock.previa .pista input[type="range"] { cursor: default; }
+.leyenda i.ventana-muestra { border: 2px solid #fff; background: rgba(255, 255, 255, 0.12); }
+.leyenda i.aro-muestra { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--acento); }
+.dock.previa .reloj.si { color: var(--bien); }
+.dock.previa .reloj.no { color: var(--mal); }

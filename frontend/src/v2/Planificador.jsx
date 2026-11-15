@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BATERIAS } from "./configEnergia";
 import { explicar, textoExplicacion } from "./explicar";
-import { DIAS_2027, MEJORES, REGIONES, TOLERANCIAS, preguntaBateria, preguntaCerca, preguntaPrimera, preguntaPuestas, preguntaSemana } from "./planificar";
+import { DIAS_2027, DURACION_MAX, DURACION_MIN, MEJORES, PERFIL_PLAN, REGIONES, TOLERANCIA_MAX, limitarDuracion, limitarTolerancia, perfilElegido, perfilesDelPlan, preguntaBateria, preguntaCerca, preguntaPrimera, preguntaPuestas, preguntaSemana } from "./planificar";
+import { CamposSistema } from "./Sistema";
 import { useIdioma } from "./i18n";
 import "./planificador.css";
 
@@ -19,6 +20,32 @@ export function IconoAstronauta() {
       <rect x="8" y="9" width="8" height="5.2" rx="2.6" />
       <path d="M8.5 21h7M2.8 12.5v2.4M21.2 12.5v2.4" />
     </svg>
+  );
+}
+
+/**
+ * Campo numérico entero chico. Deja escribir libremente (incluso vacío) y avisa solo con un número válido;
+ * al salir del campo vuelve al último valor válido.
+ */
+function CampoEntero({ valor, min, max, limitar, alCambiar, ...resto }) {
+  const [texto, setTexto] = useState(String(valor));
+  useEffect(() => setTexto(String(valor)), [valor]);
+  return (
+    <input
+      {...resto}
+      type="number"
+      inputMode="numeric"
+      className="plan-campo chico"
+      min={min}
+      max={max}
+      step="1"
+      value={texto}
+      onChange={(evento) => {
+        setTexto(evento.target.value);
+        if (evento.target.value !== "") alCambiar(limitar(evento.target.value));
+      }}
+      onBlur={() => setTexto(String(valor))}
+    />
   );
 }
 
@@ -53,13 +80,13 @@ export function Explicaciones({ frases }) {
  * Modo planificación del panel: cuatro preguntas y, después de "Buscar sitios", el ranking.
  * No guarda estado propio: todo vive en `estado` (Cabina), así cambiar de pestaña no pierde nada.
  * @param {object} props
- * @param {object} props.estado { paso, perfilId, region, dia, tolerancia, duracionDias, ranking, abierta, hilo }
+ * @param {object} props.estado estado del planificador (planificar.js: estadoInicialPlan)
  * @param {(cambios: object) => void} props.alCambiar
- * @param {{ id: string, valores: object }[]} props.perfiles perfiles de energía que se pueden elegir
+ * @param {(cambios: object) => void} props.alAjustar cambia un valor del sistema dentro del planificador
  * @param {number} props.t0 ms del 1 de enero de 2027 (inicio de los datos)
  * @param {Record<string, object|null|undefined>} props.vecindades grillas de alrededores ya pedidas
  */
-export default function Planificador({ estado, alCambiar, perfiles, totalSitios, t0, buscando, alBuscar, alVer, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
+export default function Planificador({ estado, alCambiar, alAjustar, totalSitios, t0, buscando, alBuscar, alVer, alComparar, aviso, alDeshacer, vecindades, perfilVista }) {
   const { t, f } = useIdioma();
   const { num, fechaLarga, nombreCorto } = f;
   const preguntas = useRef(null);
@@ -73,9 +100,10 @@ export default function Planificador({ estado, alCambiar, perfiles, totalSitios,
   const isoDe = (dia) => new Date(t0 + dia * DIA_MS).toISOString().slice(0, 10);
   const detallePerfil = (v) => t("plan.perfilDetalle", { bateria: BATERIAS[v.tipoBateria].nombre, kwh: num(v.capacidadKWh, v.capacidadKWh % 1 ? 1 : 0), n: v.paneles });
   const dias = (n) => t("plan.etiquetaDuracion", { n });
+  const nombrePerfil = (id) => (id === PERFIL_PLAN ? t("plan.perfilPlan") : t(`sistema.perfiles.${id}`));
 
   if (estado.paso === "preguntas" || !estado.ranking) {
-    const perfilElegido = perfiles.some((p) => p.id === estado.perfilId) ? estado.perfilId : perfiles[0].id;
+    const elegido = perfilElegido(estado);
     return (
       <form className="plan" onSubmit={(evento) => { evento.preventDefault(); alBuscar(); }}>
         <div className="plan-titulo">
@@ -85,12 +113,28 @@ export default function Planificador({ estado, alCambiar, perfiles, totalSitios,
 
         <fieldset className="plan-paso">
           <legend><span>1</span>{t("plan.queLlevas")}</legend>
-          {perfiles.map((p) => (
-            <button key={p.id} type="button" className="plan-opcion ancha" aria-pressed={perfilElegido === p.id} onClick={() => alCambiar({ perfilId: p.id })}>
-              <b>{t(`sistema.perfiles.${p.id}`)}</b>
-              <small>{detallePerfil(p.valores)}</small>
-            </button>
-          ))}
+          {perfilesDelPlan(estado).map((p) => {
+            const esElegido = elegido.id === p.id;
+            return (
+              <div key={p.id} className="plan-perfil">
+                <button type="button" className="plan-opcion ancha" aria-pressed={esElegido} onClick={() => alCambiar({ perfilId: p.id })}>
+                  <b>{nombrePerfil(p.id)}</b>
+                  <small>{detallePerfil(p.valores)}</small>
+                </button>
+                {esElegido && (
+                  <button type="button" className="plan-ajustar" aria-expanded={estado.ajustando} aria-controls="plan-campos" onClick={() => alCambiar({ ajustando: !estado.ajustando })}>
+                    {t("plan.ajustar")}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {estado.ajustando && (
+            <div className="plan-campos" id="plan-campos">
+              <p className="tenue plan-nota">{t("plan.ajustarNota")}</p>
+              <CamposSistema sistema={elegido.valores} alCambiar={alAjustar} />
+            </div>
+          )}
         </fieldset>
 
         <fieldset className="plan-paso">
@@ -107,35 +151,57 @@ export default function Planificador({ estado, alCambiar, perfiles, totalSitios,
 
         <fieldset className="plan-paso">
           <legend><span>3</span>{t("plan.cuando")}</legend>
-          <input
-            type="date"
-            className="plan-campo"
-            aria-label={t("plan.fechaAria")}
-            min={isoDe(0)}
-            max={isoDe(DIAS_2027 - 1)}
-            required
-            value={isoDe(estado.dia)}
-            onChange={(evento) => {
-              const dia = Math.round((Date.parse(evento.target.value) - t0) / DIA_MS);
-              if (Number.isFinite(dia)) alCambiar({ dia: Math.max(0, Math.min(DIAS_2027 - 1, dia)) });
-            }}
-          />
-          <p className="rotulo">{t("plan.tolerancia")}</p>
-          <div className="plan-fila">
-            {TOLERANCIAS.map((n) => (
-              <button key={n} type="button" className="plan-opcion chica" aria-pressed={estado.tolerancia === n} onClick={() => alCambiar({ tolerancia: n })}>
-                {n === 0 ? t("plan.toleranciaFija") : t("plan.toleranciaDias", { n })}
-              </button>
-            ))}
+          <div className="plan-cuando">
+            <label className="plan-etiqueta">
+              <span>{t("plan.llegadaRotulo")}</span>
+              <input
+                type="date"
+                className="plan-campo"
+                aria-label={t("plan.fechaAria")}
+                min={isoDe(0)}
+                max={isoDe(DIAS_2027 - 1)}
+                required
+                value={isoDe(estado.dia)}
+                onChange={(evento) => {
+                  const dia = Math.round((Date.parse(evento.target.value) - t0) / DIA_MS);
+                  if (Number.isFinite(dia)) alCambiar({ dia: Math.max(0, Math.min(DIAS_2027 - 1, dia)) });
+                }}
+              />
+            </label>
+            <label className="plan-etiqueta">
+              <span>{t("plan.tolerancia")}</span>
+              <span className="plan-tolerancia">
+                <i aria-hidden="true">±</i>
+                <CampoEntero
+                  valor={estado.tolerancia}
+                  min={0}
+                  max={TOLERANCIA_MAX}
+                  limitar={limitarTolerancia}
+                  aria-label={t("plan.toleranciaAria", { max: TOLERANCIA_MAX })}
+                  alCambiar={(tolerancia) => alCambiar({ tolerancia })}
+                />
+                <small>{t("plan.dias")}</small>
+              </span>
+            </label>
           </div>
         </fieldset>
 
         <fieldset className="plan-paso">
           <legend><span>4</span>{t("plan.cuanto")}</legend>
-          <label className="plan-duracion">
-            <input type="number" className="plan-campo" aria-label={t("plan.duracionAria")} min="1" max="30" value={estado.duracionDias} onChange={(evento) => alCambiar({ duracionDias: Math.max(1, Math.min(30, Math.round(Number(evento.target.value)) || 1)) })} />
-            {t("plan.dias")}
-          </label>
+          <div className="plan-deslizador">
+            <input
+              type="range"
+              min={DURACION_MIN}
+              max={DURACION_MAX}
+              step="1"
+              value={estado.duracionDias}
+              aria-label={t("plan.duracionAria")}
+              aria-valuetext={dias(estado.duracionDias)}
+              onChange={(evento) => alCambiar({ duracionDias: limitarDuracion(evento.target.value) })}
+            />
+            <output aria-hidden="true">{dias(estado.duracionDias)}</output>
+            <span className="plan-marcas" aria-hidden="true"><span>{DURACION_MIN}</span><span>{DURACION_MAX}</span></span>
+          </div>
         </fieldset>
 
         <button type="submit" className="primario plan-buscar" disabled={buscando}>{buscando ? t("plan.buscando") : t("plan.buscar")}</button>
@@ -204,7 +270,7 @@ export default function Planificador({ estado, alCambiar, perfiles, totalSitios,
     <div className="plan">
       <div className="plan-respuestas">
         <ul aria-label={t("plan.respuestasAria")}>
-          <li>{t(`sistema.perfiles.${r.perfilId}`)}</li>
+          <li>{nombrePerfil(r.perfilId)}</li>
           <li>{t(r.region === "polo" ? "plan.regionPolo" : "plan.regionTodos")}</li>
           <li>{r.tolerancia ? t("plan.etiquetaFechaTolerancia", { fecha: fecha(r.dia), n: r.tolerancia }) : t("plan.etiquetaFecha", { fecha: fecha(r.dia) })}</li>
           <li>{dias(r.duracionDias)}</li>

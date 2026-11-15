@@ -5,12 +5,93 @@ import { evaluarMision, horasHastaCambio } from "./calculo.js";
 import { capacidadMinima, entradaSitio, evaluarEnergia, evaluarVecindadEnergia, fechaViableEnergia, panelesMinimos } from "./energia.js";
 import { elevacionMaxTierra } from "./explicar.js";
 import { LAT_POLAR_SUR } from "./enlaces.js";
+import { PERFIL_PERSONALIZADO, PERFILES } from "./configEnergia.js";
 
 export const REGIONES = ["polo", "todos"];
-export const TOLERANCIAS = [0, 3, 7, 15];
+export const TOLERANCIA_MAX = 30; // días que se puede mover la llegada, hacia cada lado
+export const TOLERANCIA_DEFECTO = 7;
+export const DURACION_MIN = 1;
+export const DURACION_MAX = 30;
+export const DURACION_DEFECTO = 14;
 export const DIAS_2027 = 365;
 export const HORA_LLEGADA = 0; // el asistente planifica llegadas a las 00:00 UTC
 export const MEJORES = 3;
+/** Perfil que nace al ajustar un valor dentro del planificador. Vive solo ahí hasta "Ver en la app". */
+export const PERFIL_PLAN = "personalizado-plan";
+
+const entero = (x, min, max, defecto) => {
+  const n = Math.round(Number(x));
+  return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : defecto;
+};
+/** Tolerancia libre de 0 a 30 días (lo que no es un número vuelve al valor por defecto). */
+export const limitarTolerancia = (x) => entero(x, 0, TOLERANCIA_MAX, TOLERANCIA_DEFECTO);
+export const limitarDuracion = (x) => entero(x, DURACION_MIN, DURACION_MAX, DURACION_DEFECTO);
+
+// ---------- estado del planificador: funciones puras que usa la cabina (App.jsx) ----------
+
+/** Estado inicial: cerrado, sin respuestas. perfilId y dia se completan al abrirlo por primera vez. */
+export function estadoInicialPlan() {
+  return {
+    abierto: false,
+    pestana: "planificar",
+    paso: "preguntas",
+    perfilId: null,
+    perfilApp: null, // valores del perfil personalizado de la app al abrir el planificador (si lo había)
+    sistemaPlan: null, // valores ajustados dentro del planificador (perfil PERFIL_PLAN)
+    ajustando: false, // los campos de "Ajustar" están desplegados
+    region: "polo",
+    dia: null,
+    tolerancia: TOLERANCIA_DEFECTO,
+    duracionDias: DURACION_DEFECTO,
+    ranking: null,
+    abierta: null,
+    sobre: null,
+    hilo: [],
+  };
+}
+
+/**
+ * El astronauta alterna el modo: si está cerrado lo abre en la pestaña Planificar (en el ranking si ya hay uno);
+ * si está abierto, en cualquier pestaña, lo cierra. Las respuestas y el ranking se conservan siempre.
+ * @param {object} plan estado del planificador
+ * @param {{ perfilId: string, sistema: object, dia: number }} app lo que tiene la app al abrir (no se modifica)
+ */
+export function alternarPlan(plan, app) {
+  if (plan.abierto) return { ...plan, abierto: false, sobre: null };
+  const perfilApp = app.perfilId === PERFIL_PERSONALIZADO ? { ...app.sistema } : null;
+  const disponibles = perfilesDelPlan({ ...plan, perfilApp });
+  const perfilId = disponibles.some((p) => p.id === plan.perfilId) ? plan.perfilId : disponibles.some((p) => p.id === app.perfilId) ? app.perfilId : disponibles[0].id;
+  return { ...plan, abierto: true, pestana: "planificar", paso: plan.ranking ? "ranking" : "preguntas", perfilApp, perfilId, dia: plan.dia ?? app.dia, sobre: null };
+}
+
+/** Perfiles de "¿Qué llevás?": los de la lista, el personalizado de la app (si había) y el ajustado en el planificador. */
+export function perfilesDelPlan(plan) {
+  return [
+    ...PERFILES.map((p) => ({ id: p.id, valores: p.valores })),
+    ...(plan.perfilApp ? [{ id: PERFIL_PERSONALIZADO, valores: plan.perfilApp }] : []),
+    ...(plan.sistemaPlan ? [{ id: PERFIL_PLAN, valores: plan.sistemaPlan }] : []),
+  ];
+}
+
+/** El perfil elegido en el planificador, o el primero si el elegido ya no está. */
+export function perfilElegido(plan) {
+  const disponibles = perfilesDelPlan(plan);
+  return disponibles.find((p) => p.id === plan.perfilId) ?? disponibles[0];
+}
+
+/**
+ * Cambia un valor del sistema dentro del planificador: parte de los valores del perfil elegido y el resultado
+ * pasa a ser el perfil "Personalizado (planificador)". No toca los perfiles de la lista ni el de la app.
+ */
+export function ajustarSistema(plan, cambios) {
+  const base = perfilElegido(plan).valores;
+  return { ...plan, perfilId: PERFIL_PLAN, sistemaPlan: { ...base, ...cambios } };
+}
+
+/** Lo que "Ver en la app" aplica del perfil: el ajustado en el planificador entra como el personalizado de la app. */
+export function perfilParaApp(ranking) {
+  return { perfilId: ranking.perfilId === PERFIL_PLAN ? PERFIL_PERSONALIZADO : ranking.perfilId, sistema: { ...ranking.sistema } };
+}
 
 /** Sitios precalculados de la región: "polo" es al sur de 80° S; "todos", la lista entera. */
 export function sitiosDeRegion(sitios, region) {
