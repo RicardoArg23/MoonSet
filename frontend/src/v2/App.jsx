@@ -163,6 +163,8 @@ function Cabina({ perfil }) {
   // Punto tocado que se está calculando (o que falló): { lat, lon, estado: "cargando" | "error", error, n }.
   const [pendiente, setPendiente] = useState(null);
   const [progreso, setProgreso] = useState(null); // barra del panel: { n, estado: "cargando" | "listo" }
+  const arrastreHoja = useRef(null);
+  const hojaRef = useRef(null);
   const pedido = useRef(null); // AbortController del último pedido: solo cuenta el último punto tocado
   const pedidosHechos = useRef(0);
   useEffect(() => () => pedido.current?.abort(), []); // al salir de la cabina no queda un pedido colgado
@@ -511,6 +513,30 @@ function Cabina({ perfil }) {
     setPanelPlegado(false);
     setPlan((p) => alternarPlan(p, { perfilId, sistema, dia }));
   }
+  // Hoja del planificador en teléfono: arrastrar hacia abajo desde el asa o las pestañas la cierra.
+  function hojaAbajo(ev) {
+    if (!angosto || !plan.abierto || ev.target.closest("button, input, select, textarea, a")) return;
+    const caja = ev.currentTarget.getBoundingClientRect();
+    if (ev.clientY - caja.top > 64) return;
+    arrastreHoja.current = { y0: ev.clientY, dy: 0 };
+    ev.currentTarget.setPointerCapture?.(ev.pointerId);
+  }
+  function hojaMueve(ev) {
+    const a = arrastreHoja.current;
+    if (!a) return;
+    a.dy = Math.max(0, ev.clientY - a.y0);
+    ev.currentTarget.style.transition = "none";
+    ev.currentTarget.style.transform = `translateY(${a.dy}px)`;
+  }
+  function hojaSuelta(ev) {
+    const a = arrastreHoja.current;
+    if (!a) return;
+    arrastreHoja.current = null;
+    const el = ev.currentTarget;
+    el.style.transition = "transform 0.2s var(--salida)";
+    if (a.dy > 90) { el.style.transform = "translateY(100%)"; setTimeout(() => { el.style.transition = ""; el.style.transform = ""; cerrarPlan(); }, 180); }
+    else { el.style.transform = ""; setTimeout(() => { el.style.transition = ""; }, 220); }
+  }
   function cerrarPlan() {
     setPlan((p) => (p.abierto ? alternarPlan(p, { perfilId, sistema, dia }) : p));
     setPanelPlegado(plegadoAntes.current);
@@ -757,7 +783,7 @@ function Cabina({ perfil }) {
         </button>
       </header>
 
-      {hayPanel && !plegarPanel && <aside className={`panel vidrio ${enPlan ? "en-plan" : pendiente ? "cargando" : e.sobrevive ? "si" : "no"}${plan.abierto ? " con-plan" : ""}`} aria-live={enPlan ? undefined : "polite"} aria-busy={(enPlan ? buscando : pendiente?.estado === "cargando") || undefined}>
+      {hayPanel && !plegarPanel && <aside ref={hojaRef} onPointerDown={hojaAbajo} onPointerMove={hojaMueve} onPointerUp={hojaSuelta} onPointerCancel={hojaSuelta} className={`panel vidrio ${enPlan ? "en-plan" : pendiente ? "cargando" : e.sobrevive ? "si" : "no"}${plan.abierto ? " con-plan" : ""}`} aria-live={enPlan ? undefined : "polite"} aria-busy={(enPlan ? buscando : pendiente?.estado === "cargando") || undefined}>
         {enPlan ? <BarraProgreso key={`plan-${progresoPlan?.n}`} estado={progresoPlan?.estado ?? null} /> : <BarraProgreso key={progreso?.n} estado={progreso?.estado ?? null} />}
         {plan.abierto && <PestanasPlan pestana={plan.pestana} alElegir={(pestana) => cambiarPlan({ pestana, sobre: null })} alCerrar={cerrarPlan} alLimpiar={hayAlgoQueLimpiar ? limpiarPlan : null} />}
         {enPlan ? (
