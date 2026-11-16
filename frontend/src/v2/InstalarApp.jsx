@@ -1,25 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useIdioma } from "./i18n";
 import { descartarOferta, instalarApp, useInstalar } from "./instalar.js";
 import "./instalar.css";
 
-const ESPERA_OFERTA_MS = 4000; // el ofrecimiento aparece después de que la persona vio la pantalla
 const COMPARTIR = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M6 12v7h12v-7" /></svg>;
 
 /** Ofrecimiento flotante para instalar MoonSet. Aparece solo si se puede instalar y no se descartó antes. */
 export function OfertaInstalar() {
   const { t } = useIdioma();
   const { modo, descartado } = useInstalar();
-  const [listo, setListo] = useState(false);
-  useEffect(() => {
-    const id = setTimeout(() => setListo(true), ESPERA_OFERTA_MS);
-    return () => clearTimeout(id);
-  }, []);
   const hay = Boolean(modo) && !descartado;
-  // El lugar se reserva apenas se sabe que se puede instalar, antes de que aparezca la tarjeta: así no corre la columna en el momento de mostrarla.
+  // Aparece junto con la portada (sin espera: si no, se podía entrar a la herramienta sin verla). El lugar se reserva desde que se sabe que se puede instalar.
   return (
     <div className={`instalar-reserva${hay ? " abierta" : ""}`}>
-      {hay && listo && (
+      {hay && (
         <aside className={`instalar-oferta${modo === "ios" ? " instalar-ios" : ""}`} role="region" aria-label={t("instalar.titulo")}>
           <img src={`${import.meta.env.BASE_URL}marca/icono-192.png`} alt="" width="44" height="44" />
           <div className="instalar-texto">
@@ -53,3 +47,5 @@ export function useFilaInstalar() {
     },
   };
 }
+
+export const DESCARGAR = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" /></svg>;

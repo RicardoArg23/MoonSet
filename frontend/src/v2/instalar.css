@@ -5,7 +5,7 @@
 .instalar-reserva.abierta { max-height: 110px; margin-top: -8px; }
 .instalar-oferta { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 12px; align-items: center; width: 100%;
   padding: 10px 12px; border-radius: 18px; background: var(--vidrio, rgba(16, 14, 12, 0.88)); border: 1px solid rgba(255, 184, 74, 0.7); backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 4px rgba(255, 184, 74, 0.1), 0 18px 50px rgba(0, 0, 0, 0.6); animation: instalar-entra 0.5s var(--salida) both; }
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 4px rgba(255, 184, 74, 0.1), 0 18px 50px rgba(0, 0, 0, 0.6); animation: instalar-entra 0.5s var(--salida) 0.4s both; } /* entra justo después de los botones de la portada */
 .instalar-oferta img { border-radius: 10px; display: block; }
 .instalar-texto b { display: block; font-weight: 500; font-size: 15px; letter-spacing: -0.01em; }
 .instalar-texto small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; color: var(--texto-2); }
@@ -38,5 +38,11 @@
   .instalar-texto small { font-size: 13px; }
 }
 
-/* Fila del cajón */
-.cj-instalar small svg { width: 13px; height: 13px; vertical-align: -2px; margin: 0 3px; }
+/* Pie del cajón: un enlace chico, en ámbar y con ícono, abajo del todo. */
+.cj-pie { flex: none; padding: 10px 18px 14px; border-top: 1px solid var(--borde); display: grid; gap: 6px; }
+.cj-instalar { justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; padding: 0; border: 0; border-radius: 6px; background: none; font-size: 13.5px; color: var(--acento); }
+.cj-instalar svg { width: 16px; height: 16px; flex: none; }
+.cj-instalar span { text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+.cj-instalar:hover span { text-decoration-style: solid; }
+.cj-instalar:active:not(:disabled) { transform: none; }
+.cj-pie p { font-size: 12.5px; line-height: 1.4; color: var(--tenue); }
