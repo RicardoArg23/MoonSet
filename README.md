@@ -33,6 +33,10 @@ cifras). La interfaz está en español e inglés, y un tutorial guiado presenta 
   [Leer los CSV exportados](#leer-los-csv-exportados)).
 - **Herramientas de NASA.** Abre NASA Moon Trek y LROC QuickMap centrados en el sitio, y las tablas de JPL Horizons
   del Sol y la Tierra para las horas de la misión.
+- **Instalable como app.** MoonSet es una PWA: se instala con su propio ícono y se abre sin la barra del navegador.
+  En Chrome y Edge (escritorio y Android) aparece un botón «Instalar» al entrar y otro en el menú de ajustes; en
+  iPhone, desde Safari: Compartir → «Agregar a pantalla de inicio». Necesita conexión: los datos, las texturas y el mapa
+  de NASA se descargan en cada uso.
 
 <!-- CAPTURAS: agregar los archivos en docs/capturas/ con estos nombres. -->
 ![Globo con un sitio elegido y el panel de respuesta](docs/capturas/globo.png)

@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./v2/instalar.js"; // primero: guarda el aviso de instalación que el navegador manda apenas carga
 import App from "./v2/App.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

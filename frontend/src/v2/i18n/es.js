@@ -149,6 +149,20 @@ export default {
     },
   },
 
+  // Instalar como app (InstalarApp.jsx)
+  instalar: {
+    titulo: "Instalá MoonSet en tu dispositivo",
+    detalle: "Se abre como una app, con su propio ícono y sin la barra del navegador.",
+    boton: "Instalar",
+    ahoraNo: "Ahora no",
+    entendido: "Entendido",
+    pasosIOS1: "Tocá Compartir",
+    pasosIOS2: " y elegí «Agregar a pantalla de inicio».",
+    cajon: "Instalar app",
+    cajonDetalle: "Con su propio ícono y sin la barra del navegador",
+    cajonIOS: "Tocá Compartir y elegí «Agregar a pantalla de inicio»",
+  },
+
   // Pantalla de inicio (src/v2/inicio)
   inicio: {
     titular: "Elegí dónde y cuándo alunizar.",

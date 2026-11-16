@@ -171,6 +171,20 @@ export default {
     },
   },
 
+  // Install as an app (InstalarApp.jsx)
+  instalar: {
+    titulo: "Install MoonSet on your device",
+    detalle: "It opens like an app, with its own icon and no browser bar.",
+    boton: "Install",
+    ahoraNo: "Not now",
+    entendido: "Got it",
+    pasosIOS1: "Tap Share",
+    pasosIOS2: " and choose “Add to Home Screen”.",
+    cajon: "Install app",
+    cajonDetalle: "With its own icon and no browser bar",
+    cajonIOS: "Tap Share and choose “Add to Home Screen”",
+  },
+
   // Start screen (src/v2/inicio)
   inicio: {
     titular: "Choose where and when to land on the Moon.",

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useIdioma } from "../i18n";
 import { crearEspacio } from "./espacio";
+import { OfertaInstalar } from "../InstalarApp.jsx";
 import "./inicio.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -170,6 +171,7 @@ export default function Inicio({ alEntrar }) {
             <Flecha />
           </button>
         </div>
+        <OfertaInstalar />
       </main>
 
       <div className="ini-pie ini-ocultable">

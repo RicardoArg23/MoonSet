@@ -2,6 +2,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ACCIONES, CIFRAS, HERRAMIENTAS, PERFILES_BASE, PERSONALIZADO, VISTAS, buscarAjustes, conBloqueMovido, conCifra, conVista } from "./ajustes";
 import { MARGEN_COMUNICACION_MAX_DEG } from "./calculo";
 import { useProximamente } from "./Proximamente.jsx";
+import { useFilaInstalar } from "./InstalarApp.jsx";
 import { useIdioma } from "./i18n";
 import { ANGOSTO, CON_PUNTERO, useMedia } from "./useMedia";
 import "./cajon.css";
@@ -36,6 +37,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
   const { idioma, setIdioma, idiomas, t, f } = useIdioma();
   const angosto = useMedia(ANGOSTO);
   const abrirProximamente = useProximamente();
+  const instalar = useFilaInstalar(); // null si no se puede instalar (ya instalada, o el navegador no lo permite)
   const conPuntero = useMedia(CON_PUNTERO) && !angosto;
   const [ruta, setRuta] = useState([]); // [] | [sección] | [sección, detalle]
   const [consulta, setConsulta] = useState("");
@@ -307,6 +309,13 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
     </button>
   );
 
+  // Instalar como app: a pedido, también si se descartó el ofrecimiento del inicio. En iPhone no hay botón posible: se muestran los pasos.
+  const filaInstalar = instalar && !consulta && (
+    <button type="button" className="cj-seccion cj-instalar" data-clave="instalar" onClick={instalar.alTocar}>
+      <span><b>{t("instalar.cajon")}</b><small>{instalar.pasos ? t("instalar.cajonIOS") : t("instalar.cajonDetalle")}</small></span>
+    </button>
+  );
+
   // En pantalla angosta no hay lugar al costado: el cajón muestra una sola pantalla, con botón para volver.
   const enAngosto = angosto && seccion;
   const tituloAngosto = detalle ? detalle.titulo : seccion?.titulo;
@@ -340,7 +349,7 @@ export default function Cajon({ config, alCambiar, activo, hayPropio, alElegirPe
           )}
         </div>
         <div className="cj-cuerpo" onScroll={posicionar}>
-          {enAngosto ? lista((detalle ?? seccion).items, rutaValida.slice(0, 1)) : <>{cuerpoRaiz}{filaProximamente}</>}
+          {enAngosto ? lista((detalle ?? seccion).items, rutaValida.slice(0, 1)) : <>{cuerpoRaiz}{filaProximamente}{filaInstalar}</>}
         </div>
       </aside>
 

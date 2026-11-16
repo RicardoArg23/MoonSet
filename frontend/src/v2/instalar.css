@@ -1,0 +1,42 @@
+/* Ofrecimiento de instalar la app: una tarjeta de vidrio con reborde ámbar, bajo las entradas del inicio. Su lugar se reserva antes de
+   mostrarla (así no corre la columna) y se cierra al descartarla. En el teléfono es una sola fila: ícono, título, «Instalar» y una X. */
+.instalar-reserva { max-width: 30rem; max-height: 0; margin-top: -16px; /* anula el gap de la columna mientras no hay nada */
+  transition: max-height 0.4s var(--salida), margin-top 0.4s var(--salida); }
+.instalar-reserva.abierta { max-height: 110px; margin-top: -8px; }
+.instalar-oferta { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 12px; align-items: center; width: 100%;
+  padding: 10px 12px; border-radius: 18px; background: var(--vidrio, rgba(16, 14, 12, 0.88)); border: 1px solid rgba(255, 184, 74, 0.7); backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 4px rgba(255, 184, 74, 0.1), 0 18px 50px rgba(0, 0, 0, 0.6); animation: instalar-entra 0.5s var(--salida) both; }
+.instalar-oferta img { border-radius: 10px; display: block; }
+.instalar-texto b { display: block; font-weight: 500; font-size: 15px; letter-spacing: -0.01em; }
+.instalar-texto small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; color: var(--texto-2); }
+.instalar-texto small svg { width: 14px; height: 14px; vertical-align: -2px; margin: 0 3px; }
+.instalar-acciones { display: flex; flex-direction: column; gap: 6px; }
+.instalar-acciones button { min-height: 30px; padding: 0 14px; font-size: 13px; }
+.instalar-descartar-x { display: none; width: 16px; height: 16px; }
+@keyframes instalar-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .instalar-oferta { animation: none; } }
+
+/* Teléfono: más simple, solo el título y los dos controles (en iPhone queda la línea con los pasos, que sí hacen falta). */
+@media (max-width: 860px) {
+  .instalar-reserva.abierta { max-height: 100px; }
+  .instalar-oferta { grid-template-columns: auto minmax(0, 1fr) auto; padding: 8px 8px 8px 10px; }
+  .instalar-oferta img { width: 34px; height: 34px; }
+  .instalar-oferta:not(.instalar-ios) .instalar-texto small { display: none; }
+  .instalar-acciones { flex-direction: row; align-items: center; gap: 4px; }
+  .instalar-acciones button.primario { min-height: 34px; }
+  .instalar-descartar { width: 34px; padding: 0; border-color: transparent; display: grid; place-items: center; color: var(--tenue); }
+  .instalar-descartar-texto { display: none; }
+  .instalar-descartar-x { display: block; }
+}
+
+/* Ventana baja: bajo las entradas ya no hay lugar sin pisar los créditos; la tarjeta pasa abajo a la izquierda. */
+@media (min-width: 861px) and (max-height: 800px) {
+  .instalar-reserva, .instalar-reserva.abierta { display: contents; }
+  .instalar-oferta { position: fixed; left: 32px; right: auto; bottom: 90px; width: 360px; z-index: 30; grid-template-columns: auto minmax(0, 1fr); padding: 12px 14px; }
+  .instalar-acciones { grid-column: 1 / -1; flex-direction: row; }
+  .instalar-acciones button { min-height: 36px; padding: 0 16px; font-size: 13.5px; }
+  .instalar-texto small { font-size: 13px; }
+}
+
+/* Fila del cajón */
+.cj-instalar small svg { width: 13px; height: 13px; vertical-align: -2px; margin: 0 3px; }
